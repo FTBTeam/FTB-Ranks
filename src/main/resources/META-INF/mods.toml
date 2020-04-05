@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[30,)"
+issueTrackerURL="https://github.com/FTBTeam/FTB-Ultimine/issues"
+
+[[mods]]
+modId="ftbranks"
+version="${file.jarVersion}"
+displayName="FTB Ranks"
+authors="LatvianModder"
+description='''
+A simple mod that lets you create ranks for players, similar to Discord roles, and manage permissions for them
+'''
+
+[[dependencies.ftbranks]]
+    modId="forge"
+    mandatory=true
+    versionRange="[30,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ftbranks]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.15,)"
+    ordering="NONE"
+    side="BOTH"

@@ -1,1 +1,1 @@
-# FTB-Utilities-Ranks
+# FTB Ranks
