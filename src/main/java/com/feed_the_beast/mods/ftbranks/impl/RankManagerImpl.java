@@ -322,6 +322,14 @@ public class RankManagerImpl implements RankManager
 			saveRanksNow();
 		}
 
+		if (Files.notExists(playerFile))
+		{
+			playerData = new HashMap<>();
+
+			savePlayers();
+			savePlayersNow();
+		}
+
 		LinkedHashMap<String, RankImpl> tempRanks = new LinkedHashMap<>();
 		LinkedHashMap<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
 
