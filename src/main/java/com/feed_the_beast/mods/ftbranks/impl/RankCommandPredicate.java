@@ -31,7 +31,7 @@ public class RankCommandPredicate implements Predicate<CommandSource>
 
 	public String getNode()
 	{
-		if (redirect == null)
+		if (redirect == null || redirect.get() == null)
 		{
 			return node;
 		}
