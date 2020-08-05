@@ -3,7 +3,6 @@ package com.feed_the_beast.mods.ftbranks;
 import com.feed_the_beast.mods.ftbranks.api.Rank;
 import com.feed_the_beast.mods.ftbranks.impl.FTBRanksAPIImpl;
 import com.mojang.authlib.GameProfile;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.CommandSource;
@@ -13,6 +12,9 @@ import net.minecraft.command.arguments.GameProfileArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -20,11 +22,13 @@ import java.util.Collection;
 /**
  * @author LatvianModder
  */
+@Mod.EventBusSubscriber
 public class FTBRanksCommands
 {
-	public static void register(CommandDispatcher<CommandSource> dispatcher)
+	@SubscribeEvent
+	public static void register(RegisterCommandsEvent event)
 	{
-		dispatcher.register(Commands.literal("ftbranks")
+		event.getDispatcher().register(Commands.literal("ftbranks")
 				.then(Commands.literal("reload")
 						.executes(context -> reloadRanks(context.getSource()))
 				)
@@ -87,7 +91,7 @@ public class FTBRanksCommands
 		catch (Exception ex)
 		{
 			ex.printStackTrace();
-			source.sendFeedback(new StringTextComponent(ex.getLocalizedMessage()).applyTextStyle(TextFormatting.RED), true);
+			source.sendFeedback(new StringTextComponent(ex.getLocalizedMessage()).mergeStyle(TextFormatting.RED), true);
 			return 0;
 		}
 	}
@@ -113,7 +117,7 @@ public class FTBRanksCommands
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks())
 		{
-			source.sendFeedback(new StringTextComponent("- " + rank.getName()).applyTextStyle(rank.getCondition().isDefaultCondition() ? TextFormatting.AQUA : TextFormatting.YELLOW), false);
+			source.sendFeedback(new StringTextComponent("- " + rank.getName()).mergeStyle(rank.getCondition().isDefaultCondition() ? TextFormatting.AQUA : TextFormatting.YELLOW), false);
 		}
 
 		return 1;
@@ -184,7 +188,7 @@ public class FTBRanksCommands
 		{
 			if (rank.isActive(player))
 			{
-				source.sendFeedback(new StringTextComponent("- " + rank.getName()).applyTextStyle(rank.getCondition().isDefaultCondition() ? TextFormatting.AQUA : TextFormatting.YELLOW), false);
+				source.sendFeedback(new StringTextComponent("- " + rank.getName()).mergeStyle(rank.getCondition().isDefaultCondition() ? TextFormatting.AQUA : TextFormatting.YELLOW), false);
 			}
 		}
 
@@ -201,7 +205,7 @@ public class FTBRanksCommands
 		{
 			if (r.isActive(player))
 			{
-				source.sendFeedback(new StringTextComponent("- ").applyTextStyle(TextFormatting.YELLOW).appendSibling(player.getDisplayName()), false);
+				source.sendFeedback(new StringTextComponent("- ").mergeStyle(TextFormatting.YELLOW).append(player.getDisplayName()), false);
 			}
 		}
 

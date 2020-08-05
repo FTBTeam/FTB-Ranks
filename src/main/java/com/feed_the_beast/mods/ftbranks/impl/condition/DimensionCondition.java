@@ -4,18 +4,17 @@ import com.feed_the_beast.mods.ftbranks.api.RankCondition;
 import com.google.gson.JsonObject;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.dimension.DimensionType;
 
 /**
  * @author LatvianModder
  */
 public class DimensionCondition implements RankCondition
 {
-	public final DimensionType dimension;
+	public final ResourceLocation dimension;
 
 	public DimensionCondition(JsonObject json)
 	{
-		dimension = DimensionType.byName(new ResourceLocation(json.get("dimension").getAsString()));
+		dimension = new ResourceLocation(json.get("dimension").getAsString());
 	}
 
 	@Override
@@ -27,12 +26,12 @@ public class DimensionCondition implements RankCondition
 	@Override
 	public boolean isRankActive(ServerPlayerEntity player)
 	{
-		return player.dimension == dimension;
+		return player.world.func_234923_W_().getRegistryName().equals(dimension);
 	}
 
 	@Override
 	public void save(JsonObject json)
 	{
-		json.addProperty("dimension", DimensionType.getKey(dimension).toString());
+		json.addProperty("dimension", dimension.toString());
 	}
 }

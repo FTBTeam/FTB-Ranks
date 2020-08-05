@@ -21,7 +21,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.storage.FolderName;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -48,6 +48,7 @@ import java.util.UUID;
  */
 public class RankManagerImpl implements RankManager
 {
+	public static final FolderName FOLDER_NAME = new FolderName("serverconfig/ftbranks");
 	public static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().serializeNulls().disableHtmlEscaping().create();
 
 	public final MinecraftServer server;
@@ -61,7 +62,7 @@ public class RankManagerImpl implements RankManager
 
 	private Map<String, RankImpl> ranks;
 	private List<RankImpl> sortedRanks;
-	private Map<String, RankConditionFactory> conditions;
+	private final Map<String, RankConditionFactory> conditions;
 	Map<UUID, PlayerRankData> playerData;
 
 	public RankManagerImpl(MinecraftServer s)
@@ -98,7 +99,7 @@ public class RankManagerImpl implements RankManager
 
 	void load() throws Exception
 	{
-		directory = server.getWorld(DimensionType.OVERWORLD).getSaveHandler().getWorldDirectory().toPath().resolve("serverconfig/ftbranks");
+		directory = server.func_240776_a_(FOLDER_NAME);
 
 		if (Files.notExists(directory))
 		{

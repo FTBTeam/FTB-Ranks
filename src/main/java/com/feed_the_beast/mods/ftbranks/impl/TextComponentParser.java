@@ -1,7 +1,8 @@
 package com.feed_the_beast.mods.ftbranks.impl;
 
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
@@ -42,25 +43,25 @@ public class TextComponentParser
 		CODE_TO_FORMATTING.put('r', TextFormatting.RESET);
 	}
 
-	public static ITextComponent parse(String text, @Nullable Function<String, ITextComponent> substitutes)
+	public static StringTextComponent parse(String text, @Nullable Function<String, IFormattableTextComponent> substitutes)
 	{
 		return new TextComponentParser(text, substitutes).parse();
 	}
 
-	private String text;
-	private Function<String, ITextComponent> substitutes;
+	private final String text;
+	private final Function<String, IFormattableTextComponent> substitutes;
 
-	private ITextComponent component;
+	private StringTextComponent component;
 	private StringBuilder builder;
 	private Style style;
 
-	private TextComponentParser(String txt, @Nullable Function<String, ITextComponent> sub)
+	private TextComponentParser(String txt, @Nullable Function<String, IFormattableTextComponent> sub)
 	{
 		text = txt;
 		substitutes = sub;
 	}
 
-	private ITextComponent parse()
+	private StringTextComponent parse()
 	{
 		if (text.isEmpty())
 		{
@@ -85,7 +86,7 @@ public class TextComponentParser
 		}
 
 		component = new StringTextComponent("");
-		style = new Style();
+		style = Style.EMPTY;
 		builder = new StringBuilder();
 		boolean sub = false;
 
@@ -134,25 +135,25 @@ public class TextComponentParser
 					switch (formatting)
 					{
 						case OBFUSCATED:
-							style.setObfuscated(!style.getObfuscated());
+							style = style.setObfuscated(!style.getObfuscated());
 							break;
 						case BOLD:
-							style.setBold(!style.getBold());
+							style = style.setBold(!style.getBold());
 							break;
 						case STRIKETHROUGH:
-							style.setStrikethrough(!style.getStrikethrough());
+							style = style.setStrikethrough(!style.getStrikethrough());
 							break;
 						case UNDERLINE:
-							style.setUnderlined(!style.getUnderlined());
+							style = style.setUnderlined(!style.getUnderlined());
 							break;
 						case ITALIC:
-							style.setItalic(!style.getItalic());
+							style = style.setItalic(!style.getItalic());
 							break;
 						case RESET:
-							style = new Style();
+							style = Style.EMPTY;
 							break;
 						default:
-							style.setColor(formatting);
+							style = style.setColor(Color.func_240744_a_(formatting));
 					}
 
 					continue;
@@ -191,18 +192,18 @@ public class TextComponentParser
 		}
 		else if (string.length() < 2 || string.charAt(0) != '{')
 		{
-			ITextComponent component1 = new StringTextComponent(string);
-			component1.setStyle(style.createShallowCopy());
-			component.appendSibling(component1);
+			StringTextComponent component1 = new StringTextComponent(string);
+			component1.setStyle(style);
+			component.append(component1);
 			return;
 		}
 
-		ITextComponent component1 = substitutes.apply(string.substring(1));
+		IFormattableTextComponent component1 = substitutes.apply(string.substring(1));
 
 		if (component1 != null)
 		{
-			Style style0 = component1.getStyle().createShallowCopy();
-			Style style1 = style.createShallowCopy();
+			Style style0 = component1.getStyle();
+			Style style1 = style;
 			style1.setHoverEvent(style0.getHoverEvent());
 			style1.setClickEvent(style0.getClickEvent());
 			style1.setInsertion(style0.getInsertion());
@@ -213,6 +214,6 @@ public class TextComponentParser
 			throw new IllegalArgumentException("Invalid formatting! Unknown substitute: " + string.substring(1));
 		}
 
-		component.appendSibling(component1);
+		component.append(component1);
 	}
 }
