@@ -21,9 +21,9 @@ public class SpawnCondition implements RankCondition
 	@Override
 	public boolean isRankActive(ServerPlayerEntity player)
 	{
-		if (player.world instanceof ServerWorld && player.world.func_234923_W_() == World.field_234918_g_ && player.server.getSpawnProtectionSize() > 0)
+		if (player.world instanceof ServerWorld && player.world.getDimensionKey() == World.OVERWORLD && player.server.getSpawnProtectionSize() > 0)
 		{
-			BlockPos spawn = ((ServerWorld) player.world).func_241135_u_();
+			BlockPos spawn = ((ServerWorld) player.world).getSpawnPoint();
 			int x = MathHelper.abs(MathHelper.floor(player.getPosX()) - spawn.getX());
 			int z = MathHelper.abs(MathHelper.floor(player.getPosZ()) - spawn.getZ());
 			return Math.max(x, z) <= player.server.getSpawnProtectionSize();

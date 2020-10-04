@@ -26,7 +26,7 @@ public class DimensionCondition implements RankCondition
 	@Override
 	public boolean isRankActive(ServerPlayerEntity player)
 	{
-		return player.world.func_234923_W_().getRegistryName().equals(dimension);
+		return player.world.getDimensionKey().getLocation().equals(dimension);
 	}
 
 	@Override

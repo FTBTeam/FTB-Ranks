@@ -153,7 +153,7 @@ public class TextComponentParser
 							style = Style.EMPTY;
 							break;
 						default:
-							style = style.setColor(Color.func_240744_a_(formatting));
+							style = style.setColor(Color.fromTextFormatting(formatting));
 					}
 
 					continue;
