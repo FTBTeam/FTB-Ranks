@@ -6,6 +6,7 @@ import com.feed_the_beast.mods.ftbranks.impl.PermissionAPIWrapper;
 import com.feed_the_beast.mods.ftbranks.impl.TextComponentParser;
 import com.feed_the_beast.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import com.feed_the_beast.mods.ftbranks.impl.condition.AndCondition;
+import com.feed_the_beast.mods.ftbranks.impl.condition.CreativeModeCondition;
 import com.feed_the_beast.mods.ftbranks.impl.condition.DimensionCondition;
 import com.feed_the_beast.mods.ftbranks.impl.condition.FakePlayerCondition;
 import com.feed_the_beast.mods.ftbranks.impl.condition.NotCondition;
@@ -72,6 +73,7 @@ public class FTBRanks
 		FTBRanksAPI.INSTANCE.getManager().registerCondition("playtime", (rank, json) -> new PlaytimeCondition(json));
 		FTBRanksAPI.INSTANCE.getManager().registerCondition("stat", (rank, json) -> new StatCondition(json));
 		FTBRanksAPI.INSTANCE.getManager().registerCondition("fake_player", (rank, json) -> new FakePlayerCondition());
+		FTBRanksAPI.INSTANCE.getManager().registerCondition("creative_mode", (rank, json) -> new CreativeModeCondition());
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
