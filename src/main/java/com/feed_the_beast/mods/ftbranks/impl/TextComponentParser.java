@@ -109,12 +109,12 @@ public class TextComponentParser
 
 			if (!escape)
 			{
-				if (c[i] == '&')
+				if (c[i] == '\u00a7')
 				{
-					c[i] = '\u00a7';
+					c[i] = '&';
 				}
 
-				if (c[i] == '\u00a7')
+				if (c[i] == '&')
 				{
 					finishPart();
 
@@ -125,35 +125,51 @@ public class TextComponentParser
 
 					i++;
 
-					TextFormatting formatting = CODE_TO_FORMATTING.get(c[i]);
-
-					if (formatting == null)
+					if (c[i] == '#')
 					{
-						throw new IllegalArgumentException("Illegal formatting! Unknown color code character: " + c[i] + "!");
+						char[] rrggbb = new char[7];
+						rrggbb[0] = '#';
+
+						for (int j = 1; j <= 6; j++)
+						{
+							rrggbb[j] = c[i + j];
+						}
+
+						i += 6;
+						style = style.setColor(Color.fromHex(new String(rrggbb)));
 					}
-
-					switch (formatting)
+					else
 					{
-						case OBFUSCATED:
-							style = style.setObfuscated(!style.getObfuscated());
-							break;
-						case BOLD:
-							style = style.setBold(!style.getBold());
-							break;
-						case STRIKETHROUGH:
-							style = style.setStrikethrough(!style.getStrikethrough());
-							break;
-						case UNDERLINE:
-							style = style.setUnderlined(!style.getUnderlined());
-							break;
-						case ITALIC:
-							style = style.setItalic(!style.getItalic());
-							break;
-						case RESET:
-							style = Style.EMPTY;
-							break;
-						default:
-							style = style.setColor(Color.fromTextFormatting(formatting));
+						TextFormatting formatting = CODE_TO_FORMATTING.get(c[i]);
+
+						if (formatting == null)
+						{
+							throw new IllegalArgumentException("Illegal formatting! Unknown color code character: " + c[i] + "!");
+						}
+
+						switch (formatting)
+						{
+							case OBFUSCATED:
+								style = style.setObfuscated(!style.getObfuscated());
+								break;
+							case BOLD:
+								style = style.setBold(!style.getBold());
+								break;
+							case STRIKETHROUGH:
+								style = style.setStrikethrough(!style.getStrikethrough());
+								break;
+							case UNDERLINE:
+								style = style.setUnderlined(!style.getUnderlined());
+								break;
+							case ITALIC:
+								style = style.setItalic(!style.getItalic());
+								break;
+							case RESET:
+								style = Style.EMPTY;
+								break;
+							default:
+								style = style.setColor(Color.fromTextFormatting(formatting));
+						}
 					}
 
 					continue;
