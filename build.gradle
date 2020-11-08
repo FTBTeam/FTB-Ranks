@@ -8,16 +8,14 @@ buildscript {
 	dependencies {
 		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
 		classpath 'gradle.plugin.com.matthewprenger:CurseGradle:1.1.0'
-		classpath 'com.wynprice.cursemaven:CurseMaven:1.2.+'
 	}
 }
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'com.matthewprenger.cursegradle'
 apply plugin: 'maven'
-apply plugin: 'com.wynprice.cursemaven'
 
-apply from: 'https://raw.githubusercontent.com/MinecraftModDevelopment/Gradle-Collection/master/generic/markdown-git-changelog.gradle'
+apply from: 'https://files.latmod.com/public/markdown-git-changelog.gradle'
 
 def ENV = System.getenv()
 version = ENV.BUILD_NUMBER ? "${mod_version}.${ENV.BUILD_NUMBER}" : "${mod_version}.custom"
@@ -83,10 +81,12 @@ configurations.all {
 
 repositories {
 	mavenLocal()
+	maven { url = "https://www.cursemaven.com" }
 }
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${forge_version}"
+	runtimeOnly fg.deobf("curse.maven:ftb-essentials:${ftbessentials_file}")
 }
 
 jar {
@@ -126,6 +126,8 @@ if (ENV.CURSEFORGE_KEY) {
 			id = project.curseforge_id
 			releaseType = "release"
 			addGameVersion "1.16.2"
+			addGameVersion "1.16.3"
+			addGameVersion "1.16.4"
 			changelog = getGitChangelog
 			changelogType = 'markdown'
 		}

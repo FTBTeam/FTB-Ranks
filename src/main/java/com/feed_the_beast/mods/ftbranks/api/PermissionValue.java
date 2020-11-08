@@ -17,6 +17,12 @@ public interface PermissionValue
 		{
 			return true;
 		}
+
+		@Override
+		public String toString()
+		{
+			return "default";
+		}
 	};
 
 	default boolean isDefaultValue()
@@ -29,19 +35,19 @@ public interface PermissionValue
 		return Optional.empty();
 	}
 
-	default Optional<Boolean> asBoolean()
+	default OptionalBoolean asBoolean()
 	{
-		return Optional.empty();
+		return OptionalBoolean.EMPTY;
 	}
 
 	default boolean asBooleanOrTrue()
 	{
-		return asBoolean().orElse(Boolean.TRUE);
+		return asBoolean().orElse(true);
 	}
 
 	default boolean asBooleanOrFalse()
 	{
-		return asBoolean().orElse(Boolean.FALSE);
+		return asBoolean().orElse(false);
 	}
 
 	default Optional<Number> asNumber()

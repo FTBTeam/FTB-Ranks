@@ -22,13 +22,14 @@ import java.util.Collection;
 /**
  * @author LatvianModder
  */
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(modid = "ftbranks")
 public class FTBRanksCommands
 {
 	@SubscribeEvent
 	public static void register(RegisterCommandsEvent event)
 	{
 		event.getDispatcher().register(Commands.literal("ftbranks")
+				.requires(source -> source.getServer().isSinglePlayer() || source.hasPermissionLevel(2))
 				.then(Commands.literal("reload")
 						.executes(context -> reloadRanks(context.getSource()))
 				)

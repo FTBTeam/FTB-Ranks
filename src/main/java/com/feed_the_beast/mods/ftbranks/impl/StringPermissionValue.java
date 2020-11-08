@@ -9,10 +9,17 @@ import java.util.Optional;
  */
 public class StringPermissionValue implements PermissionValue
 {
+	public static final StringPermissionValue EMPTY = new StringPermissionValue("");
+
+	public static StringPermissionValue of(String value)
+	{
+		return value.isEmpty() ? EMPTY : new StringPermissionValue(value);
+	}
+
 	public final String value;
 	private final Optional<String> cachedValue;
 
-	public StringPermissionValue(String v)
+	private StringPermissionValue(String v)
 	{
 		value = v;
 		cachedValue = Optional.of(value);
@@ -22,5 +29,23 @@ public class StringPermissionValue implements PermissionValue
 	public Optional<String> asString()
 	{
 		return cachedValue;
+	}
+
+	@Override
+	public String toString()
+	{
+		return value;
+	}
+
+	@Override
+	public boolean equals(Object o)
+	{
+		return this == o || o instanceof StringPermissionValue && value.equals(((StringPermissionValue) o).value);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return value.hashCode();
 	}
 }

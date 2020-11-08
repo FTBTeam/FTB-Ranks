@@ -300,22 +300,22 @@ public class RankManagerImpl implements RankManager
 			ranks = new LinkedHashMap<>();
 
 			RankImpl memberRank = new RankImpl(this, "member");
-			memberRank.setPermission("name", new StringPermissionValue("Member"));
-			memberRank.setPermission("power", new NumberPermissionValue(1));
-			memberRank.setPermission("ftbranks.name_format", new StringPermissionValue("<{name}>"));
+			memberRank.setPermission("name", StringPermissionValue.of("Member"));
+			memberRank.setPermission("power", NumberPermissionValue.of(1));
+			memberRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<{name}>"));
 			memberRank.condition = AlwaysActiveCondition.INSTANCE;
 			ranks.put("member", memberRank);
 
 			RankImpl vipRank = new RankImpl(this, "vip");
-			vipRank.setPermission("name", new StringPermissionValue("VIP"));
-			vipRank.setPermission("power", new NumberPermissionValue(50));
-			vipRank.setPermission("ftbranks.name_format", new StringPermissionValue("<&bVIP {name}&r>"));
+			vipRank.setPermission("name", StringPermissionValue.of("VIP"));
+			vipRank.setPermission("power", NumberPermissionValue.of(50));
+			vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&bVIP {name}&r>"));
 			ranks.put("vip", vipRank);
 
 			RankImpl adminRank = new RankImpl(this, "admin");
-			adminRank.setPermission("name", new StringPermissionValue("Admin"));
-			adminRank.setPermission("power", new NumberPermissionValue(1000));
-			adminRank.setPermission("ftbranks.name_format", new StringPermissionValue("<&2{name}&r>"));
+			adminRank.setPermission("name", StringPermissionValue.of("Admin"));
+			adminRank.setPermission("power", NumberPermissionValue.of(1000));
+			adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&2{name}&r>"));
 			adminRank.condition = new OPCondition();
 			ranks.put("admin", adminRank);
 
@@ -605,17 +605,17 @@ public class RankManagerImpl implements RankManager
 		{
 			if (((JsonPrimitive) v).isBoolean())
 			{
-				return v.getAsBoolean() ? BooleanPermissionValue.TRUE : BooleanPermissionValue.FALSE;
+				return BooleanPermissionValue.of(v.getAsBoolean());
 			}
 			else if (((JsonPrimitive) v).isNumber())
 			{
-				return new NumberPermissionValue(v.getAsNumber());
+				return NumberPermissionValue.of(v.getAsNumber());
 			}
 
-			return new StringPermissionValue(v.getAsString());
+			return StringPermissionValue.of(v.getAsString());
 		}
 
-		return new StringPermissionValue(v.toString());
+		return StringPermissionValue.of(v.toString());
 	}
 
 	private void getCommandNodes(CommandDispatcher<CommandSource> dispatcher, String perm, Field field, CommandNode<CommandSource> node) throws Exception
