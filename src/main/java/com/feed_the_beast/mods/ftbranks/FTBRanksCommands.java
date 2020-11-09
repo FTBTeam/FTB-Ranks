@@ -87,12 +87,18 @@ public class FTBRanksCommands
 		{
 			FTBRanksAPIImpl.manager.reload();
 			source.sendFeedback(new StringTextComponent("Ranks reloaded!"), true);
+
+			for (ServerPlayerEntity p : source.getServer().getPlayerList().getPlayers())
+			{
+				source.getServer().getPlayerList().updatePermissionLevel(p);
+			}
+
 			return 1;
 		}
 		catch (Exception ex)
 		{
 			ex.printStackTrace();
-			source.sendFeedback(new StringTextComponent(ex.getLocalizedMessage()).mergeStyle(TextFormatting.RED), true);
+			source.sendErrorMessage(new StringTextComponent(ex.getLocalizedMessage()));
 			return 0;
 		}
 	}
@@ -130,7 +136,7 @@ public class FTBRanksCommands
 
 		if (FTBRanksAPIImpl.manager.getRank(id).isPresent())
 		{
-			source.sendFeedback(new StringTextComponent("Rank ID already taken!"), false);
+			source.sendErrorMessage(new StringTextComponent("Rank ID already taken!"));
 			return 0;
 		}
 
@@ -143,7 +149,7 @@ public class FTBRanksCommands
 	{
 		if (FTBRanksAPIImpl.manager.deleteRank(normalizeRankName(name)) == null)
 		{
-			source.sendFeedback(new StringTextComponent("Rank not found!"), false);
+			source.sendErrorMessage(new StringTextComponent("Rank not found!"));
 			return 0;
 		}
 
