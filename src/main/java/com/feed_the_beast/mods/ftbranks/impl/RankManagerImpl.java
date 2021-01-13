@@ -22,13 +22,13 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.FolderName;
+import sun.misc.Unsafe;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -46,6 +46,7 @@ import java.util.UUID;
 /**
  * @author LatvianModder
  */
+@SuppressWarnings("sunapi")
 public class RankManagerImpl implements RankManager
 {
 	public static final FolderName FOLDER_NAME = new FolderName("serverconfig/ftbranks");
@@ -83,11 +84,11 @@ public class RankManagerImpl implements RankManager
 			// Absolute cancer but ATs don't work here //
 			Field field = CommandNode.class.getDeclaredField("requirement");
 			field.setAccessible(true);
-			Field modifiersField = Field.class.getDeclaredField("modifiers");
-			modifiersField.setAccessible(true);
-			modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+			Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+			unsafeField.setAccessible(true);
+			Unsafe unsafe = (Unsafe) unsafeField.get(null);
 
-			getCommandNodes(server.getCommandManager().getDispatcher(), "command", field, server.getCommandManager().getDispatcher().getRoot());
+			getCommandNodes(server.getCommandManager().getDispatcher(), "command", unsafe, field, server.getCommandManager().getDispatcher().getRoot());
 		}
 		catch (Exception ex)
 		{
@@ -618,7 +619,7 @@ public class RankManagerImpl implements RankManager
 		return StringPermissionValue.of(v.toString());
 	}
 
-	private void getCommandNodes(CommandDispatcher<CommandSource> dispatcher, String perm, Field field, CommandNode<CommandSource> node) throws Exception
+	private void getCommandNodes(CommandDispatcher<CommandSource> dispatcher, String perm, Unsafe unsafe, Field field, CommandNode<CommandSource> node) throws Exception
 	{
 		for (CommandNode<CommandSource> c : node.getChildren())
 		{
@@ -630,10 +631,10 @@ public class RankManagerImpl implements RankManager
 			String n = perm + "." + c.getName().replace("*", "all");
 			FTBRanks.LOGGER.debug(n);
 			RankCommandPredicate predicate = new RankCommandPredicate(c, n);
-			field.set(c, predicate);
+			unsafe.putObject(c, unsafe.objectFieldOffset(field), predicate);
 			commands.put(n, predicate);
 			commandNodes.put(c, predicate);
-			getCommandNodes(dispatcher, n, field, c);
+			getCommandNodes(dispatcher, n, unsafe, field, c);
 
 			if (c.getRedirect() != null && c.getRedirect() != dispatcher.getRoot())
 			{

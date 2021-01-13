@@ -86,7 +86,7 @@ repositories {
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${forge_version}"
-	runtimeOnly fg.deobf("curse.maven:ftb-essentials:${ftbessentials_file}")
+	runtimeOnly fg.deobf("curse.maven:ftb-essentials-410811:${ftbessentials_file}")
 }
 
 jar {
