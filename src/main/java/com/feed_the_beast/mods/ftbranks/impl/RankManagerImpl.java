@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -83,15 +82,12 @@ public class RankManagerImpl implements RankManager
 			// Absolute cancer but ATs don't work here //
 			Field field = CommandNode.class.getDeclaredField("requirement");
 			field.setAccessible(true);
-			Field modifiersField = Field.class.getDeclaredField("modifiers");
-			modifiersField.setAccessible(true);
-			modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
 			getCommandNodes(server.getCommandManager().getDispatcher(), "command", field, server.getCommandManager().getDispatcher().getRoot());
 		}
-		catch (Exception ex)
+		catch (Throwable ex)
 		{
 			ex.printStackTrace();
+			FTBRanks.LOGGER.error("Reflection failed! Downgrading Java version to 8 might help");
 		}
 
 		FTBRanks.LOGGER.info("Loaded " + commands.size() + " command nodes");
