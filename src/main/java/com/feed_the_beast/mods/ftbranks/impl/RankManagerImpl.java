@@ -241,22 +241,32 @@ public class RankManagerImpl implements RankManager
 	@Override
 	public PermissionValue getPermissionValue(ServerPlayerEntity player, String node)
 	{
-		if (node.isEmpty())
+		if (node.isEmpty() || sortedRanks == null || sortedRanks.isEmpty())
 		{
 			return PermissionValue.DEFAULT;
 		}
 
-		List<RankImpl> list = new ArrayList<>();
-
-		for (RankImpl rank : sortedRanks)
+		try
 		{
-			if (rank.isActive(player))
+			List<RankImpl> list = new ArrayList<>();
+
+			for (RankImpl rank : sortedRanks)
 			{
-				list.add(rank);
+				if (rank.isActive(player))
+				{
+					list.add(rank);
+				}
 			}
+
+			return getPermissionValue(getPlayerData(player.getGameProfile()), list, node);
+		}
+		catch (Exception ex)
+		{
+			FTBRanks.LOGGER.error("Error getting permission value for node " + node + "!");
+			ex.printStackTrace();
 		}
 
-		return getPermissionValue(getPlayerData(player.getGameProfile()), list, node);
+		return PermissionValue.DEFAULT;
 	}
 
 	private PermissionValue getPermissionValue(PlayerRankData data, List<RankImpl> ranks, String node)
