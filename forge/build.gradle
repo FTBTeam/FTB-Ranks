@@ -19,7 +19,7 @@ loom {
 }
 
 dependencies {
-    forge "net.minecraftforge:forge:${rootProject.forge_version}"
+    forge "net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}"
 
     modApi "me.shedaniel:architectury-forge:${rootProject.architectury_version}"
     // modApi "dev.ftb.mods:ftb-gui-library-forge:${rootProject.ftb_gui_library_version}"
