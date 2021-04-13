@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "ftbranks",
+	"version": "${version}",
+	"name": "FTB Ranks",
+	"description": "A simple mod that lets you create ranks for players, similar to Discord roles, and manage permissions for them",
+	"authors": [
+		"LatvianModder"
+	],
+	"contact": {
+		"sources": "https://github.com/FTBTeam/FTB-Ranks",
+		"issues": "https://github.com/FTBTeam/FTB-Ranks/issues"
+	},
+	"license": "All Rights Reserved",
+	"entrypoints": {
+		"main": [
+			"dev.ftb.mods.ftbranks.fabric.FTBRanksFabric"
+		]
+	},
+	"depends": {
+		"fabric": "*",
+		"minecraft": "~1.16.5",
+		"architectury": ">=1.3.84"
+	}
+}
