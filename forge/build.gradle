@@ -14,6 +14,10 @@ architectury {
     forge()
 }
 
+loom {
+    useFabricMixin = true
+}
+
 dependencies {
     forge "net.minecraftforge:forge:${rootProject.forge_version}"
 
@@ -26,16 +30,17 @@ dependencies {
     developmentForge(project(path: ":common")) {
         transitive = false
     }
-    shadow(project(path: ":common", configuration: "transformProductionForge")) {
+    shadowCommon(project(path: ":common", configuration: "transformProductionForge")) {
         transitive = false
     }
 }
 
 processResources {
+    inputs.property "version", project.version
+
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version
     }
-    inputs.property "version", project.version
 }
 
 shadowJar {
@@ -86,10 +91,12 @@ if (ENV.CURSEFORGE_KEY) {
 publishing {
     publications {
         mavenForge(MavenPublication) {
-            artifactId = rootProject.archivesBaseName + "-forge"
-            artifact(remapJar.archivePath) {
-                builtBy build
+            artifactId = rootProject.archivesBaseName + "-" + project.name
+            artifact(remapJar) {
                 classifier null
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
             }
         }
     }
@@ -97,7 +104,6 @@ publishing {
     repositories {
         if (ENV.LOCAL_MAVEN) {
             maven {
-                // upload to local maven repo
                 url = "file://${ENV.LOCAL_MAVEN}"
             }
         }

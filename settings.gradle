@@ -7,6 +7,8 @@ pluginManagement {
     }
 }
 
-include "common", "fabric", "forge"
+include("common")
+include("fabric")
+include("forge")
 
 rootProject.name = 'FTB-Ranks-1.16.5'

@@ -15,8 +15,7 @@ architectury {
 }
 
 dependencies {
-    modApi "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
     modApi "me.shedaniel:architectury-fabric:${rootProject.architectury_version}"
     // modApi "dev.ftb.mods:ftb-gui-library-fabric:${rootProject.ftb_gui_library_version}"
@@ -27,16 +26,17 @@ dependencies {
     developmentFabric(project(path: ":common")) {
         transitive = false
     }
-    shadow(project(path: ":common", configuration: "transformProductionFabric")) {
+    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) {
         transitive = false
     }
 }
 
 processResources {
+    inputs.property "version", project.version
+
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
-    inputs.property "version", project.version
 }
 
 shadowJar {
@@ -86,10 +86,12 @@ if (ENV.CURSEFORGE_KEY) {
 publishing {
     publications {
         mavenFabric(MavenPublication) {
-            artifactId = rootProject.archivesBaseName + "-fabric"
-            artifact(remapJar.archivePath) {
-                builtBy build
+            artifactId = rootProject.archivesBaseName + "-" + project.name
+            artifact(remapJar) {
                 classifier null
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
             }
         }
     }
@@ -97,7 +99,6 @@ publishing {
     repositories {
         if (ENV.LOCAL_MAVEN) {
             maven {
-                // upload to local maven repo
                 url = "file://${ENV.LOCAL_MAVEN}"
             }
         }
