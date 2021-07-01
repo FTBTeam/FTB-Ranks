@@ -1,6 +1,6 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import com.google.gson.JsonObject;
+import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,10 +22,10 @@ public class PlaytimeCondition implements RankCondition {
 	public final int timeUnit;
 	private final Stat<ResourceLocation> stat;
 
-	public PlaytimeCondition(JsonObject json) {
-		time = json.get("time").getAsInt();
+	public PlaytimeCondition(SNBTCompoundTag tag) {
+		time = tag.getInt("time");
 
-		switch (json.get("time_unit").getAsString()) {
+		switch (tag.getString("time_unit")) {
 			case "seconds":
 				timeUnit = SECONDS;
 				break;
@@ -59,27 +59,27 @@ public class PlaytimeCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(JsonObject json) {
-		json.addProperty("time", time);
+	public void save(SNBTCompoundTag tag) {
+		tag.putInt("time", time);
 
 		switch (timeUnit) {
 			case SECONDS:
-				json.addProperty("time_unit", "seconds");
+				tag.putString("time_unit", "seconds");
 				break;
 			case MINUTES:
-				json.addProperty("time_unit", "minutes");
+				tag.putString("time_unit", "minutes");
 				break;
 			case HOURS:
-				json.addProperty("time_unit", "hours");
+				tag.putString("time_unit", "hours");
 				break;
 			case DAYS:
-				json.addProperty("time_unit", "days");
+				tag.putString("time_unit", "days");
 				break;
 			case WEEKS:
-				json.addProperty("time_unit", "weeks");
+				tag.putString("time_unit", "weeks");
 				break;
 			default:
-				json.addProperty("time_unit", "ticks");
+				tag.putString("time_unit", "ticks");
 		}
 	}
 }

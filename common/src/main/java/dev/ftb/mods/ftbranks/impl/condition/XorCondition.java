@@ -1,10 +1,9 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
@@ -16,11 +15,11 @@ import java.util.List;
 public class XorCondition implements RankCondition {
 	public final List<RankCondition> conditions;
 
-	public XorCondition(Rank rank, JsonObject json) throws Exception {
+	public XorCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
 		conditions = new ArrayList<>();
 
-		for (JsonElement e : json.get("conditions").getAsJsonArray()) {
-			conditions.add(rank.getManager().createCondition(rank, e.getAsJsonObject()));
+		for (SNBTCompoundTag t : tag.getList("conditions", SNBTCompoundTag.class)) {
+			conditions.add(rank.getManager().createCondition(rank, t));
 		}
 	}
 
@@ -35,16 +34,16 @@ public class XorCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(JsonObject json) {
-		JsonArray a = new JsonArray();
+	public void save(SNBTCompoundTag tag) {
+		ListTag a = new ListTag();
 
 		for (RankCondition condition : conditions) {
-			JsonObject c = new JsonObject();
-			c.addProperty("type", condition.getType());
+			SNBTCompoundTag c = new SNBTCompoundTag();
+			c.putString("type", condition.getType());
 			condition.save(c);
 			a.add(c);
 		}
 
-		json.add("conditions", a);
+		tag.put("conditions", a);
 	}
 }

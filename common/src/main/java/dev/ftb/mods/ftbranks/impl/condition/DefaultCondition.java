@@ -1,13 +1,13 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
 import dev.ftb.mods.ftbranks.api.Rank;
-import dev.ftb.mods.ftbranks.api.RankCondition;
+import dev.ftb.mods.ftbranks.api.SimpleRankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
  * @author LatvianModder
  */
-public class DefaultCondition implements RankCondition {
+public class DefaultCondition implements SimpleRankCondition {
 	public final Rank original;
 
 	public DefaultCondition(Rank r) {

@@ -1,6 +1,6 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import com.google.gson.JsonObject;
+import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,12 +23,12 @@ public class StatCondition implements RankCondition {
 	public final int valueCheck;
 	private final Stat<?> stat;
 
-	public StatCondition(JsonObject json) {
-		statId = new ResourceLocation(json.get("stat").getAsString());
+	public StatCondition(SNBTCompoundTag tag) {
+		statId = new ResourceLocation(tag.getString("stat"));
 		stat = Stats.CUSTOM.get(statId);
-		value = json.get("value").getAsInt();
+		value = tag.getInt("value");
 
-		switch (json.get("value_check").getAsString()) {
+		switch (tag.getString("value_check")) {
 			case "not_equals":
 			case "not":
 			case "!=":
@@ -81,28 +81,28 @@ public class StatCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(JsonObject json) {
-		json.addProperty("stat", statId.toString());
-		json.addProperty("value", value);
+	public void save(SNBTCompoundTag tag) {
+		tag.putString("stat", statId.toString());
+		tag.putInt("value", value);
 
 		switch (valueCheck) {
 			case NOT_EQUALS:
-				json.addProperty("value_check", "!=");
+				tag.putString("value_check", "!=");
 				break;
 			case GREATER:
-				json.addProperty("value_check", ">");
+				tag.putString("value_check", ">");
 				break;
 			case GREATER_OR_EQUAL:
-				json.addProperty("value_check", ">=");
+				tag.putString("value_check", ">=");
 				break;
 			case LESSER:
-				json.addProperty("value_check", "<");
+				tag.putString("value_check", "<");
 				break;
 			case LESSER_OR_EQUAL:
-				json.addProperty("value_check", "<=");
+				tag.putString("value_check", "<=");
 				break;
 			default:
-				json.addProperty("value_check", "==");
+				tag.putString("value_check", "==");
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import com.google.gson.JsonObject;
+import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,8 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 public class NotCondition implements RankCondition {
 	public final RankCondition condition;
 
-	public NotCondition(Rank rank, JsonObject json) throws Exception {
-		condition = rank.getManager().createCondition(rank, json.get("condition").getAsJsonObject());
+	public NotCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
+		condition = rank.getManager().createCondition(rank, tag.getCompound("condition"));
 	}
 
 	@Override
@@ -26,10 +26,10 @@ public class NotCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(JsonObject json) {
-		JsonObject c = new JsonObject();
-		c.addProperty("type", condition.getType());
+	public void save(SNBTCompoundTag tag) {
+		SNBTCompoundTag c = new SNBTCompoundTag();
+		c.putString("type", condition.getType());
 		condition.save(c);
-		json.add("condition", c);
+		tag.put("condition", c);
 	}
 }

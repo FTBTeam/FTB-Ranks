@@ -1,6 +1,6 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import dev.ftb.mods.ftbranks.api.RankCondition;
+import dev.ftb.mods.ftbranks.api.SimpleRankCondition;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,7 +10,7 @@ import net.minecraft.world.level.Level;
 /**
  * @author LatvianModder
  */
-public class SpawnCondition implements RankCondition {
+public class SpawnCondition implements SimpleRankCondition {
 	@Override
 	public String getType() {
 		return "spawn";

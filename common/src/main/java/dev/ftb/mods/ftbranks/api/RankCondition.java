@@ -1,6 +1,6 @@
 package dev.ftb.mods.ftbranks.api;
 
-import com.google.gson.JsonObject;
+import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -13,8 +13,12 @@ public interface RankCondition {
 		return false;
 	}
 
+	default boolean isSimple() {
+		return false;
+	}
+
 	boolean isRankActive(ServerPlayer player);
 
-	default void save(JsonObject json) {
+	default void save(SNBTCompoundTag tag) {
 	}
 }

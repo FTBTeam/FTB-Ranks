@@ -2,14 +2,11 @@ package dev.ftb.mods.ftbranks.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.CommandNode;
+import dev.ftb.mods.ftblibrary.snbt.SNBT;
+import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
@@ -20,14 +17,16 @@ import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
 import me.shedaniel.architectury.hooks.LevelResourceHooks;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.nbt.EndTag;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -95,14 +94,39 @@ public class RankManagerImpl implements RankManager {
 			Files.createDirectories(directory);
 		}
 
-		rankFile = directory.resolve("ranks.json");
-		playerFile = directory.resolve("players.json");
+		rankFile = directory.resolve("ranks.snbt");
+		playerFile = directory.resolve("players.snbt");
 
-		if (Files.notExists(directory.resolve("README.txt"))) {
+		Path oldRankFile = directory.resolve("ranks.json");
+		Path oldPlayerFile = directory.resolve("players.json");
+		boolean oldRankFileLoaded = false;
+		boolean oldPlayerFileLoaded = false;
+
+		if (Files.exists(oldRankFile)) {
+			Files.move(oldRankFile, rankFile);
+			oldRankFileLoaded = true;
+		}
+
+		if (Files.exists(oldPlayerFile)) {
+			Files.move(oldPlayerFile, playerFile);
+			oldPlayerFileLoaded = true;
+		}
+
+		if (oldRankFileLoaded || oldPlayerFileLoaded || Files.notExists(directory.resolve("README.txt"))) {
 			refreshReadme();
 		}
 
 		reload();
+
+		if (oldRankFileLoaded) {
+			saveRanks();
+			saveRanksNow();
+		}
+
+		if (oldPlayerFileLoaded) {
+			savePlayers();
+			savePlayersNow();
+		}
 	}
 
 	public void refreshReadme() throws IOException {
@@ -110,7 +134,7 @@ public class RankManagerImpl implements RankManager {
 		lines.add("=== FTB Ranks ===");
 		lines.add("");
 		lines.add("Last README file update: " + new Date());
-		lines.add("Wiki: https://faq.ftb.world/books/ftb-ranks");
+		lines.add("Wiki: https://www.notion.so/feedthebeast/FTB-Mod-Documentation-da2e359bad2449459d58d787edda3168");
 		lines.add("To refresh this file, run /ftbranks refresh_readme");
 		lines.add("");
 		lines.add("= All available command nodes =");
@@ -209,8 +233,8 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public RankCondition createCondition(Rank rank, JsonObject json) throws Exception {
-		return conditions.get(json.get("type").getAsString()).create(rank, json);
+	public RankCondition createCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
+		return conditions.get(tag.getString("type")).create(rank, tag);
 	}
 
 	@Override
@@ -300,92 +324,86 @@ public class RankManagerImpl implements RankManager {
 		LinkedHashMap<String, RankImpl> tempRanks = new LinkedHashMap<>();
 		LinkedHashMap<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
 
-		try (Reader reader = Files.newBufferedReader(rankFile)) {
-			try {
-				JsonObject json = GSON.fromJson(reader, JsonObject.class);
+		SNBTCompoundTag rankFileTag = SNBT.read(rankFile);
 
-				for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject().entrySet()) {
-					RankImpl rank = new RankImpl(this, entry.getKey());
+		if (rankFileTag != null) {
+			for (String key : rankFileTag.getAllKeys()) {
+				RankImpl rank = new RankImpl(this, key);
 
-					JsonObject o = entry.getValue().getAsJsonObject();
-					rank.name = o.remove("name").getAsString();
-					rank.power = o.remove("power").getAsInt();
+				SNBTCompoundTag o = rankFileTag.getCompound(key);
+				rank.name = o.getString("name");
+				rank.power = o.getInt("power");
 
-					if (o.has("condition")) {
-						try {
-							rank.condition = createCondition(rank, o.remove("condition").getAsJsonObject());
-						} catch (Exception ex) {
-							FTBRanks.LOGGER.error("Failed to parse condition for " + rank.id + ": " + ex);
-						}
+				if (o.contains("condition")) {
+					try {
+						rank.condition = createCondition(rank, o.getCompound("condition"));
+					} catch (Exception ex) {
+						FTBRanks.LOGGER.error("Failed to parse condition for " + rank.id + ": " + ex);
 					}
+				}
 
-					for (Map.Entry<String, JsonElement> pEntry : o.entrySet()) {
-						String key = pEntry.getKey();
+				o.remove("name");
+				o.remove("power");
+				o.remove("condition");
 
-						while (key.endsWith(".*")) {
-							key = key.substring(0, key.length() - 2);
-							saveRanks();
-						}
-
-						if (!key.isEmpty()) {
-							rank.permissions.put(key, ofJson(pEntry.getValue()));
-						}
-					}
-
-					if (rank.name.isEmpty()) {
-						rank.name = rank.id;
+				for (String pkey : o.getAllKeys()) {
+					while (pkey.endsWith(".*")) {
+						pkey = pkey.substring(0, pkey.length() - 2);
 						saveRanks();
 					}
 
-					tempRanks.put(rank.id, rank);
+					if (!pkey.isEmpty()) {
+						rank.permissions.put(pkey, ofTag(o, pkey));
+					}
 				}
 
-				if (tempRanks.isEmpty()) {
-					FTBRanks.LOGGER.warn("No ranks found!");
+				if (rank.name.isEmpty()) {
+					rank.name = rank.id;
+					saveRanks();
 				}
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				throw new JsonSyntaxException("Couldn't parse serverconfig/ftbranks/ranks.json file! Error: " + ex.getLocalizedMessage());
+
+				tempRanks.put(rank.id, rank);
+			}
+
+			if (tempRanks.isEmpty()) {
+				FTBRanks.LOGGER.warn("No ranks found!");
 			}
 		}
 
-		try (Reader reader = Files.newBufferedReader(playerFile)) {
-			try {
-				JsonObject json = GSON.fromJson(reader, JsonObject.class);
+		SNBTCompoundTag playerFileTag = SNBT.read(playerFile);
 
-				for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject().entrySet()) {
-					JsonObject o = entry.getValue().getAsJsonObject();
-					PlayerRankData data = new PlayerRankData(this, UUID.fromString(entry.getKey()));
-					data.name = o.get("name").getAsString();
+		if (playerFileTag != null) {
+			for (String key : playerFileTag.getAllKeys()) {
+				SNBTCompoundTag o = playerFileTag.getCompound(key);
+				PlayerRankData data = new PlayerRankData(this, UUID.fromString(key));
+				data.name = o.getString("name");
 
-					for (Map.Entry<String, JsonElement> r : o.get("ranks").getAsJsonObject().entrySet()) {
-						RankImpl rank = tempRanks.get(r.getKey());
+				SNBTCompoundTag ranksTag = o.getCompound("ranks");
 
-						if (rank != null) {
-							data.added.put(rank, Instant.parse(r.getValue().getAsString()));
-						}
+				for (String rkey : ranksTag.getAllKeys()) {
+					RankImpl rank = tempRanks.get(rkey);
+
+					if (rank != null) {
+						data.added.put(rank, Instant.parse(ranksTag.getString(rkey)));
 					}
-
-					if (o.has("permissions")) {
-						for (Map.Entry<String, JsonElement> pEntry : o.get("permissions").getAsJsonObject().entrySet()) {
-							String key = pEntry.getKey();
-
-							while (key.endsWith(".*")) {
-								key = key.substring(0, key.length() - 2);
-								savePlayers();
-							}
-
-							if (!key.isEmpty()) {
-								data.permissions.put(key, ofJson(pEntry.getValue()));
-							}
-						}
-					}
-
-					tempPlayerData.put(data.uuid, data);
 				}
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				throw new JsonSyntaxException("Couldn't parse serverconfig/ftbranks/players.json file! Error: " + ex.getLocalizedMessage());
+
+				if (o.contains("permissions")) {
+					SNBTCompoundTag ptag = o.getCompound("permissions");
+
+					for (String pkey : ptag.getAllKeys()) {
+						while (pkey.endsWith(".*")) {
+							pkey = pkey.substring(0, pkey.length() - 2);
+							savePlayers();
+						}
+
+						if (!pkey.isEmpty()) {
+							data.permissions.put(key, ofTag(ptag, pkey));
+						}
+					}
+				}
+
+				tempPlayerData.put(data.uuid, data);
 			}
 		}
 
@@ -405,43 +423,45 @@ public class RankManagerImpl implements RankManager {
 
 		shouldSaveRanks = false;
 
-		JsonObject json = new JsonObject();
+		SNBTCompoundTag tag = new SNBTCompoundTag();
 
 		for (RankImpl rank : ranks.values()) {
-			JsonObject o = new JsonObject();
-			o.addProperty("name", rank.getName());
-			o.addProperty("power", rank.getPower());
+			SNBTCompoundTag o = new SNBTCompoundTag();
+			o.putString("name", rank.getName());
+			o.putInt("power", rank.getPower());
 
 			if (!rank.condition.isDefaultCondition()) {
-				JsonObject c = new JsonObject();
-				c.addProperty("type", rank.condition.getType());
-				rank.condition.save(c);
-				o.add("condition", c);
+				if (rank.condition.isSimple()) {
+					o.putString("condition", rank.condition.getType());
+				} else {
+					SNBTCompoundTag c = new SNBTCompoundTag();
+					c.putString("type", rank.condition.getType());
+					rank.condition.save(c);
+					o.put("condition", c);
+				}
 			}
 
 			for (Map.Entry<String, PermissionValue> entry : rank.permissions.entrySet()) {
 				PermissionValue v = entry.getValue();
 
 				if (v.isDefaultValue()) {
-					o.add(entry.getKey(), JsonNull.INSTANCE);
+					o.putNull(entry.getKey());
 				} else if (v instanceof BooleanPermissionValue) {
-					o.addProperty(entry.getKey(), ((BooleanPermissionValue) entry.getValue()).value);
+					o.putBoolean(entry.getKey(), ((BooleanPermissionValue) entry.getValue()).value);
 				} else if (v instanceof StringPermissionValue) {
-					o.addProperty(entry.getKey(), ((StringPermissionValue) entry.getValue()).value);
+					o.putString(entry.getKey(), ((StringPermissionValue) entry.getValue()).value);
 				} else if (v instanceof NumberPermissionValue) {
-					o.addProperty(entry.getKey(), ((NumberPermissionValue) entry.getValue()).value);
+					o.putNumber(entry.getKey(), ((NumberPermissionValue) entry.getValue()).value);
 				} else {
-					o.addProperty(entry.getKey(), entry.getValue().asString().orElse(""));
+					o.putString(entry.getKey(), entry.getValue().asString().orElse(""));
 				}
 			}
 
-			json.add(rank.id, o);
+			tag.put(rank.id, o);
 		}
 
-		try (Writer writer = Files.newBufferedWriter(rankFile)) {
-			GSON.toJson(json, writer);
-		} catch (Exception ex) {
-			FTBRanks.LOGGER.warn("Failed to save ranks.json! Error: " + ex);
+		if (!SNBT.write(rankFile, tag)) {
+			FTBRanks.LOGGER.warn("Failed to save ranks.snbt!");
 		}
 	}
 
@@ -452,64 +472,64 @@ public class RankManagerImpl implements RankManager {
 
 		shouldSavePlayers = false;
 
-		JsonObject playerJson = new JsonObject();
+		SNBTCompoundTag playerJson = new SNBTCompoundTag();
 
 		for (PlayerRankData data : playerData.values()) {
-			JsonObject o = new JsonObject();
-			o.addProperty("name", data.name);
+			SNBTCompoundTag o = new SNBTCompoundTag();
+			o.putString("name", data.name);
 
-			JsonObject r = new JsonObject();
+			SNBTCompoundTag r = new SNBTCompoundTag();
 
 			for (Map.Entry<Rank, Instant> entry : data.added.entrySet()) {
 				if (entry.getKey().getCondition().isDefaultCondition()) {
-					r.addProperty(entry.getKey().getId(), entry.getValue().toString());
+					r.putString(entry.getKey().getId(), entry.getValue().toString());
 				}
 			}
 
-			o.add("ranks", r);
+			o.put("ranks", r);
 
 			if (!data.permissions.isEmpty()) {
-				JsonObject p = new JsonObject();
+				SNBTCompoundTag p = new SNBTCompoundTag();
 
 				for (Map.Entry<String, PermissionValue> entry : data.permissions.entrySet()) {
 					PermissionValue v = entry.getValue();
 
 					if (v.isDefaultValue()) {
-						p.add(entry.getKey(), JsonNull.INSTANCE);
+						p.putNull(entry.getKey());
 					} else if (v instanceof BooleanPermissionValue) {
-						p.addProperty(entry.getKey(), ((BooleanPermissionValue) entry.getValue()).value);
+						p.putBoolean(entry.getKey(), ((BooleanPermissionValue) entry.getValue()).value);
 					} else if (v instanceof StringPermissionValue) {
-						p.addProperty(entry.getKey(), ((StringPermissionValue) entry.getValue()).value);
+						p.putString(entry.getKey(), ((StringPermissionValue) entry.getValue()).value);
 					} else if (v instanceof NumberPermissionValue) {
-						p.addProperty(entry.getKey(), ((NumberPermissionValue) entry.getValue()).value);
+						p.putNumber(entry.getKey(), ((NumberPermissionValue) entry.getValue()).value);
 					} else {
-						p.addProperty(entry.getKey(), entry.getValue().asString().orElse(""));
+						p.putString(entry.getKey(), entry.getValue().asString().orElse(""));
 					}
 				}
 
-				o.add("permissions", p);
+				o.put("permissions", p);
 			}
 
-			playerJson.add(data.uuid.toString(), o);
+			playerJson.put(data.uuid.toString(), o);
 		}
 
-		try (Writer writer = Files.newBufferedWriter(playerFile)) {
-			GSON.toJson(playerJson, writer);
-		} catch (Exception ex) {
-			FTBRanks.LOGGER.warn("Failed to save players.json! Error: " + ex);
+		if (!SNBT.write(playerFile, playerJson)) {
+			FTBRanks.LOGGER.warn("Failed to save players.snbt!");
 		}
 	}
 
-	private static PermissionValue ofJson(@Nullable JsonElement v) {
-		if (v == null || v instanceof JsonNull) {
-			return PermissionValue.DEFAULT;
-		} else if (v instanceof JsonPrimitive) {
-			if (((JsonPrimitive) v).isBoolean()) {
-				return BooleanPermissionValue.of(v.getAsBoolean());
-			} else if (((JsonPrimitive) v).isNumber()) {
-				return NumberPermissionValue.of(v.getAsNumber());
-			}
+	private static PermissionValue ofTag(SNBTCompoundTag tag, String key) {
+		if (tag.isBoolean(key)) {
+			return BooleanPermissionValue.of(tag.getBoolean(key));
+		}
 
+		Tag v = tag.get(key);
+
+		if (v == null || v instanceof EndTag) {
+			return PermissionValue.DEFAULT;
+		} else if (v instanceof NumericTag) {
+			return NumberPermissionValue.of(((NumericTag) v).getAsNumber());
+		} else if (v instanceof StringTag) {
 			return StringPermissionValue.of(v.getAsString());
 		}
 
