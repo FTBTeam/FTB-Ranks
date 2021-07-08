@@ -1,10 +1,6 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.mojang.authlib.GameProfile;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.tree.CommandNode;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.FTBRanks;
@@ -16,7 +12,6 @@ import dev.ftb.mods.ftbranks.api.RankManager;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
 import me.shedaniel.architectury.hooks.LevelResourceHooks;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.EndTag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.StringTag;
@@ -27,7 +22,6 @@ import net.minecraft.world.level.storage.LevelResource;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -47,11 +41,8 @@ import java.util.UUID;
  */
 public class RankManagerImpl implements RankManager {
 	public static final LevelResource FOLDER_NAME = LevelResourceHooks.create("serverconfig/ftbranks");
-	public static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().serializeNulls().disableHtmlEscaping().create();
 
 	public final MinecraftServer server;
-	private Map<String, RankCommandPredicate> commands;
-	private Map<CommandNode<CommandSourceStack>, RankCommandPredicate> commandNodes;
 	private Path directory;
 	private Path rankFile;
 	private Path playerFile;
@@ -66,25 +57,6 @@ public class RankManagerImpl implements RankManager {
 	public RankManagerImpl(MinecraftServer s) {
 		server = s;
 		conditions = new HashMap<>();
-	}
-
-	void initCommands() {
-		commands = new HashMap<>();
-		commandNodes = new HashMap<>();
-
-		FTBRanks.LOGGER.info("Loading command nodes...");
-
-		try {
-			// Absolute cancer but ATs don't work here //
-			Field field = CommandNode.class.getDeclaredField("requirement");
-			field.setAccessible(true);
-			getCommandNodes(server.getCommands().getDispatcher(), "command", field, server.getCommands().getDispatcher().getRoot());
-		} catch (Throwable ex) {
-			ex.printStackTrace();
-			FTBRanks.LOGGER.error("Reflection failed! Downgrading Java version to 8 might help");
-		}
-
-		FTBRanks.LOGGER.info("Loaded " + commands.size() + " command nodes");
 	}
 
 	void load() throws Exception {
@@ -142,7 +114,7 @@ public class RankManagerImpl implements RankManager {
 
 		HashSet<String> set = new HashSet<>();
 
-		for (RankCommandPredicate predicate : commands.values()) {
+		for (RankCommandPredicate predicate : FTBRanksCommandManager.INSTANCE.commands.values()) {
 			set.add(predicate.getNode());
 		}
 
@@ -534,25 +506,5 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		return StringPermissionValue.of(v.toString());
-	}
-
-	private void getCommandNodes(CommandDispatcher<CommandSourceStack> dispatcher, String perm, Field field, CommandNode<CommandSourceStack> node) throws Exception {
-		for (CommandNode<CommandSourceStack> c : node.getChildren()) {
-			if (c.isFork()) {
-				continue;
-			}
-
-			String n = perm + "." + c.getName().replace("*", "all");
-			FTBRanks.LOGGER.debug(n);
-			RankCommandPredicate predicate = new RankCommandPredicate(c, n);
-			field.set(c, predicate);
-			commands.put(n, predicate);
-			commandNodes.put(c, predicate);
-			getCommandNodes(dispatcher, n, field, c);
-
-			if (c.getRedirect() != null && c.getRedirect() != dispatcher.getRoot()) {
-				predicate.redirect = () -> commandNodes.get(c.getRedirect());
-			}
-		}
 	}
 }

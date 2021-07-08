@@ -16,6 +16,7 @@ architectury {
 
 loom {
 	useFabricMixin = true
+	mixinConfigs = ["ftbranks-common.mixins.json"]
 }
 
 dependencies {
