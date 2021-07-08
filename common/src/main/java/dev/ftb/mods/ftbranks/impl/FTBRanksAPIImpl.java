@@ -1,5 +1,6 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.RankManager;
@@ -41,7 +42,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	}
 
 	public static void serverStarted(MinecraftServer server) {
-		manager.initCommands();
+		// manager.initCommands();
 
 		try {
 			manager.load();
@@ -70,13 +71,13 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		manager.registerCondition("and", AndCondition::new);
 		manager.registerCondition("xor", XorCondition::new);
 
-		manager.registerCondition("op", (rank, json) -> new OPCondition());
-		manager.registerCondition("spawn", (rank, json) -> new SpawnCondition());
-		manager.registerCondition("dimension", (rank, json) -> new DimensionCondition(json));
-		manager.registerCondition("playtime", (rank, json) -> new PlaytimeCondition(json));
-		manager.registerCondition("stat", (rank, json) -> new StatCondition(json));
-		manager.registerCondition("fake_player", (rank, json) -> new FakePlayerCondition());
-		manager.registerCondition("creative_mode", (rank, json) -> new CreativeModeCondition());
+		manager.registerCondition("op", (rank, tag) -> new OPCondition());
+		manager.registerCondition("spawn", (rank, tag) -> new SpawnCondition());
+		manager.registerCondition("dimension", (rank, tag) -> new DimensionCondition(tag));
+		manager.registerCondition("playtime", (rank, tag) -> new PlaytimeCondition(tag));
+		manager.registerCondition("stat", (rank, tag) -> new StatCondition(tag));
+		manager.registerCondition("fake_player", (rank, tag) -> new FakePlayerCondition());
+		manager.registerCondition("creative_mode", (rank, tag) -> new CreativeModeCondition());
 	}
 
 	public static InteractionResultHolder<Component> serverChat(ServerPlayer player, String eventMessage, Component component) {
@@ -111,8 +112,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 
 		String message = eventMessage.trim();
 
-
-		Component textWithLinks = new TextComponent(message);// FIXME: ForgeHooks.newChatWithLinks(message);
+		Component textWithLinks = TextComponentUtils.withLinks(message);
 		TextComponent text = textWithLinks instanceof TextComponent ? (TextComponent) textWithLinks : new TextComponent(message);
 
 		ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
