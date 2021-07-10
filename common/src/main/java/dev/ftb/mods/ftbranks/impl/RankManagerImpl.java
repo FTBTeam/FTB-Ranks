@@ -205,8 +205,16 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public RankCondition createCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
-		return conditions.get(tag.getString("type")).create(rank, tag);
+	public RankCondition createCondition(Rank rank, @Nullable Tag tag) throws Exception {
+		if (tag instanceof StringTag) {
+			SNBTCompoundTag tag1 = new SNBTCompoundTag();
+			tag1.put("type", tag);
+			return conditions.get(tag.getAsString()).create(rank, tag1);
+		} else if (tag instanceof SNBTCompoundTag) {
+			return conditions.get(((SNBTCompoundTag) tag).getString("type")).create(rank, (SNBTCompoundTag) tag);
+		}
+
+		throw new IllegalArgumentException("Can't create condition from tag " + tag);
 	}
 
 	@Override
@@ -308,7 +316,7 @@ public class RankManagerImpl implements RankManager {
 
 				if (o.contains("condition")) {
 					try {
-						rank.condition = createCondition(rank, o.getCompound("condition"));
+						rank.condition = createCondition(rank, o.get("condition"));
 					} catch (Exception ex) {
 						FTBRanks.LOGGER.error("Failed to parse condition for " + rank.id + ": " + ex);
 					}

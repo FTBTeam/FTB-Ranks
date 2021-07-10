@@ -4,6 +4,7 @@ import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class OrCondition implements RankCondition {
 	public OrCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
 		conditions = new ArrayList<>();
 
-		for (SNBTCompoundTag t : tag.getList("conditions", SNBTCompoundTag.class)) {
+		for (Tag t : tag.getList("conditions", Tag.class)) {
 			conditions.add(rank.getManager().createCondition(rank, t));
 		}
 	}

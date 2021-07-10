@@ -12,7 +12,7 @@ public class NotCondition implements RankCondition {
 	public final RankCondition condition;
 
 	public NotCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
-		condition = rank.getManager().createCondition(rank, tag.getCompound("condition"));
+		condition = rank.getManager().createCondition(rank, tag.get("condition"));
 	}
 
 	@Override

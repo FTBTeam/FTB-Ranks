@@ -1,7 +1,7 @@
 package dev.ftb.mods.ftbranks.api;
 
 import com.mojang.authlib.GameProfile;
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
@@ -43,7 +43,7 @@ public interface RankManager {
 
 	void registerCondition(String id, RankConditionFactory conditionFactory);
 
-	RankCondition createCondition(Rank rank, SNBTCompoundTag tag) throws Exception;
+	RankCondition createCondition(Rank rank, @Nullable Tag tag) throws Exception;
 
 	PermissionValue getPermissionValue(ServerPlayer player, String node);
 }
