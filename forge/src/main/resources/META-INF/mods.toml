@@ -36,6 +36,6 @@ side = "BOTH"
 [[dependencies.ftbranks]]
 modId = "ftblibrary"
 mandatory = true
-versionRange = "[1605.3.1-build.44,)"
+versionRange = "[1605.3.1-build.56,)"
 ordering = "AFTER"
 side = "BOTH"
