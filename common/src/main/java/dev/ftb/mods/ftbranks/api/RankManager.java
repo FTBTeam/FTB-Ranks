@@ -3,8 +3,8 @@ package dev.ftb.mods.ftbranks.api;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
