@@ -3,6 +3,7 @@ package dev.ftb.mods.ftbranks.impl;
 import com.mojang.authlib.GameProfile;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import dev.ftb.mods.ftblibrary.snbt.config.ConfigUtil;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
@@ -36,6 +37,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
+
 /**
  * @author LatvianModder
  */
@@ -43,9 +46,13 @@ public class RankManagerImpl implements RankManager {
 	public static final LevelResource FOLDER_NAME = LevelResourceHooks.create("serverconfig/ftbranks");
 
 	public final MinecraftServer server;
+
 	private Path directory;
 	private Path rankFile;
 	private Path playerFile;
+
+	private final Path defaultRankFile = ConfigUtil.DEFAULT_CONFIG_DIR.resolve(MOD_ID).resolve("ranks.snbt");
+
 	boolean shouldSaveRanks;
 	boolean shouldSavePlayers;
 
@@ -268,30 +275,34 @@ public class RankManagerImpl implements RankManager {
 		shouldSaveRanks = false;
 
 		if (Files.notExists(rankFile)) {
-			ranks = new LinkedHashMap<>();
+			if (Files.exists(defaultRankFile)) {
+				Files.copy(defaultRankFile, rankFile);
+			} else {
+				ranks = new LinkedHashMap<>();
 
-			RankImpl memberRank = new RankImpl(this, "member");
-			memberRank.setPermission("name", StringPermissionValue.of("Member"));
-			memberRank.setPermission("power", NumberPermissionValue.of(1));
-			memberRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<{name}>"));
-			memberRank.condition = AlwaysActiveCondition.INSTANCE;
-			ranks.put("member", memberRank);
+				RankImpl memberRank = new RankImpl(this, "member");
+				memberRank.setPermission("name", StringPermissionValue.of("Member"));
+				memberRank.setPermission("power", NumberPermissionValue.of(1));
+				memberRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<{name}>"));
+				memberRank.condition = AlwaysActiveCondition.INSTANCE;
+				ranks.put("member", memberRank);
 
-			RankImpl vipRank = new RankImpl(this, "vip");
-			vipRank.setPermission("name", StringPermissionValue.of("VIP"));
-			vipRank.setPermission("power", NumberPermissionValue.of(50));
-			vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&bVIP {name}&r>"));
-			ranks.put("vip", vipRank);
+				RankImpl vipRank = new RankImpl(this, "vip");
+				vipRank.setPermission("name", StringPermissionValue.of("VIP"));
+				vipRank.setPermission("power", NumberPermissionValue.of(50));
+				vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&bVIP {name}&r>"));
+				ranks.put("vip", vipRank);
 
-			RankImpl adminRank = new RankImpl(this, "admin");
-			adminRank.setPermission("name", StringPermissionValue.of("Admin"));
-			adminRank.setPermission("power", NumberPermissionValue.of(1000));
-			adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&2{name}&r>"));
-			adminRank.condition = new OPCondition();
-			ranks.put("admin", adminRank);
+				RankImpl adminRank = new RankImpl(this, "admin");
+				adminRank.setPermission("name", StringPermissionValue.of("Admin"));
+				adminRank.setPermission("power", NumberPermissionValue.of(1000));
+				adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&2{name}&r>"));
+				adminRank.condition = new OPCondition();
+				ranks.put("admin", adminRank);
 
-			saveRanks();
-			saveRanksNow();
+				saveRanks();
+				saveRanksNow();
+			}
 		}
 
 		if (Files.notExists(playerFile)) {
