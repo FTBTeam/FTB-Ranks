@@ -1,5 +1,5 @@
 plugins {
-	id "com.github.johnrengelman.shadow" version "5.0.0"
+	id "com.github.johnrengelman.shadow" version "7.0.0"
 	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
@@ -14,28 +14,33 @@ architectury {
 	forge()
 }
 
+configurations {
+	common
+	shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
+	compileClasspath.extendsFrom common
+	runtimeClasspath.extendsFrom common
+	developmentForge.extendsFrom common
+	dev
+}
+
 loom {
-	useFabricMixin = true
-	mixinConfigs = ["ftbranks-common.mixins.json"]
+	forge {
+		mixinConfigs = ["ftbranks-common.mixins.json"]
+	}
+}
+
+artifacts {
+	dev(jar)
 }
 
 dependencies {
 	forge "net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}"
 
 	modApi "me.shedaniel:architectury-forge:${rootProject.architectury_version}"
-	modApi("dev.ftb.mods:ftb-library-forge:${rootProject.ftb_library_version}") {
-		// transitive = false
-	}
+	modApi("dev.ftb.mods:ftb-library-forge:${rootProject.ftb_library_version}") { transitive = false }
 
-	implementation(project(path: ":common")) {
-		transitive = false
-	}
-	developmentForge(project(path: ":common")) {
-		transitive = false
-	}
-	shadowCommon(project(path: ":common", configuration: "transformProductionForge")) {
-		transitive = false
-	}
+	common(project(path: ":common", configuration: "dev")) { transitive false }
+	shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
 }
 
 processResources {
@@ -56,21 +61,18 @@ shadowJar {
 remapJar {
 	input.set shadowJar.archiveFile
 	dependsOn shadowJar
-	classifier "forge"
+	archiveBaseName.set "${rootProject.archives_base_name}-${project.name}"
+	archiveClassifier.set null
 }
 
 jar {
 	classifier "dev"
 }
 
-java {
-	withSourcesJar()
-}
-
-sourcesJar {
-	def commonSources = project(":common").sourcesJar
-	dependsOn commonSources
-	from commonSources.archiveFile.map { zipTree(it) }
+components.java {
+	withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+		skip()
+	}
 }
 
 if (ENV.CURSEFORGE_KEY) {
@@ -95,13 +97,8 @@ if (ENV.CURSEFORGE_KEY) {
 publishing {
 	publications {
 		mavenForge(MavenPublication) {
-			artifactId = rootProject.archivesBaseName + "-" + project.name
-			artifact(remapJar) {
-				classifier null
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
+			artifactId = "${rootProject.archives_base_name}-${project.name}"
+			artifact(remapJar)
 		}
 	}
 
