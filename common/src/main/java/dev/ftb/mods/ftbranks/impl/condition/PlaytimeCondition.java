@@ -45,7 +45,7 @@ public class PlaytimeCondition implements RankCondition {
 				timeUnit = TICKS;
 		}
 
-		stat = Stats.CUSTOM.get(Stats.PLAY_ONE_MINUTE);
+		stat = Stats.CUSTOM.get(Stats.PLAY_TIME);
 	}
 
 	@Override

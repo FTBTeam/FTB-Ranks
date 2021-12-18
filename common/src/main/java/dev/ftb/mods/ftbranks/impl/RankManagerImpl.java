@@ -12,7 +12,6 @@ import dev.ftb.mods.ftbranks.api.RankConditionFactory;
 import dev.ftb.mods.ftbranks.api.RankManager;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
-import me.shedaniel.architectury.hooks.LevelResourceHooks;
 import net.minecraft.nbt.EndTag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.StringTag;
@@ -43,7 +42,7 @@ import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
  * @author LatvianModder
  */
 public class RankManagerImpl implements RankManager {
-	public static final LevelResource FOLDER_NAME = LevelResourceHooks.create("serverconfig/ftbranks");
+	public static final LevelResource FOLDER_NAME = new LevelResource("serverconfig/ftbranks");
 
 	public final MinecraftServer server;
 

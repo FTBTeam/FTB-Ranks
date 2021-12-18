@@ -1,5 +1,7 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.architectury.event.EventResult;
+import dev.architectury.event.events.common.ChatEvent;
 import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
@@ -24,6 +26,7 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.TextFilter;
 import net.minecraft.world.InteractionResultHolder;
 
 /**
@@ -80,11 +83,12 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		manager.registerCondition("creative_mode", (rank, tag) -> new CreativeModeCondition());
 	}
 
-	public static InteractionResultHolder<Component> serverChat(ServerPlayer player, String eventMessage, Component component) {
+	// TODO: rework(?)
+	public static EventResult serverChat(ServerPlayer player, TextFilter.FilteredText eventMessage, ChatEvent.ChatComponent component) {
 		String format = FTBRanksAPI.getPermissionValue(player, "ftbranks.name_format").asString().orElse("");
 
 		if (format.isEmpty()) {
-			return InteractionResultHolder.pass(component);
+			return EventResult.pass();
 		}
 
 		TextComponent main = new TextComponent("");
@@ -110,7 +114,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		main.append(" ");
 		//main.appendText("<").appendSibling(event.getPlayer().getDisplayName()).appendText(">").appendText(" ");
 
-		String message = eventMessage.trim();
+		String message = eventMessage.getRaw().trim();
 
 		Component textWithLinks = TextComponentUtils.withLinks(message);
 		TextComponent text = textWithLinks instanceof TextComponent ? (TextComponent) textWithLinks : new TextComponent(message);
@@ -142,6 +146,9 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		}
 
 		main.append(text);
-		return InteractionResultHolder.success(main);
+
+		component.setRaw(main);
+
+		return EventResult.interruptTrue();
 	}
 }

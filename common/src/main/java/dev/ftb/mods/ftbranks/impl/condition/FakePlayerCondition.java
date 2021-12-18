@@ -1,7 +1,7 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
+import dev.architectury.hooks.level.entity.PlayerHooks;
 import dev.ftb.mods.ftbranks.api.SimpleRankCondition;
-import me.shedaniel.architectury.hooks.PlayerHooks;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
