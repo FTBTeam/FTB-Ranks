@@ -29,29 +29,12 @@ public class StatCondition implements RankCondition {
 		value = tag.getInt("value");
 
 		switch (tag.getString("value_check")) {
-			case "not_equals":
-			case "not":
-			case "!=":
-				valueCheck = NOT_EQUALS;
-				break;
-			case "greater":
-			case ">":
-				valueCheck = GREATER;
-				break;
-			case "greater_or_equal":
-			case ">=":
-				valueCheck = GREATER_OR_EQUAL;
-				break;
-			case "lesser":
-			case "<":
-				valueCheck = LESSER;
-				break;
-			case "lesser_or_equal":
-			case "<=":
-				valueCheck = LESSER_OR_EQUAL;
-				break;
-			default:
-				valueCheck = EQUALS;
+			case "not_equals", "not", "!=" -> valueCheck = NOT_EQUALS;
+			case "greater", ">" -> valueCheck = GREATER;
+			case "greater_or_equal", ">=" -> valueCheck = GREATER_OR_EQUAL;
+			case "lesser", "<" -> valueCheck = LESSER;
+			case "lesser_or_equal", "<=" -> valueCheck = LESSER_OR_EQUAL;
+			default -> valueCheck = EQUALS;
 		}
 	}
 
@@ -64,20 +47,14 @@ public class StatCondition implements RankCondition {
 	public boolean isRankActive(ServerPlayer player) {
 		int v = player.getStats().getValue(stat);
 
-		switch (valueCheck) {
-			case NOT_EQUALS:
-				return v != value;
-			case GREATER:
-				return v > value;
-			case GREATER_OR_EQUAL:
-				return v >= value;
-			case LESSER:
-				return v < value;
-			case LESSER_OR_EQUAL:
-				return v <= value;
-			default:
-				return v == value;
-		}
+		return switch (valueCheck) {
+			case NOT_EQUALS -> v != value;
+			case GREATER -> v > value;
+			case GREATER_OR_EQUAL -> v >= value;
+			case LESSER -> v < value;
+			case LESSER_OR_EQUAL -> v <= value;
+			default -> v == value;
+		};
 	}
 
 	@Override
@@ -86,23 +63,12 @@ public class StatCondition implements RankCondition {
 		tag.putInt("value", value);
 
 		switch (valueCheck) {
-			case NOT_EQUALS:
-				tag.putString("value_check", "!=");
-				break;
-			case GREATER:
-				tag.putString("value_check", ">");
-				break;
-			case GREATER_OR_EQUAL:
-				tag.putString("value_check", ">=");
-				break;
-			case LESSER:
-				tag.putString("value_check", "<");
-				break;
-			case LESSER_OR_EQUAL:
-				tag.putString("value_check", "<=");
-				break;
-			default:
-				tag.putString("value_check", "==");
+			case NOT_EQUALS -> tag.putString("value_check", "!=");
+			case GREATER -> tag.putString("value_check", ">");
+			case GREATER_OR_EQUAL -> tag.putString("value_check", ">=");
+			case LESSER -> tag.putString("value_check", "<");
+			case LESSER_OR_EQUAL -> tag.putString("value_check", "<=");
+			default -> tag.putString("value_check", "==");
 		}
 	}
 }

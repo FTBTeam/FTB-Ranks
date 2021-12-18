@@ -26,23 +26,12 @@ public class PlaytimeCondition implements RankCondition {
 		time = tag.getInt("time");
 
 		switch (tag.getString("time_unit")) {
-			case "seconds":
-				timeUnit = SECONDS;
-				break;
-			case "minutes":
-				timeUnit = MINUTES;
-				break;
-			case "hours":
-				timeUnit = HOURS;
-				break;
-			case "days":
-				timeUnit = DAYS;
-				break;
-			case "weeks":
-				timeUnit = WEEKS;
-				break;
-			default:
-				timeUnit = TICKS;
+			case "seconds" -> timeUnit = SECONDS;
+			case "minutes" -> timeUnit = MINUTES;
+			case "hours" -> timeUnit = HOURS;
+			case "days" -> timeUnit = DAYS;
+			case "weeks" -> timeUnit = WEEKS;
+			default -> timeUnit = TICKS;
 		}
 
 		stat = Stats.CUSTOM.get(Stats.PLAY_TIME);
@@ -63,23 +52,12 @@ public class PlaytimeCondition implements RankCondition {
 		tag.putInt("time", time);
 
 		switch (timeUnit) {
-			case SECONDS:
-				tag.putString("time_unit", "seconds");
-				break;
-			case MINUTES:
-				tag.putString("time_unit", "minutes");
-				break;
-			case HOURS:
-				tag.putString("time_unit", "hours");
-				break;
-			case DAYS:
-				tag.putString("time_unit", "days");
-				break;
-			case WEEKS:
-				tag.putString("time_unit", "weeks");
-				break;
-			default:
-				tag.putString("time_unit", "ticks");
+			case SECONDS -> tag.putString("time_unit", "seconds");
+			case MINUTES -> tag.putString("time_unit", "minutes");
+			case HOURS -> tag.putString("time_unit", "hours");
+			case DAYS -> tag.putString("time_unit", "days");
+			case WEEKS -> tag.putString("time_unit", "weeks");
+			default -> tag.putString("time_unit", "ticks");
 		}
 	}
 }

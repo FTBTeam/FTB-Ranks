@@ -113,9 +113,7 @@ public class TextComponentParser {
 						char[] rrggbb = new char[7];
 						rrggbb[0] = '#';
 
-						for (int j = 1; j <= 6; j++) {
-							rrggbb[j] = c[i + j];
-						}
+						System.arraycopy(c, i + 1, rrggbb, 1, 6);
 
 						i += 6;
 						style = style.withColor(TextColor.parseColor(new String(rrggbb)));
