@@ -1,19 +1,10 @@
 package dev.ftb.mods.ftbranks.forge;
 
-import com.mojang.authlib.GameProfile;
-import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.server.permission.DefaultPermissionLevel;
-import net.minecraftforge.server.permission.IPermissionHandler;
-import net.minecraftforge.server.permission.context.IContext;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-
 /**
  * @author LatvianModder
  */
-public class PermissionAPIWrapper implements IPermissionHandler {
+public class PermissionAPIWrapper /* implements IPermissionHandler */ {
+	/* Nah, im not doing this lol
 	private final IPermissionHandler original;
 
 	public PermissionAPIWrapper(IPermissionHandler h) {
@@ -49,4 +40,5 @@ public class PermissionAPIWrapper implements IPermissionHandler {
 	public String getNodeDescription(String node) {
 		return original.getNodeDescription(node);
 	}
+	 */
 }
