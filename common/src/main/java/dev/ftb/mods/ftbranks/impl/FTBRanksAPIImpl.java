@@ -113,7 +113,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		main.append(" ");
 		//main.appendText("<").appendSibling(event.getPlayer().getDisplayName()).appendText(">").appendText(" ");
 
-		String message = eventMessage.getRaw().trim();
+		String message = eventMessage.getFiltered().trim();
 
 		Component textWithLinks = TextComponentUtils.withLinks(message);
 		TextComponent text = textWithLinks instanceof TextComponent ? (TextComponent) textWithLinks : new TextComponent(message);
@@ -146,7 +146,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 
 		main.append(text);
 
-		component.setRaw(main);
+		component.setFiltered(main);
 
 		return EventResult.interruptTrue();
 	}
