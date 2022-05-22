@@ -22,3 +22,5 @@ logs
 eclipse
 run
 .vscode
+/.architectury-transformer/debug.log
+/common/.architectury-transformer/debug.log

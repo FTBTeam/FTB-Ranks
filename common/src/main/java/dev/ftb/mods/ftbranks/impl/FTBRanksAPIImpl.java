@@ -1,31 +1,18 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.RankManager;
-import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
-import dev.ftb.mods.ftbranks.impl.condition.AndCondition;
-import dev.ftb.mods.ftbranks.impl.condition.CreativeModeCondition;
-import dev.ftb.mods.ftbranks.impl.condition.DimensionCondition;
-import dev.ftb.mods.ftbranks.impl.condition.FakePlayerCondition;
-import dev.ftb.mods.ftbranks.impl.condition.NotCondition;
-import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
-import dev.ftb.mods.ftbranks.impl.condition.OrCondition;
-import dev.ftb.mods.ftbranks.impl.condition.PlaytimeCondition;
-import dev.ftb.mods.ftbranks.impl.condition.RankAddedCondition;
-import dev.ftb.mods.ftbranks.impl.condition.SpawnCondition;
-import dev.ftb.mods.ftbranks.impl.condition.StatCondition;
-import dev.ftb.mods.ftbranks.impl.condition.XorCondition;
+import dev.ftb.mods.ftbranks.impl.condition.*;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResultHolder;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author LatvianModder
