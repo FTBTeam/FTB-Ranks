@@ -89,7 +89,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		manager.registerCondition("creative_mode", (rank, tag) -> new CreativeModeCondition());
 	}
 
-	// TODO: rework(?)
+
 	public static EventResult serverChat(ServerPlayer player, TextFilter.FilteredText eventMessage, ChatEvent.ChatComponent component) {
 		String format = FTBRanksAPI.getPermissionValue(player, "ftbranks.name_format").asString().orElse("");
 
@@ -119,52 +119,34 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		main.append(cachedNameForChat);
 		main.append(" ");
 
-		String message = eventMessage.getFiltered().trim();
-
-
-
 		ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
-
-		if (color != null) {
-			main.setStyle(main.getStyle().applyFormat(color));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.bold").asBooleanOrFalse()) {
-			main.setStyle(main.getStyle().applyFormat(ChatFormatting.BOLD));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.italic").asBooleanOrFalse()) {
-			main.setStyle(main.getStyle().applyFormat(ChatFormatting.ITALIC));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.underlined").asBooleanOrFalse()) {
-			main.setStyle(main.getStyle().applyFormat(ChatFormatting.UNDERLINE));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.strikethrough").asBooleanOrFalse()) {
-			main.setStyle(main.getStyle().applyFormat(ChatFormatting.STRIKETHROUGH));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.obfuscated").asBooleanOrFalse()) {
-			main.setStyle(main.getStyle().applyFormat(ChatFormatting.OBFUSCATED));
-		}
-
-
-		//component.getFiltered().getSiblings().size();
-		component.getFiltered().getSiblings();
-
 		TranslatableComponent fullComp = (TranslatableComponent) component.getFiltered();
 
-
 		for(int i=1; i < fullComp.getArgs().length; i++){
-			//TextComponent part = (TextComponent) trans.getArgs()[i];
 
 			TextComponent part = fullComp.getArgs()[i] instanceof Component ? (TextComponent) fullComp.getArgs()[i] : new TextComponent((String) fullComp.getArgs()[i]);
 
+			if (color != null) {
+				part.setStyle(part.getStyle().applyFormat(color));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.bold").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.BOLD));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.italic").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.ITALIC));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.underlined").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.UNDERLINE));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.strikethrough").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.STRIKETHROUGH));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.obfuscated").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.OBFUSCATED));
+			}
 
 			main.append(part);
 		}
-		//main.append(trans);
 
 		component.setFiltered(main);
 		return EventResult.interruptTrue();
