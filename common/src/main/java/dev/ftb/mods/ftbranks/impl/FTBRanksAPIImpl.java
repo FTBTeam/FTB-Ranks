@@ -1,7 +1,10 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import com.mojang.brigadier.Message;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.ChatEvent;
+import dev.architectury.event.events.common.LifecycleEvent;
+import dev.architectury.event.events.common.TickEvent;
 import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
@@ -20,13 +23,17 @@ import dev.ftb.mods.ftbranks.impl.condition.SpawnCondition;
 import dev.ftb.mods.ftbranks.impl.condition.StatCondition;
 import dev.ftb.mods.ftbranks.impl.condition.XorCondition;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.*;
+import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.TextFilter;
+import net.minecraft.world.InteractionResultHolder;
+
+import java.text.CompactNumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author LatvianModder
@@ -82,7 +89,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		manager.registerCondition("creative_mode", (rank, tag) -> new CreativeModeCondition());
 	}
 
-	// TODO: rework(?)
+
 	public static EventResult serverChat(ServerPlayer player, TextFilter.FilteredText eventMessage, ChatEvent.ChatComponent component) {
 		String format = FTBRanksAPI.getPermissionValue(player, "ftbranks.name_format").asString().orElse("");
 
@@ -111,43 +118,37 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 
 		main.append(cachedNameForChat);
 		main.append(" ");
-		//main.appendText("<").appendSibling(event.getPlayer().getDisplayName()).appendText(">").appendText(" ");
-
-		String message = eventMessage.getFiltered().trim();
-
-		Component textWithLinks = TextComponentUtils.withLinks(message);
-		TextComponent text = textWithLinks instanceof TextComponent ? (TextComponent) textWithLinks : new TextComponent(message);
 
 		ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
+		TranslatableComponent fullComp = (TranslatableComponent) component.getFiltered();
 
-		if (color != null) {
-			text.setStyle(text.getStyle().applyFormat(color));
+		for(int i=1; i < fullComp.getArgs().length; i++){
+
+			TextComponent part = fullComp.getArgs()[i] instanceof Component ? (TextComponent) fullComp.getArgs()[i] : new TextComponent((String) fullComp.getArgs()[i]);
+
+			if (color != null) {
+				part.setStyle(part.getStyle().applyFormat(color));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.bold").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.BOLD));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.italic").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.ITALIC));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.underlined").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.UNDERLINE));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.strikethrough").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.STRIKETHROUGH));
+			}
+			if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.obfuscated").asBooleanOrFalse()) {
+				part.setStyle(part.getStyle().applyFormat(ChatFormatting.OBFUSCATED));
+			}
+
+			main.append(part);
 		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.bold").asBooleanOrFalse()) {
-			text.setStyle(text.getStyle().applyFormat(ChatFormatting.BOLD));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.italic").asBooleanOrFalse()) {
-			text.setStyle(text.getStyle().applyFormat(ChatFormatting.ITALIC));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.underlined").asBooleanOrFalse()) {
-			text.setStyle(text.getStyle().applyFormat(ChatFormatting.UNDERLINE));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.strikethrough").asBooleanOrFalse()) {
-			text.setStyle(text.getStyle().applyFormat(ChatFormatting.STRIKETHROUGH));
-		}
-
-		if (FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.obfuscated").asBooleanOrFalse()) {
-			text.setStyle(text.getStyle().applyFormat(ChatFormatting.OBFUSCATED));
-		}
-
-		main.append(text);
 
 		component.setFiltered(main);
-
 		return EventResult.interruptTrue();
 	}
 }
