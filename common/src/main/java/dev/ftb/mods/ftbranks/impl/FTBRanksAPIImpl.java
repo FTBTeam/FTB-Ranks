@@ -4,10 +4,23 @@ import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.RankManager;
-import dev.ftb.mods.ftbranks.impl.condition.*;
+import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
+import dev.ftb.mods.ftbranks.impl.condition.AndCondition;
+import dev.ftb.mods.ftbranks.impl.condition.CreativeModeCondition;
+import dev.ftb.mods.ftbranks.impl.condition.DimensionCondition;
+import dev.ftb.mods.ftbranks.impl.condition.FakePlayerCondition;
+import dev.ftb.mods.ftbranks.impl.condition.NotCondition;
+import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
+import dev.ftb.mods.ftbranks.impl.condition.OrCondition;
+import dev.ftb.mods.ftbranks.impl.condition.PlaytimeCondition;
+import dev.ftb.mods.ftbranks.impl.condition.RankAddedCondition;
+import dev.ftb.mods.ftbranks.impl.condition.SpawnCondition;
+import dev.ftb.mods.ftbranks.impl.condition.StatCondition;
+import dev.ftb.mods.ftbranks.impl.condition.XorCondition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.MinecraftServer;
@@ -98,19 +111,26 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		main.append(cachedNameForChat);
 		main.append(" ");
 
-		String message = eventMessage.trim();
-		Component textWithLinks = TextComponentUtils.withLinks(message);
-		TextComponent text = null;
-
-		TranslatableComponent fullComp = (TranslatableComponent) component;
-		if (fullComp.getKey().equals("chat.type.text")) {
-			for (int i = 1; i < ((TranslatableComponent) component).getArgs().length; i++) {
-				text = fullComp.getArgs()[i] instanceof Component ? (TextComponent) fullComp.getArgs()[i] : new TextComponent((String) fullComp.getArgs()[i]);
+		MutableComponent text = null;
+		if (component instanceof TranslatableComponent) {
+			TranslatableComponent tc = (TranslatableComponent) component;
+			// In the easiest case, we have the vanilla chat format,
+			// so we can just use the message from that.
+			if(tc.getKey().equals("chat.type.text") && tc.getArgs().length > 1) {
+				Object message = tc.getArgs()[1];
+				if(message instanceof Component) {
+					text = ((Component) message).copy();
+				} else {
+					text = new TextComponent(message.toString());
+				}
 			}
-			System.out.print(fullComp.toString());
-		} else {
-			// Original Method fallback
-			text = textWithLinks instanceof TextComponent ? (TextComponent) textWithLinks : new TextComponent(message);
+		}
+
+		// Otherwise, fall back to parsing the message as a string and turning it back into a component.
+		if(text == null) {
+			FTBRanks.LOGGER.debug("Chat message format has been changed, fall back to parsing as string!");
+			FTBRanks.LOGGER.debug("Since this may break formatting, feel free to remove the `ftbranks.name_format` permission node to stop this from happening.");
+			text = TextComponentUtils.withLinks(eventMessage.trim()).copy();
 		}
 
 		ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
