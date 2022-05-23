@@ -39,6 +39,9 @@ dependencies {
 	modApi "me.shedaniel:architectury-forge:${rootProject.architectury_version}"
 	modApi("dev.ftb.mods:ftb-library-forge:${rootProject.ftb_library_version}") { transitive = false }
 
+	modLocalRuntime("curse.maven:quark-243121:3642325")
+	modLocalRuntime("curse.maven:emojiful-284324:3543338")
+
 	common(project(path: ":common", configuration: "dev")) { transitive false }
 	shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
 }
