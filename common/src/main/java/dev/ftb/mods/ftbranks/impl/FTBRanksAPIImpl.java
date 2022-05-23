@@ -20,7 +20,9 @@ import dev.ftb.mods.ftbranks.impl.condition.XorCondition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -108,15 +110,30 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 
 		main.append(cachedNameForChat);
 		main.append(" ");
-		//main.appendText("<").appendSibling(event.getPlayer().getDisplayName()).appendText(">").appendText(" ");
 
-		String message = eventMessage.trim();
+		MutableComponent text = null;
+		if (component instanceof TranslatableComponent) {
+			TranslatableComponent tc = (TranslatableComponent) component;
+			// In the easiest case, we have the vanilla chat format,
+			// so we can just use the message from that.
+			if(tc.getKey().equals("chat.type.text") && tc.getArgs().length > 1) {
+				Object message = tc.getArgs()[1];
+				if(message instanceof Component) {
+					text = ((Component) message).copy();
+				} else {
+					text = new TextComponent(message.toString());
+				}
+			}
+		}
 
-		Component textWithLinks = TextComponentUtils.withLinks(message);
-		TextComponent text = textWithLinks instanceof TextComponent ? (TextComponent) textWithLinks : new TextComponent(message);
+		// Otherwise, fall back to parsing the message as a string and turning it back into a component.
+		if(text == null) {
+			FTBRanks.LOGGER.debug("Chat message format has been changed, fall back to parsing as string!");
+			FTBRanks.LOGGER.debug("Since this may break formatting, feel free to remove the `ftbranks.name_format` permission node to stop this from happening.");
+			text = TextComponentUtils.withLinks(eventMessage.trim()).copy();
+		}
 
 		ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
-
 		if (color != null) {
 			text.setStyle(text.getStyle().applyFormat(color));
 		}
@@ -142,6 +159,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		}
 
 		main.append(text);
+
 		return InteractionResultHolder.success(main);
 	}
 }

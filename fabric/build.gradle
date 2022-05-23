@@ -73,6 +73,7 @@ components.java {
 	}
 }
 
+
 if (ENV.CURSEFORGE_KEY) {
 	curseforge {
 		apiKey = ENV.CURSEFORGE_KEY
