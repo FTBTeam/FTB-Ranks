@@ -11,7 +11,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.io.IOException;
@@ -77,7 +77,7 @@ public class FTBRanksCommands {
 	private static int reloadRanks(CommandSourceStack source) {
 		try {
 			FTBRanksAPIImpl.manager.reload();
-			source.sendSuccess(new TextComponent("Ranks reloaded!"), true);
+			source.sendSuccess(Component.literal("Ranks reloaded!"), true);
 
 			for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
 				source.getServer().getPlayerList().sendPlayerPermissionLevel(p);
@@ -86,7 +86,7 @@ public class FTBRanksCommands {
 			return 1;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			source.sendFailure(new TextComponent(ex.getLocalizedMessage()));
+			source.sendFailure(Component.literal(ex.getLocalizedMessage()));
 			return 0;
 		}
 	}
@@ -98,15 +98,15 @@ public class FTBRanksCommands {
 			ex.printStackTrace();
 		}
 
-		source.sendSuccess(new TextComponent("Done!"), false);
+		source.sendSuccess(Component.literal("Done!"), false);
 		return 1;
 	}
 
 	private static int listAllRanks(CommandSourceStack source) {
-		source.sendSuccess(new TextComponent("Ranks:"), false);
+		source.sendSuccess(Component.literal("Ranks:"), false);
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
-			source.sendSuccess(new TextComponent("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
+			source.sendSuccess(Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
 		}
 
 		return 1;
@@ -116,22 +116,22 @@ public class FTBRanksCommands {
 		String id = normalizeRankName(name);
 
 		if (FTBRanksAPIImpl.manager.getRank(id).isPresent()) {
-			source.sendFailure(new TextComponent("Rank ID already taken!"));
+			source.sendFailure(Component.literal("Rank ID already taken!"));
 			return 0;
 		}
 
 		FTBRanksAPIImpl.manager.createRank(id, name);
-		source.sendSuccess(new TextComponent("Rank created with id '" + id + "'!"), false);
+		source.sendSuccess(Component.literal("Rank created with id '" + id + "'!"), false);
 		return 1;
 	}
 
 	private static int deleteRank(CommandSourceStack source, String name) throws CommandSyntaxException {
 		if (FTBRanksAPIImpl.manager.deleteRank(normalizeRankName(name)) == null) {
-			source.sendFailure(new TextComponent("Rank not found!"));
+			source.sendFailure(Component.literal("Rank not found!"));
 			return 0;
 		}
 
-		source.sendSuccess(new TextComponent("Rank deleted!"), false);
+		source.sendSuccess(Component.literal("Rank deleted!"), false);
 		return 1;
 	}
 
@@ -140,7 +140,7 @@ public class FTBRanksCommands {
 
 		for (GameProfile profile : players) {
 			if (r.add(profile)) {
-				source.sendSuccess(new TextComponent("Added '" + r.getName() + "' to " + profile.getName()), false);
+				source.sendSuccess(Component.literal("Added '" + r.getName() + "' to " + profile.getName()), false);
 			}
 		}
 
@@ -152,7 +152,7 @@ public class FTBRanksCommands {
 
 		for (GameProfile profile : players) {
 			if (r.remove(profile)) {
-				source.sendSuccess(new TextComponent("Removed '" + r.getName() + "' from " + profile.getName()), false);
+				source.sendSuccess(Component.literal("Removed '" + r.getName() + "' from " + profile.getName()), false);
 			}
 		}
 
@@ -160,11 +160,11 @@ public class FTBRanksCommands {
 	}
 
 	private static int listRanksOf(CommandSourceStack source, ServerPlayer player) {
-		source.sendSuccess(new TextComponent("Ranks added to " + player.getGameProfile().getName() + ":"), false);
+		source.sendSuccess(Component.literal("Ranks added to " + player.getGameProfile().getName() + ":"), false);
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
 			if (rank.isActive(player)) {
-				source.sendSuccess(new TextComponent("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
+				source.sendSuccess(Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
 			}
 		}
 
@@ -174,11 +174,11 @@ public class FTBRanksCommands {
 	private static int listPlayersWith(CommandSourceStack source, String name) {
 		Rank r = FTBRanksAPIImpl.manager.getRank(normalizeRankName(name)).orElseThrow(NullPointerException::new);
 
-		source.sendSuccess(new TextComponent("Players with " + name + " added to them:"), false);
+		source.sendSuccess(Component.literal("Players with " + name + " added to them:"), false);
 
 		for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
 			if (r.isActive(player)) {
-				source.sendSuccess(new TextComponent("- ").withStyle(ChatFormatting.YELLOW).append(player.getDisplayName()), false);
+				source.sendSuccess(Component.literal("- ").withStyle(ChatFormatting.YELLOW).append(player.getDisplayName()), false);
 			}
 		}
 

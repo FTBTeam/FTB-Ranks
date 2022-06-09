@@ -3,9 +3,9 @@ package dev.ftb.mods.ftbranks.impl;
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TextComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
@@ -41,14 +41,14 @@ public class TextComponentParser {
 		CODE_TO_FORMATTING.put('r', ChatFormatting.RESET);
 	}
 
-	public static TextComponent parse(String text, @Nullable Function<String, Component> substitutes) {
+	public static MutableComponent parse(String text, @Nullable Function<String, Component> substitutes) {
 		return new TextComponentParser(text, substitutes).parse();
 	}
 
 	private final String text;
 	private final Function<String, Component> substitutes;
 
-	private TextComponent component;
+	private MutableComponent component;
 	private StringBuilder builder;
 	private Style style;
 
@@ -57,9 +57,9 @@ public class TextComponentParser {
 		substitutes = sub;
 	}
 
-	private TextComponent parse() {
+	private MutableComponent parse() {
 		if (text.isEmpty()) {
-			return new TextComponent("");
+			return Component.empty();
 		}
 
 		char[] c = text.toCharArray();
@@ -73,10 +73,10 @@ public class TextComponentParser {
 		}
 
 		if (!hasSpecialCodes) {
-			return new TextComponent(text);
+			return Component.literal(text);
 		}
 
-		component = new TextComponent("");
+		component = Component.literal("");
 		style = Style.EMPTY;
 		builder = new StringBuilder();
 		boolean sub = false;
@@ -155,7 +155,7 @@ public class TextComponentParser {
 		if (string.isEmpty()) {
 			return;
 		} else if (string.length() < 2 || string.charAt(0) != '{') {
-			TextComponent component1 = new TextComponent(string);
+			MutableComponent component1 = Component.literal(string);
 			component1.setStyle(style);
 			component.append(component1);
 			return;
@@ -169,7 +169,7 @@ public class TextComponentParser {
 			style1.withHoverEvent(style0.getHoverEvent());
 			style1.withClickEvent(style0.getClickEvent());
 			style1.withInsertion(style0.getInsertion());
-			component1 = new TextComponent("").append(component1).withStyle(style1);
+			component1 = Component.literal("").append(component1).withStyle(style1);
 		} else {
 			throw new IllegalArgumentException("Invalid formatting! Unknown substitute: " + string.substring(1));
 		}

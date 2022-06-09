@@ -10,4 +10,4 @@ include("common")
 include("fabric")
 include("forge")
 
-rootProject.name = 'FTB-Ranks-1.18.2'
+rootProject.name = 'FTB-Ranks-1.19'

@@ -6,29 +6,15 @@ import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.RankManager;
-import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
-import dev.ftb.mods.ftbranks.impl.condition.AndCondition;
-import dev.ftb.mods.ftbranks.impl.condition.CreativeModeCondition;
-import dev.ftb.mods.ftbranks.impl.condition.DimensionCondition;
-import dev.ftb.mods.ftbranks.impl.condition.FakePlayerCondition;
-import dev.ftb.mods.ftbranks.impl.condition.NotCondition;
-import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
-import dev.ftb.mods.ftbranks.impl.condition.OrCondition;
-import dev.ftb.mods.ftbranks.impl.condition.PlaytimeCondition;
-import dev.ftb.mods.ftbranks.impl.condition.RankAddedCondition;
-import dev.ftb.mods.ftbranks.impl.condition.SpawnCondition;
-import dev.ftb.mods.ftbranks.impl.condition.StatCondition;
-import dev.ftb.mods.ftbranks.impl.condition.XorCondition;
+import dev.ftb.mods.ftbranks.impl.condition.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.TextFilter;
 
 /**
  * @author LatvianModder
@@ -85,15 +71,15 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	}
 
 
-	public static EventResult serverChat(ServerPlayer player, TextFilter.FilteredText eventMessage, ChatEvent.ChatComponent component) {
+	public static EventResult serverChat(ServerPlayer player, ChatEvent.ChatComponent component) {
 		String format = FTBRanksAPI.getPermissionValue(player, "ftbranks.name_format").asString().orElse("");
 
 		if (format.isEmpty()) {
 			return EventResult.pass();
 		}
 
-		TextComponent main = new TextComponent("");
-		TextComponent cachedNameForChat;
+		MutableComponent main = Component.literal("");
+		MutableComponent cachedNameForChat;
 
 		try {
 			cachedNameForChat = TextComponentParser.parse(format, s -> {
@@ -106,9 +92,9 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		} catch (Exception ex) {
 			String s = "Error parsing " + format + ": " + ex;
 			FTBRanks.LOGGER.error(s);
-			cachedNameForChat = new TextComponent("BrokenFormatting");
+			cachedNameForChat = Component.literal("BrokenFormatting");
 			cachedNameForChat.withStyle(ChatFormatting.RED);
-			cachedNameForChat.setStyle(cachedNameForChat.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(s))));
+			cachedNameForChat.setStyle(cachedNameForChat.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(s))));
 		}
 
 		main.append(cachedNameForChat);
@@ -118,12 +104,12 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 
 		// In the easiest case, we have the vanilla chat format,
 		// so we can just use the message from that.
-		if (component instanceof TranslatableComponent tc && tc.getKey().equals("chat.type.text") && tc.getArgs().length > 1) {
+		if (component.getFiltered().getContents() instanceof TranslatableContents tc && tc.getKey().equals("chat.type.text") && tc.getArgs().length > 1) {
 			Object message = tc.getArgs()[1];
 			if (message instanceof Component c) {
 				text = c.copy();
 			} else {
-				text = new TextComponent(message.toString());
+				text = Component.literal(message.toString());
 			}
 		}
 
@@ -131,7 +117,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		if (text == null) {
 			FTBRanks.LOGGER.debug("Chat message format has been changed, fall back to parsing as string!");
 			FTBRanks.LOGGER.debug("Since this may break formatting, feel free to remove the `ftbranks.name_format` permission node to stop this from happening.");
-			text = TextComponentUtils.withLinks(eventMessage.getFiltered()).copy();
+			text = TextComponentUtils.withLinks(component.getFiltered().getString()).copy();
 		}
 
 		ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
@@ -162,6 +148,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		main.append(text);
 
 		component.setFiltered(main);
+
 		return EventResult.interruptTrue();
 	}
 }
