@@ -72,6 +72,10 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 
 
 	public static EventResult serverChat(ServerPlayer player, ChatEvent.ChatComponent component) {
+		if (player == null) {
+			return EventResult.pass();
+		}
+
 		String format = FTBRanksAPI.getPermissionValue(player, "ftbranks.name_format").asString().orElse("");
 
 		if (format.isEmpty()) {
@@ -146,7 +150,6 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		}
 
 		main.append(text);
-
 		component.setFiltered(main);
 
 		return EventResult.interruptTrue();

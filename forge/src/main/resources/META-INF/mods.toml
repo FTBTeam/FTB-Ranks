@@ -1,13 +1,13 @@
 modLoader = "javafml"
-loaderVersion = "[39,)"
-issueTrackerURL = "https://github.com/FTBTeam/FTB-Ranks/issues"
+loaderVersion = "[${forgeshortversion},)"
+issueTrackerURL = "https://go.ftb.team/support-mod-issues"
 license = "All Rights Reserved"
 
 [[mods]]
 modId = "ftbranks"
 version = "${version}"
 displayName = "FTB Ranks"
-authors = "LatvianModder"
+authors = "FTB Team"
 description = '''
 A simple mod that lets you create ranks for players, similar to Discord roles, and manage permissions for them
 '''
@@ -15,27 +15,28 @@ A simple mod that lets you create ranks for players, similar to Discord roles, a
 [[dependencies.ftbranks]]
 modId = "forge"
 mandatory = true
-versionRange = "[39,)"
+versionRange = "[${forgeversion},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.19,)"
+versionRange = "[${mcversion},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "architectury"
 mandatory = true
-versionRange = "[3.2.52,)"
-ordering = "NONE"
+versionRange = "[${archversion},)"
+ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "ftblibrary"
 mandatory = true
-versionRange = "[1801.3.5-build.98,)"
+versionRange = "[${ftblibraryversion},)"
 ordering = "AFTER"
 side = "CLIENT"
+
