@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -21,7 +22,7 @@ import java.util.Collection;
  * @author LatvianModder
  */
 public class FTBRanksCommands {
-	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, Commands.CommandSelection selection) {
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
 		dispatcher.register(Commands.literal("ftbranks")
 				.requires(source -> source.getServer().isSingleplayer() || source.hasPermission(2))
 				.then(Commands.literal("reload")

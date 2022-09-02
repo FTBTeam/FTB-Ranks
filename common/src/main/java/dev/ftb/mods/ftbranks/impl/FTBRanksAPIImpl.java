@@ -1,7 +1,6 @@
 package dev.ftb.mods.ftbranks.impl;
 
 import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.ChatEvent;
 import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
@@ -71,7 +70,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	}
 
 
-	public static EventResult serverChat(ServerPlayer player, ChatEvent.ChatComponent component) {
+	public static EventResult serverChat(ServerPlayer player, Component component) {
 		if (player == null) {
 			return EventResult.pass();
 		}
@@ -108,7 +107,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 
 		// In the easiest case, we have the vanilla chat format,
 		// so we can just use the message from that.
-		if (component.getFiltered().getContents() instanceof TranslatableContents tc && tc.getKey().equals("chat.type.text") && tc.getArgs().length > 1) {
+		if (component.getContents() instanceof TranslatableContents tc && tc.getKey().equals("chat.type.text") && tc.getArgs().length > 1) {
 			Object message = tc.getArgs()[1];
 			if (message instanceof Component c) {
 				text = c.copy();
@@ -121,7 +120,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		if (text == null) {
 			FTBRanks.LOGGER.debug("Chat message format has been changed, fall back to parsing as string!");
 			FTBRanks.LOGGER.debug("Since this may break formatting, feel free to remove the `ftbranks.name_format` permission node to stop this from happening.");
-			text = TextComponentUtils.withLinks(component.getFiltered().getString()).copy();
+			text = TextComponentUtils.withLinks(component.getString()).copy();
 		}
 
 		ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
@@ -150,7 +149,9 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		}
 
 		main.append(text);
-		component.setFiltered(main);
+		component = main;
+
+		System.out.println(main);
 
 		return EventResult.interruptTrue();
 	}
