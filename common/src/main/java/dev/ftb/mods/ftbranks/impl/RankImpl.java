@@ -5,6 +5,10 @@ import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import dev.ftb.mods.ftbranks.api.RankManager;
+import dev.ftb.mods.ftbranks.api.event.RankAddPlayerEvent;
+import dev.ftb.mods.ftbranks.api.event.RankDeletedEvent;
+import dev.ftb.mods.ftbranks.api.event.RankEvent;
+import dev.ftb.mods.ftbranks.api.event.RankRemovePlayerEvent;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 
 import java.time.Instant;
@@ -89,6 +93,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		if (!data.added.containsKey(this)) {
 			data.added.put(this, Instant.now());
 			manager.savePlayers();
+			RankEvent.ADD_PLAYER.invoker().accept(new RankAddPlayerEvent(manager, this, profile));
 			return true;
 		}
 
@@ -100,6 +105,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		PlayerRankData data = manager.getPlayerData(profile);
 
 		if (data.added.remove(this) != null) {
+			RankEvent.REMOVE_PLAYER.invoker().accept(new RankRemovePlayerEvent(manager,this, profile));
 			manager.savePlayers();
 			return true;
 		}
