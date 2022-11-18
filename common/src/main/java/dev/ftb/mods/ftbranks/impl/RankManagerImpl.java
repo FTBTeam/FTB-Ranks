@@ -5,11 +5,11 @@ import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftblibrary.snbt.config.ConfigUtil;
 import dev.ftb.mods.ftbranks.FTBRanks;
-import dev.ftb.mods.ftbranks.api.PermissionValue;
-import dev.ftb.mods.ftbranks.api.Rank;
-import dev.ftb.mods.ftbranks.api.RankCondition;
-import dev.ftb.mods.ftbranks.api.RankConditionFactory;
-import dev.ftb.mods.ftbranks.api.RankManager;
+import dev.ftb.mods.ftbranks.api.*;
+import dev.ftb.mods.ftbranks.api.event.RankCreatedEvent;
+import dev.ftb.mods.ftbranks.api.event.RankDeletedEvent;
+import dev.ftb.mods.ftbranks.api.event.RankEvent;
+import dev.ftb.mods.ftbranks.api.event.RanksReloadedEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
 import net.minecraft.nbt.EndTag;
@@ -158,6 +158,7 @@ public class RankManagerImpl implements RankManager {
 		RankImpl r = new RankImpl(this, id);
 		ranks.put(id, r);
 		saveRanks();
+		RankEvent.CREATED.invoker().accept(new RankCreatedEvent(this, r));
 		return r;
 	}
 
@@ -181,6 +182,8 @@ public class RankManagerImpl implements RankManager {
 			}
 
 			ranks.remove(id);
+
+			RankEvent.DELETED.invoker().accept(new RankDeletedEvent(this, r));
 			saveRanks();
 		}
 
@@ -245,6 +248,11 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		return PermissionValue.DEFAULT;
+	}
+
+	@Override
+	public MinecraftServer getServer() {
+		return server;
 	}
 
 	private PermissionValue getPermissionValue(PlayerRankData data, List<RankImpl> ranks, String node) {
@@ -402,6 +410,8 @@ public class RankManagerImpl implements RankManager {
 
 		sortedRanks = new ArrayList<>(ranks.values());
 		sortedRanks.sort(null);
+
+		RankEvent.RELOADED.invoker().accept(new RanksReloadedEvent(FTBRanksAPI.INSTANCE.getManager()));
 
 		FTBRanks.LOGGER.info("Loaded " + ranks.size() + " ranks");
 	}

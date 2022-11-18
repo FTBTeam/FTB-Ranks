@@ -2,6 +2,7 @@ package dev.ftb.mods.ftbranks.api;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,4 +47,6 @@ public interface RankManager {
 	RankCondition createCondition(Rank rank, @Nullable Tag tag) throws Exception;
 
 	PermissionValue getPermissionValue(ServerPlayer player, String node);
+
+	MinecraftServer getServer();
 }
