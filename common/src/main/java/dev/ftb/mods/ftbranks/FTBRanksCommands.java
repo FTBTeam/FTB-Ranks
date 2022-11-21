@@ -15,12 +15,15 @@ import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import dev.ftb.mods.ftbranks.impl.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.StringPermissionValue;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import joptsimple.internal.Strings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -103,6 +106,11 @@ public class FTBRanksCommands {
 								.then(Commands.argument("value", StringArgumentType.greedyString())
 										.executes(context -> setCondition(context.getSource(), RankArgumentType.getRank(context, "rank"), StringArgumentType.getString(context, "value")))
 								)
+						)
+				)
+				.then(Commands.literal("show_rank")
+						.then(Commands.argument("rank", RankArgumentType.rank())
+								.executes(context -> showRank(context.getSource(), RankArgumentType.getRank(context, "rank")))
 						)
 				)
 		);
@@ -246,6 +254,29 @@ public class FTBRanksCommands {
 		}
 
 		return 1;
+	}
+
+	private static int showRank(CommandSourceStack source, Rank rank) {
+		source.sendSuccess(new TextComponent(Strings.repeat('=', 50)).withStyle(ChatFormatting.GREEN), false);
+
+		source.sendSuccess(new TranslatableComponent("ftbranks.show_rank.header", col(rank.getId(), ChatFormatting.WHITE), col(rank.getName(), ChatFormatting.WHITE), col(Integer.toString(rank.getPower()), ChatFormatting.WHITE)).withStyle(ChatFormatting.YELLOW), false);
+
+		String condStr = rank.getCondition().asString();
+		Component c = condStr.isEmpty() ?
+				new TranslatableComponent("ftbranks.show_rank.condition.default").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) :
+				col(condStr, ChatFormatting.WHITE);
+		source.sendSuccess(new TranslatableComponent("ftbranks.show_rank.condition", c).withStyle(ChatFormatting.YELLOW), false);
+
+		source.sendSuccess(new TranslatableComponent("ftbranks.show_rank.nodes").withStyle(ChatFormatting.YELLOW), false);
+		rank.getPermissions().stream().sorted().forEach(node ->
+				source.sendSuccess(new TranslatableComponent("ftbranks.show_rank.node", col(node, ChatFormatting.AQUA), rank.getPermission(node)).withStyle(ChatFormatting.WHITE), false)
+		);
+
+		return 0;
+	}
+
+    private static MutableComponent col(String str, ChatFormatting color) {
+		return new TextComponent(str).withStyle(color);
 	}
 
 	private static PermissionValue strToPermissionValue(String str) {
