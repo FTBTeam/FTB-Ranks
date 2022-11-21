@@ -6,16 +6,19 @@ import dev.architectury.event.EventFactory;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
 
+import java.lang.invoke.MethodHandles;
 import java.util.function.Consumer;
 
 public class RankEvent {
     public static final Event<Consumer<RanksReloadedEvent>> RELOADED = EventFactory.createConsumerLoop();
     public static final Event<Consumer<RankCreatedEvent>> CREATED = EventFactory.createConsumerLoop();
     public static final Event<Consumer<RankDeletedEvent>> DELETED = EventFactory.createConsumerLoop();
-    public static final Event<Consumer<RankAddPlayerEvent>> ADD_PLAYER = EventFactory.createConsumerLoop();
-    public static final Event<Consumer<RankRemovePlayerEvent>> REMOVE_PLAYER = EventFactory.createConsumerLoop();
+    public static final Event<Consumer<PlayerAddedToRankEvent>> ADD_PLAYER = EventFactory.createConsumerLoop();
+    public static final Event<Consumer<PlayerRemovedFromRankEvent>> REMOVE_PLAYER = EventFactory.createConsumerLoop();
+    public static final Event<Consumer<PermissionNodeChangedEvent>> PERMISSION_CHANGED = EventFactory.createConsumerLoop();
+    public static final Event<Consumer<ConditionChangedEvent>> CONDITION_CHANGED = EventFactory.createConsumerLoop();
 
-    private RankManager manager;
+    private final RankManager manager;
     private final Rank rank;
 
     public RankEvent(RankManager manager, Rank rank) {
