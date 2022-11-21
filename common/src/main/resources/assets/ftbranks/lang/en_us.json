@@ -1,0 +1,15 @@
+{
+  "ftbranks.rank_created": "Rank '%s' created",
+  "ftbranks.rank_deleted": "Rank '%s' deleted",
+  "ftbranks.player_added": "Player '%s' added to Rank '%s'",
+  "ftbranks.player_removed": "Player '%s' removed from Rank '%s'",
+  "ftbranks.node_added": "Permission node '%s'='%s' added to Rank '%s'",
+  "ftbranks.node_removed": "Permission node '%s' removed from Rank '%s'",
+  "ftbranks.list_ranks_of": "Ranks added to player '%s':",
+  "ftbranks.list_players_with": "Ranks added to player '%s':",
+  "ftbranks.reload": "Ranks reloaded from file!",
+  "ftbranks.refresh_readme": "Ranks README refreshed!",
+  "ftbranks.unknown_rank": "Unknown rank: '%s'",
+  "ftbranks.rank_taken": "Rank '%s' is already taken!",
+  "ftbranks.ranks": "Ranks:"
+}
