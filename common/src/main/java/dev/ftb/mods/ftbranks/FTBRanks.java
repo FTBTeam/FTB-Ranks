@@ -4,7 +4,10 @@ import dev.architectury.event.events.common.ChatEvent;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
+import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
+import net.minecraft.commands.synchronization.ArgumentTypes;
+import net.minecraft.commands.synchronization.EmptyArgumentSerializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,5 +28,7 @@ public class FTBRanks {
 		CommandRegistrationEvent.EVENT.register(FTBRanksCommands::register);
 		// TODO: Register with LOWEST priority on forge
 		ChatEvent.SERVER.register(FTBRanksAPIImpl::serverChat);
+
+		ArgumentTypes.register("ftbranks:rank", RankArgumentType.class, new RankArgumentType.Serializer());
 	}
 }
