@@ -5,10 +5,7 @@ import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import dev.ftb.mods.ftbranks.api.RankManager;
-import dev.ftb.mods.ftbranks.api.event.RankAddPlayerEvent;
-import dev.ftb.mods.ftbranks.api.event.RankDeletedEvent;
-import dev.ftb.mods.ftbranks.api.event.RankEvent;
-import dev.ftb.mods.ftbranks.api.event.RankRemovePlayerEvent;
+import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 
 import java.time.Instant;
@@ -72,8 +69,20 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public void setPermission(String node, PermissionValue value) {
-		permissions.put(node, value);
-		manager.saveRanks();
+		if (node.equals("condition")) {
+			throw new IllegalArgumentException("use '/ftbranks condition' to set conditions");
+		}
+
+		PermissionValue oldValue = getPermission(node);
+		if (!oldValue.equals(value)) {
+			if (value != null) {
+				permissions.put(node, value);
+			} else {
+				permissions.remove(node);
+			}
+			RankEvent.PERMISSION_CHANGED.invoker().accept(new PermissionNodeChangedEvent(manager, this, node, oldValue, value));
+			manager.saveRanks();
+		}
 	}
 
 	@Override
@@ -87,13 +96,21 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
+	public void setCondition(RankCondition condition) {
+		RankCondition oldCondition = this.condition;
+		this.condition = condition;
+		RankEvent.CONDITION_CHANGED.invoker().accept(new ConditionChangedEvent(manager, this, oldCondition, condition));
+		manager.saveRanks();
+	}
+
+	@Override
 	public boolean add(GameProfile profile) {
 		PlayerRankData data = manager.getPlayerData(profile);
 
 		if (!data.added.containsKey(this)) {
 			data.added.put(this, Instant.now());
 			manager.savePlayers();
-			RankEvent.ADD_PLAYER.invoker().accept(new RankAddPlayerEvent(manager, this, profile));
+			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, profile));
 			return true;
 		}
 
@@ -105,7 +122,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		PlayerRankData data = manager.getPlayerData(profile);
 
 		if (data.added.remove(this) != null) {
-			RankEvent.REMOVE_PLAYER.invoker().accept(new RankRemovePlayerEvent(manager,this, profile));
+			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, profile));
 			manager.savePlayers();
 			return true;
 		}

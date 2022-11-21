@@ -157,6 +157,8 @@ public class RankManagerImpl implements RankManager {
 		deleteRank(id);
 		RankImpl r = new RankImpl(this, id);
 		ranks.put(id, r);
+		sortedRanks = new ArrayList<>(ranks.values());
+		sortedRanks.sort(null);
 		saveRanks();
 		RankEvent.CREATED.invoker().accept(new RankCreatedEvent(this, r));
 		return r;
@@ -182,6 +184,9 @@ public class RankManagerImpl implements RankManager {
 			}
 
 			ranks.remove(id);
+
+			sortedRanks = new ArrayList<>(ranks.values());
+			sortedRanks.sort(null);
 
 			RankEvent.DELETED.invoker().accept(new RankDeletedEvent(this, r));
 			saveRanks();
@@ -215,15 +220,17 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public RankCondition createCondition(Rank rank, @Nullable Tag tag) throws Exception {
+		SNBTCompoundTag compoundTag = new SNBTCompoundTag();
 		if (tag instanceof StringTag) {
-			SNBTCompoundTag tag1 = new SNBTCompoundTag();
-			tag1.put("type", tag);
-			return conditions.get(tag.getAsString()).create(rank, tag1);
-		} else if (tag instanceof SNBTCompoundTag) {
-			return conditions.get(((SNBTCompoundTag) tag).getString("type")).create(rank, (SNBTCompoundTag) tag);
+			compoundTag.putString("type", tag.getAsString());
+		} else if (tag instanceof SNBTCompoundTag c) {
+			compoundTag = c;
 		}
-
-		throw new IllegalArgumentException("Can't create condition from tag " + tag);
+		String key = compoundTag.getString("type");
+		if (!conditions.containsKey(key)) {
+			throw new IllegalArgumentException("Can't create condition from tag " + tag);
+		}
+		return conditions.get(key).create(rank, compoundTag);
 	}
 
 	@Override
