@@ -11,5 +11,10 @@
   "ftbranks.refresh_readme": "Ranks README refreshed!",
   "ftbranks.unknown_rank": "Unknown rank: '%s'",
   "ftbranks.rank_taken": "Rank '%s' is already taken!",
-  "ftbranks.ranks": "Ranks:"
+  "ftbranks.ranks": "Ranks:",
+  "ftbranks.show_rank.header": "Rank ID: %s, Rank Name: %s, Power: %d",
+  "ftbranks.show_rank.condition": "Condition: %s",
+  "ftbranks.show_rank.condition.default": "(none: players must be added)",
+  "ftbranks.show_rank.nodes": "Permission nodes:",
+  "ftbranks.show_rank.node": "- %s: %s"
 }
