@@ -9,8 +9,7 @@ import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 
 import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author LatvianModder
@@ -133,5 +132,13 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	@Override
 	public int compareTo(RankImpl o) {
 		return o.getPower() - getPower();
+	}
+
+	@Override
+	public Collection<String> getPermissions() {
+		Set<String> nodes = new HashSet<>(permissions.keySet());
+		nodes.remove("name");
+		nodes.remove("power");
+		return nodes;
 	}
 }

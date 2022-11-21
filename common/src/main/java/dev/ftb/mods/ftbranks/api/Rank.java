@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 
 /**
  * @author LatvianModder
@@ -36,4 +37,6 @@ public interface Rank {
 	boolean add(GameProfile profile);
 
 	boolean remove(GameProfile profile);
+
+	Collection<String> getPermissions();
 }
