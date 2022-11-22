@@ -31,7 +31,7 @@ public class RankArgumentType implements ArgumentType<Rank> {
     private final Supplier<Set<String>> knownRanks;
 
     private RankArgumentType() {
-        knownRanks = Suppliers.memoize(() -> FTBRanksAPI.INSTANCE.getManager().getAllRanks().stream().map(Rank::getId).collect(Collectors.toSet()));
+        knownRanks = () -> FTBRanksAPI.INSTANCE.getManager().getAllRanks().stream().map(Rank::getId).collect(Collectors.toSet());
     }
 
     private RankArgumentType(Collection<String> known) {
