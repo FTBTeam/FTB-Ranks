@@ -24,6 +24,7 @@
 		"ftblibrary": ">=1801.3.5-build.98"
 	},
 	"mixins": [
-		"ftbranks-common.mixins.json"
+		"ftbranks-common.mixins.json",
+		"ftbranks-fabric.mixins.json"
 	]
 }

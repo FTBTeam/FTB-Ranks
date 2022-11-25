@@ -5,6 +5,7 @@ import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftblibrary.snbt.config.ConfigUtil;
 import dev.ftb.mods.ftbranks.FTBRanks;
+import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.RankCreatedEvent;
 import dev.ftb.mods.ftbranks.api.event.RankDeletedEvent;
@@ -25,16 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
 
@@ -297,20 +289,19 @@ public class RankManagerImpl implements RankManager {
 				RankImpl memberRank = new RankImpl(this, "member");
 				memberRank.setPermission("name", StringPermissionValue.of("Member"));
 				memberRank.setPermission("power", NumberPermissionValue.of(1));
-				memberRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<{name}>"));
 				memberRank.condition = AlwaysActiveCondition.INSTANCE;
 				ranks.put("member", memberRank);
 
 				RankImpl vipRank = new RankImpl(this, "vip");
 				vipRank.setPermission("name", StringPermissionValue.of("VIP"));
 				vipRank.setPermission("power", NumberPermissionValue.of(50));
-				vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&bVIP {name}&r>"));
+				vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&bVIP {name}"));
 				ranks.put("vip", vipRank);
 
 				RankImpl adminRank = new RankImpl(this, "admin");
 				adminRank.setPermission("name", StringPermissionValue.of("Admin"));
 				adminRank.setPermission("power", NumberPermissionValue.of(1000));
-				adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("<&2{name}&r>"));
+				adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&2{name}"));
 				adminRank.condition = new OPCondition();
 				ranks.put("admin", adminRank);
 
@@ -419,6 +410,8 @@ public class RankManagerImpl implements RankManager {
 		sortedRanks.sort(null);
 
 		RankEvent.RELOADED.invoker().accept(new RanksReloadedEvent(FTBRanksAPI.INSTANCE.getManager()));
+
+		PlayerNameFormatting.refreshPlayerNames();
 
 		FTBRanks.LOGGER.info("Loaded " + ranks.size() + " ranks");
 	}
@@ -541,5 +534,31 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		return StringPermissionValue.of(v.toString());
+	}
+
+	/**
+	 * Go through all ranks and look for old-style (pre 1.19) name_format strings. Convert "<...{name}..[&r]>"
+	 * to simply "...{name}...".  Since rank name formatting is now applied to the player's display name, and
+	 * not inserted into chat, which isn't really an option in 1.19+.
+	 */
+	public void migrateOldNameFormats() {
+		boolean[] changesMade = new boolean[]{false};
+		ranks.forEach((name, rank) -> {
+			String format = rank.getPermission("ftbranks.name_format").asString().orElse("");
+			if (!format.isEmpty()) {
+				String newFormat = format
+						.replaceAll("^<","")
+						.replaceAll("(&r)?>$", "");
+				if (!format.equals(newFormat)) {
+					rank.setPermission("ftbranks.name_format", StringPermissionValue.of(newFormat));
+					changesMade[0] = true;
+					FTBRanks.LOGGER.info("migrated old ftbranks.name_format node for rank {}: '{}' -> '{}'", rank, format, newFormat);
+				}
+			}
+		});
+		if (changesMade[0]) {
+			saveRanks();
+			saveRanksNow();
+		}
 	}
 }

@@ -23,8 +23,6 @@ public class FTBRanks {
 		LifecycleEvent.SERVER_LEVEL_SAVE.register(FTBRanksAPIImpl::worldSaved);
 		LifecycleEvent.SERVER_STARTING.register(FTBRanksAPIImpl::serverStarting);
 		CommandRegistrationEvent.EVENT.register(FTBRanksCommands::register);
-		// TODO: Register with LOWEST priority on forge
-		// FIXME: add back by syncing the ranks.snbt file to clients so they can format the text on the client.
-		ChatEvent.RECEIVED.register(FTBRanksAPIImpl::serverChat);
+		ChatEvent.RECEIVED.register(FTBRanksAPIImpl::chatReceived);
 	}
 }

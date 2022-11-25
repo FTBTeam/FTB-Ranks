@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.impl;
 
 import com.mojang.authlib.GameProfile;
+import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
@@ -80,6 +81,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 				permissions.remove(node);
 			}
 			RankEvent.PERMISSION_CHANGED.invoker().accept(new PermissionNodeChangedEvent(manager, this, node, oldValue, value));
+			if (node.equals("ftbranks.name_format")) {
+				PlayerNameFormatting.refreshPlayerNames();
+			}
 			manager.saveRanks();
 		}
 	}
@@ -99,6 +103,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		RankCondition oldCondition = this.condition;
 		this.condition = condition;
 		RankEvent.CONDITION_CHANGED.invoker().accept(new ConditionChangedEvent(manager, this, oldCondition, condition));
+		PlayerNameFormatting.refreshPlayerNames();
 		manager.saveRanks();
 	}
 
@@ -110,6 +115,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			data.added.put(this, Instant.now());
 			manager.savePlayers();
 			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, profile));
+			PlayerNameFormatting.refreshPlayerNames();
 			return true;
 		}
 
@@ -121,8 +127,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		PlayerRankData data = manager.getPlayerData(profile);
 
 		if (data.added.remove(this) != null) {
-			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, profile));
 			manager.savePlayers();
+			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, profile));
+			PlayerNameFormatting.refreshPlayerNames();
 			return true;
 		}
 
