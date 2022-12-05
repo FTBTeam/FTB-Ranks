@@ -21,7 +21,7 @@
 		"fabric": "*",
 		"minecraft": "~1.18.2",
 		"architectury": ">=3.2.52",
-		"ftblibrary": ">=1801.3.5-build.98"
+		"ftblibrary": ">=1802.3.8-build.161"
 	},
 	"mixins": [
 		"ftbranks-common.mixins.json"
