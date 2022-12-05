@@ -1,5 +1,6 @@
 package dev.ftb.mods.ftbranks;
 
+import com.google.common.base.Strings;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -15,7 +16,6 @@ import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import dev.ftb.mods.ftbranks.impl.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.StringPermissionValue;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
-import joptsimple.internal.Strings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -257,7 +257,7 @@ public class FTBRanksCommands {
 	}
 
 	private static int showRank(CommandSourceStack source, Rank rank) {
-		source.sendSuccess(new TextComponent(Strings.repeat('=', 50)).withStyle(ChatFormatting.GREEN), false);
+		source.sendSuccess(new TextComponent(Strings.repeat("=", 50)).withStyle(ChatFormatting.GREEN), false);
 
 		source.sendSuccess(new TranslatableComponent("ftbranks.show_rank.header", col(rank.getId(), ChatFormatting.WHITE), col(rank.getName(), ChatFormatting.WHITE), col(Integer.toString(rank.getPower()), ChatFormatting.WHITE)).withStyle(ChatFormatting.YELLOW), false);
 
