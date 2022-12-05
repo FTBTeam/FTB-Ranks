@@ -1,6 +1,5 @@
 package dev.ftb.mods.ftbranks;
 
-import com.google.common.base.Strings;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;

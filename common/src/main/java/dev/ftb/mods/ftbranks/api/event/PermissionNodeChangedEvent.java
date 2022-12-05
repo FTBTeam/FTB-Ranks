@@ -3,8 +3,7 @@ package dev.ftb.mods.ftbranks.api.event;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class PermissionNodeChangedEvent extends RankEvent {
     private final String node;
