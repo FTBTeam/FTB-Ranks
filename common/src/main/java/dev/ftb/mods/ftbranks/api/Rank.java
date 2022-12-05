@@ -2,6 +2,9 @@ package dev.ftb.mods.ftbranks.api;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author LatvianModder
@@ -15,11 +18,13 @@ public interface Rank {
 
 	int getPower();
 
-	void setPermission(String node, PermissionValue value);
+	void setPermission(String node, @Nullable PermissionValue value);
 
 	PermissionValue getPermission(String node);
 
 	RankCondition getCondition();
+
+	void setCondition(RankCondition condition);
 
 	default boolean isActive(ServerPlayer player) {
 		return getCondition().isRankActive(player);
@@ -32,4 +37,6 @@ public interface Rank {
 	boolean add(GameProfile profile);
 
 	boolean remove(GameProfile profile);
+
+	Collection<String> getPermissions();
 }
