@@ -257,7 +257,7 @@ public class FTBRanksCommands {
 	}
 
 	private static int showRank(CommandSourceStack source, Rank rank) {
-		source.sendSuccess(new TextComponent(Strings.repeat("=", 50)).withStyle(ChatFormatting.GREEN), false);
+		source.sendSuccess(new TextComponent("=".repeat(50)).withStyle(ChatFormatting.GREEN), false);
 
 		source.sendSuccess(new TranslatableComponent("ftbranks.show_rank.header", col(rank.getId(), ChatFormatting.WHITE), col(rank.getName(), ChatFormatting.WHITE), col(Integer.toString(rank.getPower()), ChatFormatting.WHITE)).withStyle(ChatFormatting.YELLOW), false);
 
