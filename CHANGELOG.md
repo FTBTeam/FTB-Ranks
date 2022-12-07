@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+[1902.1.13]
+
+### Fixed
+* Made rank-based chat text colouring (using `ftbranks.chat_text.*` nodes in `ranks.snbt`) work correctly on Forge and Fabric
+* FTB Ranks is no longer incorrectly marked as a server-only mod
+  * As of the previous release, it is also required on the client (to support Tab-completion for ranks in commands)
+
 [1902.1.12]
 
 ### Added
