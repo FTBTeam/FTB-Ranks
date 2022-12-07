@@ -1,6 +1,5 @@
 package dev.ftb.mods.ftbranks;
 
-import dev.architectury.event.events.common.ChatEvent;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
@@ -23,6 +22,5 @@ public class FTBRanks {
 		LifecycleEvent.SERVER_LEVEL_SAVE.register(FTBRanksAPIImpl::worldSaved);
 		LifecycleEvent.SERVER_STARTING.register(FTBRanksAPIImpl::serverStarting);
 		CommandRegistrationEvent.EVENT.register(FTBRanksCommands::register);
-		ChatEvent.RECEIVED.register(FTBRanksAPIImpl::chatReceived);
 	}
 }
