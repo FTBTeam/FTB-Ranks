@@ -28,7 +28,5 @@ public class FTBRanks {
 		CommandRegistrationEvent.EVENT.register(FTBRanksCommands::register);
 		// TODO: Register with LOWEST priority on forge
 		ChatEvent.SERVER.register(FTBRanksAPIImpl::serverChat);
-
-		ArgumentTypes.register("ftbranks:rank", RankArgumentType.class, new RankArgumentType.Serializer());
 	}
 }
