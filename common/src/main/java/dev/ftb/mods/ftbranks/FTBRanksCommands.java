@@ -18,7 +18,6 @@ import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import dev.ftb.mods.ftbranks.impl.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.StringPermissionValue;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
-import joptsimple.internal.Strings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -284,14 +283,14 @@ public class FTBRanksCommands {
 	private static int showRank(CommandSourceStack source, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
 
-		source.sendSuccess(Component.literal(String.format(Strings.repeat('=', 50))).withStyle(ChatFormatting.GREEN), false);
+		source.sendSuccess(Component.literal("=".repeat(50)).withStyle(ChatFormatting.GREEN), false);
 
 		source.sendSuccess(Component.literal(String.format("Rank ID: %s, Rank Name: %s, Power: %d", rank.getId(), rank.getName(), rank.getPower())).withStyle(ChatFormatting.YELLOW), false);
 
 		String condStr = rank.getCondition().asString();
 		Component c = condStr.isEmpty() ?
 				Component.literal("(none: players must be added)").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) : Component.literal(condStr);
-		source.sendSuccess(Component.translatable("Condition: %s", c).withStyle(ChatFormatting.YELLOW), false);
+		source.sendSuccess(Component.literal("Condition: " + c).withStyle(ChatFormatting.YELLOW), false);
 
 		source.sendSuccess(Component.literal("Permission nodes:").withStyle(ChatFormatting.YELLOW), false);
 		rank.getPermissions().stream().sorted().forEach(node ->
