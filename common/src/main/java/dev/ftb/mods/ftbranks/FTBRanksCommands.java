@@ -290,7 +290,7 @@ public class FTBRanksCommands {
 		String condStr = rank.getCondition().asString();
 		Component c = condStr.isEmpty() ?
 				Component.literal("(none: players must be added)").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) : Component.literal(condStr);
-		source.sendSuccess(Component.literal("Condition: " + c).withStyle(ChatFormatting.YELLOW), false);
+		source.sendSuccess(Component.literal("Condition: ").append(c).withStyle(ChatFormatting.YELLOW), false);
 
 		source.sendSuccess(Component.literal("Permission nodes:").withStyle(ChatFormatting.YELLOW), false);
 		rank.getPermissions().stream().sorted().forEach(node ->
