@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,6 +26,9 @@ public class PlaytimeCondition implements RankCondition {
 	public PlaytimeCondition(SNBTCompoundTag tag) {
 		time = tag.getInt("time");
 
+		if (!tag.contains("time_unit")) {
+			FTBRanks.LOGGER.warn("missing 'time_unit' field in playtime condition - assuming 'ticks'");
+		}
 		switch (tag.getString("time_unit")) {
 			case "seconds" -> timeUnit = SECONDS;
 			case "minutes" -> timeUnit = MINUTES;
