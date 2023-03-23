@@ -1,7 +1,9 @@
 package dev.ftb.mods.ftbranks.fabric;
 
+import dev.ftb.mods.ftblibrary.fabric.PlayerDisplayNameCallback;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.MessageDecorator;
+import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.message.v1.ServerMessageDecoratorEvent;
 import net.minecraft.network.chat.MutableComponent;
@@ -22,5 +24,7 @@ public class FTBRanksFabric implements ModInitializer {
 			}
 			return CompletableFuture.completedFuture(message);
 		});
+
+		PlayerDisplayNameCallback.EVENT.register(PlayerNameFormatting::formatPlayerName);
 	}
 }

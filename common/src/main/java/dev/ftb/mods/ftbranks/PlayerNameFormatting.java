@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks;
 
-import dev.architectury.injectables.annotations.ExpectPlatform;
+import dev.architectury.utils.GameInstance;
+import dev.ftb.mods.ftblibrary.util.PlayerDisplayNameUtil;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import dev.ftb.mods.ftbranks.impl.TextComponentParser;
@@ -8,6 +9,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -39,8 +41,10 @@ public class PlayerNameFormatting {
         }
     }
 
-    @ExpectPlatform
     public static void refreshPlayerNames() {
-        throw new AssertionError();
+        MinecraftServer server = GameInstance.getServer();
+        if (server != null) {
+            server.getPlayerList().getPlayers().forEach(PlayerDisplayNameUtil::refreshDisplayName);
+        }
     }
 }

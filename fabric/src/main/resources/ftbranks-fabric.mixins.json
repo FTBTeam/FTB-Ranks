@@ -3,7 +3,6 @@
 	"package": "dev.ftb.mods.ftbranks.core.mixin.fabric",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"PlayerMixin"
 	],
 	"client": [
 	],
