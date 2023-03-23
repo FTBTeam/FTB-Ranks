@@ -110,6 +110,12 @@ public class FTBRanksCommands {
 										)
 								)
 						)
+						.then(Commands.literal("list")
+								.then(Commands.argument("rank", StringArgumentType.word())
+										.suggests((context, builder) -> suggestRanks(builder))
+										.executes(context -> listNodes(context.getSource(), StringArgumentType.getString(context, "rank")))
+								)
+						)
 				)
 				.then(Commands.literal("condition")
 						.then(Commands.argument("rank", StringArgumentType.word())
@@ -228,6 +234,7 @@ public class FTBRanksCommands {
 
 		return 1;
 	}
+
 	private static int listPlayersWith(CommandSourceStack source, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
 
@@ -237,6 +244,24 @@ public class FTBRanksCommands {
 			if (rank.isActive(player)) {
 				source.sendSuccess(Component.literal("- ").withStyle(ChatFormatting.YELLOW).append(player.getDisplayName()), false);
 			}
+		}
+
+		return 1;
+	}
+
+	private static int listNodes(CommandSourceStack source, String rankName) throws CommandSyntaxException {
+		Rank rank = getRank(rankName);
+
+		Collection<String> nodes = rank.getPermissions();
+		if (nodes.isEmpty()) {
+			source.sendSuccess(Component.literal(String.format("No permission nodes in rank '%s'", rankName)).withStyle(ChatFormatting.GOLD), false);
+		} else {
+			source.sendSuccess(Component.literal(String.format("%d permission node(s) in rank '%s':", nodes.size(), rankName)).withStyle(ChatFormatting.GREEN), false);
+			source.sendSuccess(Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
+			nodes.forEach(node -> {
+				source.sendSuccess(Component.literal(String.format("%s = %s", node, rank.getPermission(node))).withStyle(ChatFormatting.YELLOW), false);
+			});
+			source.sendSuccess(Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
 		}
 
 		return 1;
