@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+[1902.1.15]
+
+### Added
+* Some backend code improvements for Fabric, related to player display name processing
+  * Now using a custom Fabric event in FTB Library for better inter-mod compatibility with upcoming Fabric version of FTB Essentials
+
 [1902.1.14]
 
 ### Fixed
