@@ -20,8 +20,8 @@
 	"depends": {
 		"fabric": "*",
 		"minecraft": "~1.19",
-		"architectury": ">=3.2.52",
-		"ftblibrary": ">=1801.3.5-build.98"
+		"architectury": ">=6.3.49",
+		"ftblibrary": ">=1902.3.16-build.191"
 	},
 	"mixins": [
 		"ftbranks-common.mixins.json",
