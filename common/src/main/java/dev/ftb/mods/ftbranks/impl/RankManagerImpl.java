@@ -364,6 +364,8 @@ public class RankManagerImpl implements RankManager {
 			if (tempRanks.isEmpty()) {
 				FTBRanks.LOGGER.warn("No ranks found!");
 			}
+		} else {
+			throw new RuntimeException("ranks.snbt failed to load! check your server log for errors");
 		}
 
 		SNBTCompoundTag playerFileTag = SNBT.read(playerFile);
@@ -401,6 +403,8 @@ public class RankManagerImpl implements RankManager {
 
 				tempPlayerData.put(data.uuid, data);
 			}
+		} else {
+			throw new RuntimeException("players.snbt failed to load! check your server log for errors");
 		}
 
 		ranks = new LinkedHashMap<>(tempRanks);
