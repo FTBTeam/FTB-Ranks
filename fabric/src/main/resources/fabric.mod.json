@@ -24,7 +24,6 @@
 		"ftblibrary": ">=1902.3.16-build.191"
 	},
 	"mixins": [
-		"ftbranks-common.mixins.json",
-		"ftbranks-fabric.mixins.json"
+		"ftbranks-common.mixins.json"
 	]
 }
