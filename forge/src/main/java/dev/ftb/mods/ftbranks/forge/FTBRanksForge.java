@@ -39,11 +39,9 @@ public class FTBRanksForge {
 	}
 
 	private void serverChat(ServerChatEvent event) {
-		if (event.canChangeMessage()) {
-			MutableComponent text = event.getMessage().copy();
-			if (MessageDecorator.decorateMessage(event.getPlayer(), text)) {
-				event.setMessage(text);
-			}
+		MutableComponent text = event.getMessage().copy();
+		if (MessageDecorator.decorateMessage(event.getPlayer(), text)) {
+			event.setMessage(text);
 		}
 	}
 

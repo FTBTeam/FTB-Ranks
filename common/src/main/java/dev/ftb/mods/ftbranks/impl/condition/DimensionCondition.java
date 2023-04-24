@@ -3,6 +3,7 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +16,7 @@ public class DimensionCondition implements RankCondition {
 	public final ResourceKey<Level> dimension;
 
 	public DimensionCondition(SNBTCompoundTag tag) {
-		dimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(tag.getString("dimension")));
+		dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("dimension")));
 	}
 
 	@Override
