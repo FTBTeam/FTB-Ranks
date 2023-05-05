@@ -1,4 +1,4 @@
-package dev.ftb.mods.ftbranks.impl;
+package dev.ftb.mods.ftbranks.impl.decorate;
 
 import it.unimi.dsi.fastutil.chars.Char2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;

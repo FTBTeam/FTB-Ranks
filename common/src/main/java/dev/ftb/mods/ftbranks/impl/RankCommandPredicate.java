@@ -1,7 +1,6 @@
 package dev.ftb.mods.ftbranks.impl;
 
 import com.mojang.brigadier.tree.CommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,32 +12,29 @@ import java.util.function.Supplier;
  * @author LatvianModder
  */
 public class RankCommandPredicate implements Predicate<CommandSourceStack> {
-	public final CommandNode<CommandSourceStack> command;
-	public final Predicate<CommandSourceStack> original;
-	public final String node;
-	public final boolean literal;
-	public Supplier<RankCommandPredicate> redirect;
+	private final Predicate<CommandSourceStack> original;
+	private final String nodeName;
 
-	public RankCommandPredicate(CommandNode<CommandSourceStack> c, String n) {
-		command = c;
-		original = command.getRequirement();
-		node = n;
-		literal = c instanceof LiteralCommandNode;
-		redirect = null;
+	private Supplier<RankCommandPredicate> redirect;
+
+	public RankCommandPredicate(CommandNode<CommandSourceStack> commandNode, String nodeName) {
+		this.original = commandNode.getRequirement();
+		this.nodeName = nodeName;
+		this.redirect = null;
 	}
 
-	public String getNode() {
-		if (redirect == null || redirect.get() == null) {
-			return node;
-		}
+	public String getNodeName() {
+		return redirect == null || redirect.get() == null ? nodeName : redirect.get().getNodeName();
+	}
 
-		return redirect.get().getNode();
+	public void setRedirect(Supplier<RankCommandPredicate> redirect) {
+		this.redirect = redirect;
 	}
 
 	@Override
 	public boolean test(CommandSourceStack source) {
-		if (source.getEntity() instanceof ServerPlayer) {
-			return FTBRanksAPI.getPermissionValue((ServerPlayer) source.getEntity(), getNode()).asBoolean().orElseGet(() -> original.test(source));
+		if (source.getEntity() instanceof ServerPlayer sp && FTBRanksAPI.manager() != null) {
+			return FTBRanksAPI.getPermissionValue(sp, getNodeName()).asBoolean().orElseGet(() -> original.test(source));
 		}
 
 		return original.test(source);

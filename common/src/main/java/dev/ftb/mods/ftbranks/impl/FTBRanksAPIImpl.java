@@ -1,10 +1,17 @@
 package dev.ftb.mods.ftbranks.impl;
 
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
+import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.RankManager;
+import dev.ftb.mods.ftbranks.api.event.RankEvent;
+import dev.ftb.mods.ftbranks.api.event.RegisterConditionsEvent;
 import dev.ftb.mods.ftbranks.impl.condition.*;
+import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import org.apache.commons.lang3.math.NumberUtils;
 
 /**
  * @author LatvianModder
@@ -13,17 +20,32 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static RankManagerImpl manager;
 
 	@Override
-	public RankManager getManager() {
+	protected RankManager getManager() {
 		return manager;
 	}
 
-	public static void serverAboutToStart(MinecraftServer server) {
+	@Override
+	public PermissionValue parsePermissionValue(String str) {
+		if (str == null) {
+			return null;
+		} else if (str.startsWith("\"") && str.endsWith("\"")) {
+			return StringPermissionValue.of(str.substring(1, str.length() - 1));
+		} else if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("false")) {
+			return BooleanPermissionValue.of(str.equalsIgnoreCase("true"));
+		} else if (NumberUtils.isCreatable(str)) {
+			return NumberPermissionValue.of(NumberUtils.createNumber(str));
+		} else {
+			return StringPermissionValue.of(str);
+		}
+	}
+
+	public static void serverStarting(MinecraftServer server) {
 		manager = new RankManagerImpl(server);
+
+		RankEvent.REGISTER_CONDITIONS.invoker().accept(new RegisterConditionsEvent((id, factory) -> manager.registerCondition(id, factory)));
 	}
 
 	public static void serverStarted(MinecraftServer server) {
-		// manager.initCommands();
-
 		try {
 			manager.load();
 		} catch (Exception ex) {
@@ -42,21 +64,21 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		}
 	}
 
-	public static void serverStarting(MinecraftServer server) {
-		manager.registerCondition("always_active", (rank, json) -> AlwaysActiveCondition.INSTANCE);
-		manager.registerCondition("rank_added", RankAddedCondition::new);
+	public static void registerConditions(RegisterConditionsEvent event) {
+		event.register("always_active", (rank, json) -> AlwaysActiveCondition.INSTANCE);
+		event.register("rank_added", RankAddedCondition::new);
 
-		manager.registerCondition("not", NotCondition::new);
-		manager.registerCondition("or", OrCondition::new);
-		manager.registerCondition("and", AndCondition::new);
-		manager.registerCondition("xor", XorCondition::new);
+		event.register("not", NotCondition::new);
+		event.register("or", OrCondition::new);
+		event.register("and", AndCondition::new);
+		event.register("xor", XorCondition::new);
 
-		manager.registerCondition("op", (rank, tag) -> new OPCondition());
-		manager.registerCondition("spawn", (rank, tag) -> new SpawnCondition());
-		manager.registerCondition("dimension", (rank, tag) -> new DimensionCondition(tag));
-		manager.registerCondition("playtime", (rank, tag) -> new PlaytimeCondition(tag));
-		manager.registerCondition("stat", (rank, tag) -> new StatCondition(tag));
-		manager.registerCondition("fake_player", (rank, tag) -> new FakePlayerCondition());
-		manager.registerCondition("creative_mode", (rank, tag) -> new CreativeModeCondition());
+		event.register("op", (rank, tag) -> new OPCondition());
+		event.register("spawn", (rank, tag) -> new SpawnCondition());
+		event.register("dimension", (rank, tag) -> new DimensionCondition(tag));
+		event.register("playtime", (rank, tag) -> new PlaytimeCondition(tag));
+		event.register("stat", (rank, tag) -> new StatCondition(tag));
+		event.register("fake_player", (rank, tag) -> new FakePlayerCondition());
+		event.register("creative_mode", (rank, tag) -> new CreativeModeCondition());
 	}
 }

@@ -2,6 +2,7 @@ package dev.ftb.mods.ftbranks;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
@@ -13,10 +14,7 @@ import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
-import dev.ftb.mods.ftbranks.impl.BooleanPermissionValue;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
-import dev.ftb.mods.ftbranks.impl.NumberPermissionValue;
-import dev.ftb.mods.ftbranks.impl.StringPermissionValue;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
@@ -28,7 +26,6 @@ import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -39,11 +36,15 @@ import java.util.concurrent.CompletableFuture;
  * @author LatvianModder
  */
 public class FTBRanksCommands {
-	public static final DynamicCommandExceptionType ERROR_UNKNOWN_RANK = new DynamicCommandExceptionType((object) -> Component.literal("Unknown rank: " + object.toString()));
+	public static final DynamicCommandExceptionType ERROR_UNKNOWN_RANK = new DynamicCommandExceptionType(
+			(object) -> Component.literal("Unknown rank: " + object.toString())
+	);
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
+		// source.getServer() *can* return null: https://github.com/FTBTeam/FTB-Mods-Issues/issues/766
+		//noinspection ConstantValue
 		dispatcher.register(Commands.literal("ftbranks")
-				.requires(source -> source.getServer().isSingleplayer() || source.hasPermission(2))
+				.requires(source -> source.getServer() != null && source.getServer().isSingleplayer() || source.hasPermission(2))
 				.then(Commands.literal("reload")
 						.executes(context -> reloadRanks(context.getSource()))
 				)
@@ -54,8 +55,10 @@ public class FTBRanksCommands {
 						.executes(context -> listAllRanks(context.getSource()))
 				)
 				.then(Commands.literal("create")
-						.then(Commands.argument("name", StringArgumentType.greedyString())
-								.executes(context -> createRank(context.getSource(), StringArgumentType.getString(context, "name")))
+						.then(Commands.argument("name", StringArgumentType.word())
+								.then(Commands.argument("power", IntegerArgumentType.integer(1))
+										.executes(context -> createRank(context.getSource(), StringArgumentType.getString(context, "name"), IntegerArgumentType.getInteger(context,"power"))))
+								.executes(context -> createRank(context.getSource(), StringArgumentType.getString(context, "name"), 1))
 						)
 				)
 				.then(Commands.literal("delete")
@@ -135,11 +138,14 @@ public class FTBRanksCommands {
 	}
 
 	private static CompletableFuture<Suggestions> suggestRanks(SuggestionsBuilder builder) {
-		return SharedSuggestionProvider.suggest(FTBRanksAPI.INSTANCE.getManager().getAllRanks().stream().map(Rank::getId), builder);
+		return SharedSuggestionProvider.suggest(FTBRanksAPI.manager().getAllRanks().stream().map(Rank::getId), builder);
 	}
 
 	private static String normalizeRankName(String name) {
-		return name.toLowerCase().replace("+", "_plus").replaceAll("[^a-z0-9_]", "_").replaceAll("_{2,}", "_");
+		return name.toLowerCase()
+				.replace("+", "_plus")
+				.replaceAll("[^a-z0-9_]", "_")
+				.replaceAll("_{2,}", "_");
 	}
 
 	private static int reloadRanks(CommandSourceStack source) {
@@ -180,7 +186,7 @@ public class FTBRanksCommands {
 		return 1;
 	}
 
-	private static int createRank(CommandSourceStack source, String name) {
+	private static int createRank(CommandSourceStack source, String name, int power) {
 		String id = normalizeRankName(name);
 
 		if (FTBRanksAPIImpl.manager.getRank(id).isPresent()) {
@@ -188,14 +194,14 @@ public class FTBRanksCommands {
 			return 0;
 		}
 
-		FTBRanksAPIImpl.manager.createRank(id, name);
+		FTBRanksAPIImpl.manager.createRank(id, name, power);
 		source.sendSuccess(Component.literal("Rank '" + id + "' created!"), false);
 		return 1;
 	}
 
 	private static int deleteRank(CommandSourceStack source, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
-		FTBRanksAPI.INSTANCE.getManager().deleteRank(rank.getId());
+		FTBRanksAPI.manager().deleteRank(rank.getId());
 		source.sendSuccess(Component.literal("Rank '" + rank.getName() + "' deleted!"), false);
 
 		return 1;
@@ -271,7 +277,7 @@ public class FTBRanksCommands {
 		Rank rank = getRank(rankName);
 
 		try {
-			rank.setPermission(node, strToPermissionValue(value));
+			rank.setPermission(node, PermissionValue.parse(value));
 			if (value != null) {
 				source.sendSuccess(Component.literal(String.format("Permission node '%s'='%s' added to rank '%s'", node, rank.getPermission(node), rank)), false);
 			} else {
@@ -292,9 +298,9 @@ public class FTBRanksCommands {
 			if (value.equals("default") || value.equals("\"\"")) {
 				condition = new DefaultCondition(rank);
 			} else if (value.startsWith("{") || value.contains(" ")) {
-				condition = FTBRanksAPI.INSTANCE.getManager().createCondition(rank, SNBT.readLines(Collections.singletonList(value)));
+				condition = FTBRanksAPI.manager().createCondition(rank, SNBT.readLines(Collections.singletonList(value)));
 			} else {
-				condition = FTBRanksAPI.INSTANCE.getManager().createCondition(rank, StringTag.valueOf(value));
+				condition = FTBRanksAPI.manager().createCondition(rank, StringTag.valueOf(value));
 			}
 			rank.setCondition(condition);
 			source.sendSuccess(Component.literal(String.format("Condition '%s' added to rank '%s'",  value, rank)), false);
@@ -325,21 +331,7 @@ public class FTBRanksCommands {
 		return 0;
 	}
 
-	private static PermissionValue strToPermissionValue(String str) {
-		if (str == null) {
-			return null;
-		} else if (str.startsWith("\"") && str.endsWith("\"")) {
-			return StringPermissionValue.of(str.substring(1, str.length() - 1));
-		} if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("false")) {
-			return BooleanPermissionValue.of(str.equalsIgnoreCase("true"));
-		} else if (NumberUtils.isCreatable(str)) {
-			return NumberPermissionValue.of(NumberUtils.createNumber(str));
-		} else {
-			return StringPermissionValue.of(str);
-		}
-	}
-
 	private static Rank getRank(String rankName) throws CommandSyntaxException {
-		return FTBRanksAPI.INSTANCE.getManager().getRank(rankName).orElseThrow(() -> ERROR_UNKNOWN_RANK.create(rankName));
+		return FTBRanksAPI.manager().getRank(rankName).orElseThrow(() -> ERROR_UNKNOWN_RANK.create(rankName));
 	}
 }

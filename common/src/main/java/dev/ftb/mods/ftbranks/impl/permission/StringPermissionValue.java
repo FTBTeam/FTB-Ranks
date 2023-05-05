@@ -1,4 +1,4 @@
-package dev.ftb.mods.ftbranks.impl;
+package dev.ftb.mods.ftbranks.impl.permission;
 
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 

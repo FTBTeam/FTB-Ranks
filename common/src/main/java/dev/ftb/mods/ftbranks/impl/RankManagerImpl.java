@@ -13,6 +13,9 @@ import dev.ftb.mods.ftbranks.api.event.RankEvent;
 import dev.ftb.mods.ftbranks.api.event.RanksReloadedEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
+import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.nbt.EndTag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.StringTag;
@@ -22,11 +25,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
 
@@ -35,68 +40,226 @@ import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
  */
 public class RankManagerImpl implements RankManager {
 	public static final LevelResource FOLDER_NAME = new LevelResource("serverconfig/ftbranks");
+	private static final Path DEFAULT_RANK_FILE = ConfigUtil.DEFAULT_CONFIG_DIR.resolve(MOD_ID).resolve("ranks.snbt");
 
-	public final MinecraftServer server;
+	private final MinecraftServer server;
+	private final Path directory;
+	private final Path rankFile;
+	private final Path playerFile;
 
-	private Path directory;
-	private Path rankFile;
-	private Path playerFile;
-
-	private final Path defaultRankFile = ConfigUtil.DEFAULT_CONFIG_DIR.resolve(MOD_ID).resolve("ranks.snbt");
-
-	boolean shouldSaveRanks;
-	boolean shouldSavePlayers;
+	private boolean shouldSaveRanks;
+	private boolean shouldSavePlayers;
 
 	private Map<String, RankImpl> ranks;
-	private List<RankImpl> sortedRanks;
-	private final Map<String, RankConditionFactory> conditions;
-	Map<UUID, PlayerRankData> playerData;
+	private final List<Rank> sortedRanks = new ArrayList<>();
+	private final Map<String, RankConditionFactory> conditions = new ConcurrentHashMap<>();
+	private Map<UUID, PlayerRankData> playerData;
 
-	public RankManagerImpl(MinecraftServer s) {
-		server = s;
-		conditions = new HashMap<>();
-	}
+	public RankManagerImpl(MinecraftServer server) {
+		this.server = server;
 
-	void load() throws Exception {
 		directory = server.getWorldPath(FOLDER_NAME);
-
-		if (Files.notExists(directory)) {
-			Files.createDirectories(directory);
-		}
-
 		rankFile = directory.resolve("ranks.snbt");
 		playerFile = directory.resolve("players.snbt");
+	}
 
-		Path oldRankFile = directory.resolve("ranks.json");
-		Path oldPlayerFile = directory.resolve("players.json");
-		boolean oldRankFileLoaded = false;
-		boolean oldPlayerFileLoaded = false;
+	public void markRanksDirty() {
+		shouldSaveRanks = true;
+	}
 
-		if (Files.exists(oldRankFile)) {
-			Files.move(oldRankFile, rankFile);
-			oldRankFileLoaded = true;
+	public void markPlayerDataDirty() {
+		shouldSavePlayers = true;
+	}
+
+	@Override
+	public Collection<Rank> getAllRanks() {
+		return sortedRanks;
+	}
+
+	@Override
+	public Optional<Rank> getRank(String id) {
+		return Optional.ofNullable(ranks.get(id));
+	}
+
+	@Override
+	public RankImpl createRank(String id) {
+		return createRank(id, "default", 1);
+	}
+
+	@Override
+	public RankImpl createRank(String id, String name, int power) {
+		deleteRank(id);
+		RankImpl rank = RankImpl.create(this, id, name, power);
+		ranks.put(id, rank);
+		rebuildSortedRanks();
+		markRanksDirty();
+		RankEvent.CREATED.invoker().accept(new RankCreatedEvent(this, rank));
+		return rank;
+	}
+
+	@Override
+	@Nullable
+	public RankImpl deleteRank(String id) {
+		RankImpl rank = ranks.get(id);
+
+		if (rank != null) {
+			for (PlayerRankData rankData : playerData.values()) {
+				if (rankData.removeRank(rank)) {
+					markPlayerDataDirty();
+				}
+			}
+
+			ranks.remove(id);
+
+			rebuildSortedRanks();
+
+			RankEvent.DELETED.invoker().accept(new RankDeletedEvent(this, rank));
+			markRanksDirty();
 		}
 
-		if (Files.exists(oldPlayerFile)) {
-			Files.move(oldPlayerFile, playerFile);
-			oldPlayerFileLoaded = true;
+		return rank;
+	}
+
+	@Override
+	public Set<Rank> getAddedRanks(GameProfile profile) {
+		return getOrCreatePlayerData(profile).addedRanks();
+	}
+
+	@Override
+	public RankCondition createCondition(Rank rank, @Nullable Tag tag) throws RankException {
+		SNBTCompoundTag compoundTag = new SNBTCompoundTag();
+		if (tag instanceof StringTag) {
+			compoundTag.putString("type", tag.getAsString());
+		} else if (tag instanceof SNBTCompoundTag c) {
+			compoundTag = c;
+		}
+		String key = compoundTag.getString("type");
+		if (!conditions.containsKey(key)) {
+			throw new IllegalArgumentException("Can't create condition from tag: '" + tag + "'");
+		}
+		return conditions.get(key).create(rank, compoundTag);
+	}
+
+	@Override
+	@Nonnull
+	public PermissionValue getPermissionValue(ServerPlayer player, String node) {
+		if (node.isEmpty() || sortedRanks.isEmpty()) {
+			return PermissionValue.MISSING;
 		}
 
-		if (oldRankFileLoaded || oldPlayerFileLoaded || Files.notExists(directory.resolve("README.txt"))) {
-			refreshReadme();
+		try {
+			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
+			return getPermissionValue(getOrCreatePlayerData(player.getGameProfile()), list, node);
+		} catch (Exception ex) {
+			FTBRanks.LOGGER.error("Error getting permission value for node " + node + "!");
+			ex.printStackTrace();
 		}
 
-		reload();
+		return PermissionValue.MISSING;
+	}
 
-		if (oldRankFileLoaded) {
-			saveRanks();
-			saveRanksNow();
+	@Override
+	public MinecraftServer getServer() {
+		return server;
+	}
+
+	private PermissionValue getPermissionValue(PlayerRankData data, List<Rank> ranks, String node) {
+		if (node.isEmpty()) {
+			return PermissionValue.MISSING;
 		}
 
-		if (oldPlayerFileLoaded) {
-			savePlayers();
+		PermissionValue value = data.getPermission(node);
+		if (!value.isEmpty()) {
+			return value;
+		}
+
+		for (Rank rank : ranks) {
+			PermissionValue value1 = rank.getPermission(node);
+			if (!value1.isEmpty()) {
+				return value1;
+			}
+		}
+
+		int i = node.lastIndexOf('.');
+		return i == -1 ? PermissionValue.MISSING : getPermissionValue(data, ranks, node.substring(0, i));
+	}
+
+	public void reload() throws Exception {
+		shouldSaveRanks = false;
+
+		if (Files.notExists(rankFile)) {
+			if (Files.exists(DEFAULT_RANK_FILE)) {
+				Files.copy(DEFAULT_RANK_FILE, rankFile);
+			} else {
+				createDefaultRanks();
+			}
+		}
+
+		if (Files.notExists(playerFile)) {
+			playerData = new HashMap<>();
+			markPlayerDataDirty();
 			savePlayersNow();
 		}
+
+		Map<String, RankImpl> tempRanks = new LinkedHashMap<>();
+		SNBTCompoundTag rankFileTag = SNBT.read(rankFile);
+		if (rankFileTag != null) {
+			for (String rankId : rankFileTag.getAllKeys()) {
+				try {
+					RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getCompound(rankId));
+					tempRanks.put(rank.getId(), rank);
+				} catch (RankException e) {
+					FTBRanks.LOGGER.error("Failed to read rank {} from SNBT: {}", rankId, e.getMessage());
+				}
+			}
+			if (tempRanks.isEmpty()) {
+				FTBRanks.LOGGER.warn("No ranks found!");
+			}
+		} else {
+			throw new RuntimeException("ranks.snbt failed to load! check your server log for errors");
+		}
+
+		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
+		SNBTCompoundTag playerFileTag = SNBT.read(playerFile);
+		if (playerFileTag != null) {
+			for (String key : playerFileTag.getAllKeys()) {
+				SNBTCompoundTag o = playerFileTag.getCompound(key);
+				UUID id = UUID.fromString(key);
+				PlayerRankData data = PlayerRankData.fromSNBT(this, id, o, tempRanks);
+				tempPlayerData.put(id, data);
+			}
+		} else {
+			throw new RuntimeException("players.snbt failed to load! check your server log for errors");
+		}
+
+		ranks = new LinkedHashMap<>(tempRanks);
+		playerData = new LinkedHashMap<>(tempPlayerData);
+
+		rebuildSortedRanks();
+
+		RankEvent.RELOADED.invoker().accept(new RanksReloadedEvent(FTBRanksAPI.manager()));
+
+		PlayerNameFormatting.refreshPlayerNames();
+
+		FTBRanks.LOGGER.info("Loaded " + ranks.size() + " ranks");
+	}
+
+	private void createDefaultRanks() {
+		ranks = new LinkedHashMap<>();
+
+		RankImpl memberRank = RankImpl.create(this, "member", "Member", 1, AlwaysActiveCondition.INSTANCE);
+		ranks.put("member", memberRank);
+
+		RankImpl vipRank = RankImpl.create(this, "vip", "VIP", 50);
+		vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&bVIP {name}"));
+		ranks.put("vip", vipRank);
+
+		RankImpl adminRank = RankImpl.create(this, "admin", "Admin", 1000, new OPCondition());
+		adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&2{name}"));
+		ranks.put("admin", adminRank);
+
+		markRanksDirty();
+		saveRanksNow();
 	}
 
 	public void refreshReadme() throws IOException {
@@ -110,419 +273,79 @@ public class RankManagerImpl implements RankManager {
 		lines.add("= All available command nodes =");
 		lines.add("command");
 
-		HashSet<String> set = new HashSet<>();
-
-		for (RankCommandPredicate predicate : FTBRanksCommandManager.INSTANCE.commands.values()) {
-			set.add(predicate.getNode());
-		}
-
-		List<String> commandList = new ArrayList<>(set);
-		commandList.sort(null);
+		List<String> commandList = FTBRanksCommandManager.INSTANCE.commandMap.values().stream()
+				.map(RankCommandPredicate::getNodeName)
+				.distinct()
+				.sorted()
+				.toList();
 		lines.addAll(commandList);
 
 		Files.write(directory.resolve("README.txt"), lines);
 	}
 
-	@Override
-	public void saveRanks() {
-		shouldSaveRanks = true;
+	private void rebuildSortedRanks() {
+		sortedRanks.clear();
+		sortedRanks.addAll(ranks.values().stream().sorted().toList());
 	}
 
-	@Override
-	public void savePlayers() {
-		shouldSavePlayers = true;
-	}
-
-	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public List<Rank> getAllRanks() {
-		return (List<Rank>) (List) sortedRanks;
-	}
-
-	@Override
-	public Optional<Rank> getRank(String id) {
-		return Optional.ofNullable(ranks.get(id));
-	}
-
-	@Override
-	public RankImpl createRank(String id) {
-		deleteRank(id);
-		RankImpl r = new RankImpl(this, id);
-		ranks.put(id, r);
-		sortedRanks = new ArrayList<>(ranks.values());
-		sortedRanks.sort(null);
-		saveRanks();
-		RankEvent.CREATED.invoker().accept(new RankCreatedEvent(this, r));
-		return r;
-	}
-
-	public RankImpl createRank(String id, String name) {
-		RankImpl rank = createRank(id);
-		rank.name = name;
-		saveRanks();
-		return rank;
-	}
-
-	@Override
-	@Nullable
-	public RankImpl deleteRank(String id) {
-		RankImpl r = ranks.get(id);
-
-		if (r != null) {
-			for (PlayerRankData rankData : playerData.values()) {
-				if (rankData.added.remove(r) != null) {
-					savePlayers();
-				}
-			}
-
-			ranks.remove(id);
-
-			sortedRanks = new ArrayList<>(ranks.values());
-			sortedRanks.sort(null);
-
-			RankEvent.DELETED.invoker().accept(new RankDeletedEvent(this, r));
-			saveRanks();
-		}
-
-		return r;
-	}
-
-	public PlayerRankData getPlayerData(GameProfile profile) {
+	PlayerRankData getOrCreatePlayerData(GameProfile profile) {
 		PlayerRankData data = playerData.get(profile.getId());
 
 		if (data == null) {
-			data = new PlayerRankData(this, profile.getId());
-			data.name = profile.getName();
-			playerData.put(data.uuid, data);
-			saveRanks();
+			data = new PlayerRankData(this, profile.getId(), profile.getName());
+			playerData.put(profile.getId(), data);
+			markRanksDirty();
 		}
 
 		return data;
 	}
 
-	@Override
-	public Set<Rank> getAddedRanks(GameProfile profile) {
-		return getPlayerData(profile).added.keySet();
-	}
-
-	@Override
-	public void registerCondition(String predicate, RankConditionFactory conditionFactory) {
-		conditions.put(predicate, conditionFactory);
-	}
-
-	@Override
-	public RankCondition createCondition(Rank rank, @Nullable Tag tag) throws Exception {
-		SNBTCompoundTag compoundTag = new SNBTCompoundTag();
-		if (tag instanceof StringTag) {
-			compoundTag.putString("type", tag.getAsString());
-		} else if (tag instanceof SNBTCompoundTag c) {
-			compoundTag = c;
-		}
-		String key = compoundTag.getString("type");
-		if (!conditions.containsKey(key)) {
-			throw new IllegalArgumentException("Can't create condition from tag " + tag);
-		}
-		return conditions.get(key).create(rank, compoundTag);
-	}
-
-	@Override
-	public PermissionValue getPermissionValue(ServerPlayer player, String node) {
-		if (node.isEmpty() || sortedRanks == null || sortedRanks.isEmpty()) {
-			return PermissionValue.DEFAULT;
-		}
-
-		try {
-			List<RankImpl> list = new ArrayList<>();
-
-			for (RankImpl rank : sortedRanks) {
-				if (rank.isActive(player)) {
-					list.add(rank);
-				}
-			}
-
-			return getPermissionValue(getPlayerData(player.getGameProfile()), list, node);
-		} catch (Exception ex) {
-			FTBRanks.LOGGER.error("Error getting permission value for node " + node + "!");
-			ex.printStackTrace();
-		}
-
-		return PermissionValue.DEFAULT;
-	}
-
-	@Override
-	public MinecraftServer getServer() {
-		return server;
-	}
-
-	private PermissionValue getPermissionValue(PlayerRankData data, List<RankImpl> ranks, String node) {
-		if (node.isEmpty()) {
-			return PermissionValue.DEFAULT;
-		}
-
-		PermissionValue pvalue = data.permissions.get(node);
-
-		if (pvalue != null) {
-			return pvalue;
-		}
-
-		for (RankImpl rank : ranks) {
-			PermissionValue value = rank.permissions.get(node);
-
-			if (value != null) {
-				return value;
-			}
-		}
-
-		int i = node.lastIndexOf('.');
-		return i == -1 ? PermissionValue.DEFAULT : getPermissionValue(data, ranks, node.substring(0, i));
-	}
-
-	public void reload() throws Exception {
-		shouldSaveRanks = false;
-
-		if (Files.notExists(rankFile)) {
-			if (Files.exists(defaultRankFile)) {
-				Files.copy(defaultRankFile, rankFile);
-			} else {
-				ranks = new LinkedHashMap<>();
-
-				RankImpl memberRank = new RankImpl(this, "member");
-				memberRank.setPermission("name", StringPermissionValue.of("Member"));
-				memberRank.setPermission("power", NumberPermissionValue.of(1));
-				memberRank.condition = AlwaysActiveCondition.INSTANCE;
-				ranks.put("member", memberRank);
-
-				RankImpl vipRank = new RankImpl(this, "vip");
-				vipRank.setPermission("name", StringPermissionValue.of("VIP"));
-				vipRank.setPermission("power", NumberPermissionValue.of(50));
-				vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&bVIP {name}"));
-				ranks.put("vip", vipRank);
-
-				RankImpl adminRank = new RankImpl(this, "admin");
-				adminRank.setPermission("name", StringPermissionValue.of("Admin"));
-				adminRank.setPermission("power", NumberPermissionValue.of(1000));
-				adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&2{name}"));
-				adminRank.condition = new OPCondition();
-				ranks.put("admin", adminRank);
-
-				saveRanks();
-				saveRanksNow();
-			}
-		}
-
-		if (Files.notExists(playerFile)) {
-			playerData = new HashMap<>();
-
-			savePlayers();
-			savePlayersNow();
-		}
-
-		LinkedHashMap<String, RankImpl> tempRanks = new LinkedHashMap<>();
-		LinkedHashMap<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
-
-		SNBTCompoundTag rankFileTag = SNBT.read(rankFile);
-
-		if (rankFileTag != null) {
-			for (String key : rankFileTag.getAllKeys()) {
-				RankImpl rank = new RankImpl(this, key);
-
-				SNBTCompoundTag o = rankFileTag.getCompound(key);
-				rank.name = o.getString("name");
-				rank.power = o.getInt("power");
-
-				if (o.contains("condition")) {
-					try {
-						rank.condition = createCondition(rank, o.get("condition"));
-					} catch (Exception ex) {
-						FTBRanks.LOGGER.error("Failed to parse condition for " + rank.id + ": " + ex);
-					}
-				}
-
-				o.remove("name");
-				o.remove("power");
-				o.remove("condition");
-
-				for (String pkey : o.getAllKeys()) {
-					while (pkey.endsWith(".*")) {
-						pkey = pkey.substring(0, pkey.length() - 2);
-						saveRanks();
-					}
-
-					if (!pkey.isEmpty()) {
-						rank.permissions.put(pkey, ofTag(o, pkey));
-					}
-				}
-
-				if (rank.name.isEmpty()) {
-					rank.name = rank.id;
-					saveRanks();
-				}
-
-				tempRanks.put(rank.id, rank);
-			}
-
-			if (tempRanks.isEmpty()) {
-				FTBRanks.LOGGER.warn("No ranks found!");
-			}
-		} else {
-			throw new RuntimeException("ranks.snbt failed to load! check your server log for errors");
-		}
-
-		SNBTCompoundTag playerFileTag = SNBT.read(playerFile);
-
-		if (playerFileTag != null) {
-			for (String key : playerFileTag.getAllKeys()) {
-				SNBTCompoundTag o = playerFileTag.getCompound(key);
-				PlayerRankData data = new PlayerRankData(this, UUID.fromString(key));
-				data.name = o.getString("name");
-
-				SNBTCompoundTag ranksTag = o.getCompound("ranks");
-
-				for (String rkey : ranksTag.getAllKeys()) {
-					RankImpl rank = tempRanks.get(rkey);
-
-					if (rank != null) {
-						data.added.put(rank, Instant.parse(ranksTag.getString(rkey)));
-					}
-				}
-
-				if (o.contains("permissions")) {
-					SNBTCompoundTag ptag = o.getCompound("permissions");
-
-					for (String pkey : ptag.getAllKeys()) {
-						while (pkey.endsWith(".*")) {
-							pkey = pkey.substring(0, pkey.length() - 2);
-							savePlayers();
-						}
-
-						if (!pkey.isEmpty()) {
-							data.permissions.put(key, ofTag(ptag, pkey));
-						}
-					}
-				}
-
-				tempPlayerData.put(data.uuid, data);
-			}
-		} else {
-			throw new RuntimeException("players.snbt failed to load! check your server log for errors");
-		}
-
-		ranks = new LinkedHashMap<>(tempRanks);
-		playerData = new LinkedHashMap<>(tempPlayerData);
-
-		sortedRanks = new ArrayList<>(ranks.values());
-		sortedRanks.sort(null);
-
-		RankEvent.RELOADED.invoker().accept(new RanksReloadedEvent(FTBRanksAPI.INSTANCE.getManager()));
-
-		PlayerNameFormatting.refreshPlayerNames();
-
-		FTBRanks.LOGGER.info("Loaded " + ranks.size() + " ranks");
-	}
-
-	public void saveRanksNow() {
-		if (!shouldSaveRanks) {
-			return;
-		}
-
-		shouldSaveRanks = false;
-
-		SNBTCompoundTag tag = new SNBTCompoundTag();
-
-		for (RankImpl rank : ranks.values()) {
-			SNBTCompoundTag o = new SNBTCompoundTag();
-			o.putString("name", rank.getName());
-			o.putInt("power", rank.getPower());
-
-			if (!rank.condition.isDefaultCondition()) {
-				if (rank.condition.isSimple()) {
-					o.putString("condition", rank.condition.getType());
-				} else {
-					SNBTCompoundTag c = new SNBTCompoundTag();
-					c.putString("type", rank.condition.getType());
-					rank.condition.save(c);
-					o.put("condition", c);
-				}
-			}
-
-			for (Map.Entry<String, PermissionValue> entry : rank.permissions.entrySet()) {
-				PermissionValue v = entry.getValue();
-
-				if (v.isDefaultValue()) {
-					o.putNull(entry.getKey());
-				} else if (v instanceof BooleanPermissionValue) {
-					o.putBoolean(entry.getKey(), ((BooleanPermissionValue) entry.getValue()).value);
-				} else if (v instanceof StringPermissionValue) {
-					o.putString(entry.getKey(), ((StringPermissionValue) entry.getValue()).value);
-				} else if (v instanceof NumberPermissionValue) {
-					o.putNumber(entry.getKey(), ((NumberPermissionValue) entry.getValue()).value);
-				} else {
-					o.putString(entry.getKey(), entry.getValue().asString().orElse(""));
-				}
-			}
-
-			tag.put(rank.id, o);
-		}
-
-		if (!SNBT.write(rankFile, tag)) {
-			FTBRanks.LOGGER.warn("Failed to save ranks.snbt!");
+	void registerCondition(String id, RankConditionFactory conditionFactory) {
+		if (conditions.putIfAbsent(id, conditionFactory) != null) {
+			FTBRanks.LOGGER.warn("condition {} already registered - ignoring attempt to overwrite", id);
 		}
 	}
 
-	public void savePlayersNow() {
-		if (!shouldSavePlayers) {
-			return;
+	void load() throws Exception {
+		if (Files.notExists(directory)) {
+			Files.createDirectories(directory);
 		}
 
-		shouldSavePlayers = false;
-
-		SNBTCompoundTag playerJson = new SNBTCompoundTag();
-
-		for (PlayerRankData data : playerData.values()) {
-			SNBTCompoundTag o = new SNBTCompoundTag();
-			o.putString("name", data.name);
-
-			SNBTCompoundTag r = new SNBTCompoundTag();
-
-			for (Map.Entry<Rank, Instant> entry : data.added.entrySet()) {
-				if (entry.getKey().getCondition().isDefaultCondition()) {
-					r.putString(entry.getKey().getId(), entry.getValue().toString());
-				}
-			}
-
-			o.put("ranks", r);
-
-			if (!data.permissions.isEmpty()) {
-				SNBTCompoundTag p = new SNBTCompoundTag();
-
-				for (Map.Entry<String, PermissionValue> entry : data.permissions.entrySet()) {
-					PermissionValue v = entry.getValue();
-
-					if (v.isDefaultValue()) {
-						p.putNull(entry.getKey());
-					} else if (v instanceof BooleanPermissionValue) {
-						p.putBoolean(entry.getKey(), ((BooleanPermissionValue) entry.getValue()).value);
-					} else if (v instanceof StringPermissionValue) {
-						p.putString(entry.getKey(), ((StringPermissionValue) entry.getValue()).value);
-					} else if (v instanceof NumberPermissionValue) {
-						p.putNumber(entry.getKey(), ((NumberPermissionValue) entry.getValue()).value);
-					} else {
-						p.putString(entry.getKey(), entry.getValue().asString().orElse(""));
-					}
-				}
-
-				o.put("permissions", p);
-			}
-
-			playerJson.put(data.uuid.toString(), o);
+		if (Files.notExists(directory.resolve("README.txt"))) {
+			refreshReadme();
 		}
 
-		if (!SNBT.write(playerFile, playerJson)) {
-			FTBRanks.LOGGER.warn("Failed to save players.snbt!");
+		reload();
+	}
+
+	void saveRanksNow() {
+		if (shouldSaveRanks) {
+			SNBTCompoundTag tag = new SNBTCompoundTag();
+			for (RankImpl rank : ranks.values()) {
+				tag.put(rank.getId(), rank.writeSNBT());
+			}
+			if (!SNBT.write(rankFile, tag)) {
+				FTBRanks.LOGGER.warn("Failed to save ranks.snbt!");
+			}
+			shouldSaveRanks = false;
 		}
 	}
 
-	private static PermissionValue ofTag(SNBTCompoundTag tag, String key) {
+	void savePlayersNow() {
+		if (shouldSavePlayers) {
+			SNBTCompoundTag playerTag = new SNBTCompoundTag();
+			for (PlayerRankData data : playerData.values()) {
+				playerTag.put(data.getPlayerId().toString(), data.writeSNBT());
+			}
+
+			if (!SNBT.write(playerFile, playerTag)) {
+				FTBRanks.LOGGER.warn("Failed to save players.snbt!");
+			}
+			shouldSavePlayers = false;
+		}
+	}
+
+	static PermissionValue ofTag(SNBTCompoundTag tag, String key) {
 		if (tag.isBoolean(key)) {
 			return BooleanPermissionValue.of(tag.getBoolean(key));
 		}
@@ -530,7 +353,7 @@ public class RankManagerImpl implements RankManager {
 		Tag v = tag.get(key);
 
 		if (v == null || v instanceof EndTag) {
-			return PermissionValue.DEFAULT;
+			return PermissionValue.MISSING;
 		} else if (v instanceof NumericTag) {
 			return NumberPermissionValue.of(((NumericTag) v).getAsNumber());
 		} else if (v instanceof StringTag) {
@@ -540,29 +363,20 @@ public class RankManagerImpl implements RankManager {
 		return StringPermissionValue.of(v.toString());
 	}
 
-	/**
-	 * Go through all ranks and look for old-style (pre 1.19) name_format strings. Convert "<...{name}..[&r]>"
-	 * to simply "...{name}...".  Since rank name formatting is now applied to the player's display name, and
-	 * not inserted into chat, which isn't really an option in 1.19+.
-	 */
-	public void migrateOldNameFormats() {
-		boolean[] changesMade = new boolean[]{false};
-		ranks.forEach((name, rank) -> {
-			String format = rank.getPermission("ftbranks.name_format").asString().orElse("");
-			if (!format.isEmpty()) {
-				String newFormat = format
-						.replaceAll("^<","")
-						.replaceAll("(&r)?>$", "");
-				if (!format.equals(newFormat)) {
-					rank.setPermission("ftbranks.name_format", StringPermissionValue.of(newFormat));
-					changesMade[0] = true;
-					FTBRanks.LOGGER.info("migrated old ftbranks.name_format node for rank {}: '{}' -> '{}'", rank, format, newFormat);
-				}
+	static SNBTCompoundTag writePermissions(Map<String, PermissionValue> map, SNBTCompoundTag res) {
+		map.forEach((key, value) -> {
+			if (value.isEmpty()) {
+				res.putNull(key);
+			} else if (value instanceof BooleanPermissionValue b) {
+				res.putBoolean(key, b.value);
+			} else if (value instanceof StringPermissionValue s) {
+				res.putString(key, s.value);
+			} else if (value instanceof NumberPermissionValue n) {
+				res.putNumber(key, n.value);
+			} else {
+				res.putString(key, value.asString().orElse(""));
 			}
 		});
-		if (changesMade[0]) {
-			saveRanks();
-			saveRanksNow();
-		}
+		return res;
 	}
 }
