@@ -12,7 +12,7 @@ import net.minecraft.world.level.Level;
  * @author LatvianModder
  */
 public class DimensionCondition implements RankCondition {
-	public final ResourceKey<Level> dimension;
+	private final ResourceKey<Level> dimension;
 
 	public DimensionCondition(SNBTCompoundTag tag) {
 		dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("dimension")));

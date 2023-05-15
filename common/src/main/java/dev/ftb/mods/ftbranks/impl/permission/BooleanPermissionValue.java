@@ -8,12 +8,12 @@ public class BooleanPermissionValue implements PermissionValue {
 	public static final BooleanPermissionValue TRUE = new BooleanPermissionValue(true);
 	public static final BooleanPermissionValue FALSE = new BooleanPermissionValue(false);
 
+	public final boolean value;
+	private final Boolean cachedValue;
+
 	public static BooleanPermissionValue of(boolean value) {
 		return value ? TRUE : FALSE;
 	}
-
-	public final boolean value;
-	private final Boolean cachedValue;
 
 	private BooleanPermissionValue(boolean v) {
 		value = v;

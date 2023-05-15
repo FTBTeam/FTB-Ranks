@@ -15,7 +15,7 @@ import java.util.List;
  * @author LatvianModder
  */
 public class AndCondition implements RankCondition {
-	public final List<RankCondition> conditions;
+	private final List<RankCondition> conditions;
 
 	public AndCondition(Rank rank, SNBTCompoundTag tag) throws RankException {
 		conditions = new ArrayList<>();

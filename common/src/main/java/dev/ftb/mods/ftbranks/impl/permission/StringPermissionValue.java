@@ -34,7 +34,7 @@ public class StringPermissionValue implements PermissionValue {
 
 	@Override
 	public boolean equals(Object o) {
-		return this == o || o instanceof StringPermissionValue && value.equals(((StringPermissionValue) o).value);
+		return this == o || o instanceof StringPermissionValue s && value.equals(s.value);
 	}
 
 	@Override

@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
  * @author LatvianModder
  */
 public class NotCondition implements RankCondition {
-	public final RankCondition condition;
+	private final RankCondition condition;
 
 	public NotCondition(Rank rank, SNBTCompoundTag tag) throws RankException {
 		condition = rank.getManager().createCondition(rank, tag.get("condition"));

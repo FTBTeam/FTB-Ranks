@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
  * @author LatvianModder
  */
 public final class RankAddedCondition implements RankCondition {
-	public final Rank original;
-	public final String id;
+	private final Rank original;
+	private final String id;
 
 	public RankAddedCondition(Rank r, SNBTCompoundTag tag) {
 		original = r;

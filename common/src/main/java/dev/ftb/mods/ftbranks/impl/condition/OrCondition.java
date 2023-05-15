@@ -15,7 +15,7 @@ import java.util.List;
  * @author LatvianModder
  */
 public class OrCondition implements RankCondition {
-	public final List<RankCondition> conditions;
+	private final List<RankCondition> conditions;
 
 	public OrCondition(Rank rank, SNBTCompoundTag tag) throws RankException {
 		conditions = new ArrayList<>();

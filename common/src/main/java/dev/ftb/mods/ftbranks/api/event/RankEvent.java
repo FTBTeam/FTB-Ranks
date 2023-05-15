@@ -6,8 +6,13 @@ import dev.architectury.event.EventFactory;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
+/**
+ * Common superclass for all rank-related events
+ */
 public class RankEvent {
     public static final Event<Consumer<RanksReloadedEvent>> RELOADED = EventFactory.createConsumerLoop();
     public static final Event<Consumer<RankCreatedEvent>> CREATED = EventFactory.createConsumerLoop();
@@ -26,14 +31,27 @@ public class RankEvent {
         this.rank = rank;
     }
 
+    /**
+     * Get the rank manager
+     * @return the rank manager
+     */
+    @Nonnull
     public RankManager getManager() {
         return manager;
     }
 
+    /**
+     * Get the rank to which this event refers
+     * @return the rank
+     */
+    @Nullable
     public Rank getRank() {
         return rank;
     }
 
+    /**
+     * Common superclass for rank events with a player involved
+     */
     public static class Player extends RankEvent {
         private final GameProfile player;
 
@@ -42,6 +60,11 @@ public class RankEvent {
             this.player = player;
         }
 
+        /**
+         * Get the player's game profile. Not that the player is not necessarily online at this time.
+         * @return the player's game profile
+         */
+        @Nonnull
         public GameProfile getPlayer() {
             return player;
         }

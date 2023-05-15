@@ -60,7 +60,7 @@ public class NumberPermissionValue implements PermissionValue {
 
 	@Override
 	public boolean equals(Object o) {
-		return this == o || o instanceof NumberPermissionValue && value.equals(((NumberPermissionValue) o).value);
+		return this == o || o instanceof NumberPermissionValue n && value.equals(n.value);
 	}
 
 	@Override

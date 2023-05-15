@@ -19,8 +19,8 @@ public class StatCondition implements RankCondition {
 	public static final int LESSER_OR_EQUAL = 6;
 
 	private final ResourceLocation statId;
-	public final int value;
-	public final int valueCheck;
+	private final int value;
+	private final int valueCheck;
 	private final Stat<?> stat;
 
 	public StatCondition(SNBTCompoundTag tag) {

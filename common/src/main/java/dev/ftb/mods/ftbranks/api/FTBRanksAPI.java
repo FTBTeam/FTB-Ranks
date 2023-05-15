@@ -1,23 +1,31 @@
 package dev.ftb.mods.ftbranks.api;
 
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
+
+import javax.annotation.Nonnull;
 
 /**
- * @author LatvianModder
+ * Top-level API object
  */
 public abstract class FTBRanksAPI {
 	private static FTBRanksAPI instance;
 
 	/**
-	 * Get the Ranks Manager instance
+	 * Get the API instance
+	 * @return the API
+	 */
+	public static FTBRanksAPI getInstance() {
+		return instance;
+	}
+
+	/**
+	 * Convenience method to get the Ranks Manager instance
 	 * @return the manager
 	 */
 	public static RankManager manager() {
 		return instance.getManager();
-	}
-
-	public static FTBRanksAPI getInstance() {
-		return instance;
 	}
 
 	/**
@@ -26,8 +34,9 @@ public abstract class FTBRanksAPI {
 	 *
 	 * @param player the player to check
 	 * @param node the node to check
-	 * @return the permission value
+	 * @return the permission value, or {@link PermissionValue#MISSING} if the node is not found
 	 */
+	@Nonnull
 	public static PermissionValue getPermissionValue(ServerPlayer player, String node) {
 		return instance.getManager().getPermissionValue(player, node);
 	}
@@ -40,11 +49,13 @@ public abstract class FTBRanksAPI {
 	 * @param str the string to parse
 	 * @return the permission value, which may be null if the input was null
 	 */
-	public abstract PermissionValue parsePermissionValue(String str);
+	@Nullable
+	public abstract PermissionValue parsePermissionValue(@Nullable String str);
 
 	/**
 	 * Do not call this yourself! For internal use only.
 	 */
+	@ApiStatus.Internal
 	public static void setup(FTBRanksAPI theInstance) {
 		if (instance != null || !theInstance.getClass().getName().startsWith("dev.ftb.mods.ftbranks")) {
 			throw new IllegalStateException("don't do this");
@@ -52,5 +63,9 @@ public abstract class FTBRanksAPI {
 		instance = theInstance;
 	}
 
+	/**
+	 * Get the manager
+	 * @return the manager
+	 */
 	protected abstract RankManager getManager();
 }
