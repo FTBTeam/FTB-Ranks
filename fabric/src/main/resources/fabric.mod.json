@@ -18,10 +18,10 @@
 		]
 	},
 	"depends": {
-		"fabric": "*",
-		"minecraft": "~1.19",
-		"architectury": ">=6.3.49",
-		"ftblibrary": ">=1902.3.16-build.191"
+		"fabric": ">=${fabricapiversion}",
+		"minecraft": "~${mcversion}",
+		"architectury": ">=${archversion}",
+		"ftblibrary": ">=${ftblibraryversion}"
 	},
 	"mixins": [
 		"ftbranks-common.mixins.json"
