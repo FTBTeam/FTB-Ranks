@@ -25,7 +25,7 @@ public class DimensionCondition implements RankCondition {
 
 	@Override
 	public boolean isRankActive(ServerPlayer player) {
-		return player.level.dimension() == dimension;
+		return player.level().dimension() == dimension;
 	}
 
 	@Override

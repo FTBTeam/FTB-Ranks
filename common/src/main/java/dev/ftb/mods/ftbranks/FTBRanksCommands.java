@@ -151,7 +151,7 @@ public class FTBRanksCommands {
 	private static int reloadRanks(CommandSourceStack source) {
 		try {
 			FTBRanksAPIImpl.manager.reload();
-			source.sendSuccess(Component.literal("Ranks reloaded from disk!"), true);
+			source.sendSuccess(() -> Component.literal("Ranks reloaded from disk!"), true);
 
 			for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
 				source.getServer().getPlayerList().sendPlayerPermissionLevel(p);
@@ -172,15 +172,15 @@ public class FTBRanksCommands {
 			ex.printStackTrace();
 		}
 
-		source.sendSuccess(Component.literal("README file refreshed!"), false);
+		source.sendSuccess(() -> Component.literal("README file refreshed!"), false);
 		return 1;
 	}
 
 	private static int listAllRanks(CommandSourceStack source) {
-		source.sendSuccess(Component.literal("Ranks:"), false);
+		source.sendSuccess(() -> Component.literal("Ranks:"), false);
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
-			source.sendSuccess(Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
+			source.sendSuccess(() -> Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
 		}
 
 		return 1;
@@ -195,14 +195,14 @@ public class FTBRanksCommands {
 		}
 
 		FTBRanksAPIImpl.manager.createRank(id, name, power);
-		source.sendSuccess(Component.literal("Rank '" + id + "' created!"), false);
+		source.sendSuccess(() -> Component.literal("Rank '" + id + "' created!"), false);
 		return 1;
 	}
 
 	private static int deleteRank(CommandSourceStack source, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
 		FTBRanksAPI.manager().deleteRank(rank.getId());
-		source.sendSuccess(Component.literal("Rank '" + rank.getName() + "' deleted!"), false);
+		source.sendSuccess(() -> Component.literal("Rank '" + rank.getName() + "' deleted!"), false);
 
 		return 1;
 	}
@@ -211,7 +211,7 @@ public class FTBRanksCommands {
 		Rank rank = getRank(rankName);
 		for (GameProfile profile : players) {
 			if (rank.add(profile)) {
-				source.sendSuccess(Component.literal(String.format("Player %s added to rank '%s'!", profile.getName(), rank.getName())), false);
+				source.sendSuccess(() -> Component.literal(String.format("Player %s added to rank '%s'!", profile.getName(), rank.getName())), false);
 			}
 		}
 
@@ -222,7 +222,7 @@ public class FTBRanksCommands {
 		Rank rank = getRank(rankName);
 		for (GameProfile profile : players) {
 			if (rank.remove(profile)) {
-				source.sendSuccess(Component.literal(String.format("Player %s removed from rank '%s'!", profile.getName(), rank.getName())), false);
+				source.sendSuccess(() -> Component.literal(String.format("Player %s removed from rank '%s'!", profile.getName(), rank.getName())), false);
 			}
 		}
 
@@ -230,11 +230,11 @@ public class FTBRanksCommands {
 	}
 
 	private static int listRanksOf(CommandSourceStack source, ServerPlayer player) {
-		source.sendSuccess(Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().getName())), false);
+		source.sendSuccess(() -> Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().getName())), false);
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
 			if (rank.isActive(player)) {
-				source.sendSuccess(Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
+				source.sendSuccess(() -> Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
 			}
 		}
 
@@ -244,11 +244,11 @@ public class FTBRanksCommands {
 	private static int listPlayersWith(CommandSourceStack source, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
 
-		source.sendSuccess(Component.literal(String.format("Players with rank '%s':", rank.getName())), false);
+		source.sendSuccess(() -> Component.literal(String.format("Players with rank '%s':", rank.getName())), false);
 
 		for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
 			if (rank.isActive(player)) {
-				source.sendSuccess(Component.literal("- ").withStyle(ChatFormatting.YELLOW).append(player.getDisplayName()), false);
+				source.sendSuccess(() -> Component.literal("- ").withStyle(ChatFormatting.YELLOW).append(player.getDisplayName()), false);
 			}
 		}
 
@@ -260,14 +260,14 @@ public class FTBRanksCommands {
 
 		Collection<String> nodes = rank.getPermissions();
 		if (nodes.isEmpty()) {
-			source.sendSuccess(Component.literal(String.format("No permission nodes in rank '%s'", rankName)).withStyle(ChatFormatting.GOLD), false);
+			source.sendSuccess(() -> Component.literal(String.format("No permission nodes in rank '%s'", rankName)).withStyle(ChatFormatting.GOLD), false);
 		} else {
-			source.sendSuccess(Component.literal(String.format("%d permission node(s) in rank '%s':", nodes.size(), rankName)).withStyle(ChatFormatting.GREEN), false);
-			source.sendSuccess(Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
+			source.sendSuccess(() -> Component.literal(String.format("%d permission node(s) in rank '%s':", nodes.size(), rankName)).withStyle(ChatFormatting.GREEN), false);
+			source.sendSuccess(() -> Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
 			nodes.forEach(node -> {
-				source.sendSuccess(Component.literal(String.format("%s = %s", node, rank.getPermission(node))).withStyle(ChatFormatting.YELLOW), false);
+				source.sendSuccess(() -> Component.literal(String.format("%s = %s", node, rank.getPermission(node))).withStyle(ChatFormatting.YELLOW), false);
 			});
-			source.sendSuccess(Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
+			source.sendSuccess(() -> Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
 		}
 
 		return 1;
@@ -279,9 +279,9 @@ public class FTBRanksCommands {
 		try {
 			rank.setPermission(node, PermissionValue.parse(value));
 			if (value != null) {
-				source.sendSuccess(Component.literal(String.format("Permission node '%s'='%s' added to rank '%s'", node, rank.getPermission(node), rank)), false);
+				source.sendSuccess(() -> Component.literal(String.format("Permission node '%s'='%s' added to rank '%s'", node, rank.getPermission(node), rank)), false);
 			} else {
-				source.sendSuccess(Component.literal(String.format("Permission node '%s' removed from rank '%s'", node, rank)), false);
+				source.sendSuccess(() -> Component.literal(String.format("Permission node '%s' removed from rank '%s'", node, rank)), false);
 			}
 		} catch (IllegalArgumentException e) {
 			throw new SimpleCommandExceptionType(Component.literal(e.getMessage())).create();
@@ -303,7 +303,7 @@ public class FTBRanksCommands {
 				condition = FTBRanksAPI.manager().createCondition(rank, StringTag.valueOf(value));
 			}
 			rank.setCondition(condition);
-			source.sendSuccess(Component.literal(String.format("Condition '%s' added to rank '%s'",  value, rank)), false);
+			source.sendSuccess(() -> Component.literal(String.format("Condition '%s' added to rank '%s'",  value, rank)), false);
 		} catch (Exception e) {
 			throw new SimpleCommandExceptionType(Component.literal(e.getMessage())).create();
 		}
@@ -314,18 +314,18 @@ public class FTBRanksCommands {
 	private static int showRank(CommandSourceStack source, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
 
-		source.sendSuccess(Component.literal("=".repeat(50)).withStyle(ChatFormatting.GREEN), false);
+		source.sendSuccess(() -> Component.literal("=".repeat(50)).withStyle(ChatFormatting.GREEN), false);
 
-		source.sendSuccess(Component.literal(String.format("Rank ID: %s, Rank Name: %s, Power: %d", rank.getId(), rank.getName(), rank.getPower())).withStyle(ChatFormatting.YELLOW), false);
+		source.sendSuccess(() -> Component.literal(String.format("Rank ID: %s, Rank Name: %s, Power: %d", rank.getId(), rank.getName(), rank.getPower())).withStyle(ChatFormatting.YELLOW), false);
 
 		String condStr = rank.getCondition().asString();
 		Component c = condStr.isEmpty() ?
 				Component.literal("(none: players must be added)").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) : Component.literal(condStr);
-		source.sendSuccess(Component.literal("Condition: ").append(c).withStyle(ChatFormatting.YELLOW), false);
+		source.sendSuccess(() -> Component.literal("Condition: ").append(c).withStyle(ChatFormatting.YELLOW), false);
 
-		source.sendSuccess(Component.literal("Permission nodes:").withStyle(ChatFormatting.YELLOW), false);
+		source.sendSuccess(() -> Component.literal("Permission nodes:").withStyle(ChatFormatting.YELLOW), false);
 		rank.getPermissions().stream().sorted().forEach(node ->
-				source.sendSuccess(Component.literal(" - " + node + ": " + rank.getPermission(node)), false)
+				source.sendSuccess(() -> Component.literal(" - " + node + ": " + rank.getPermission(node)), false)
 		);
 
 		return 0;
