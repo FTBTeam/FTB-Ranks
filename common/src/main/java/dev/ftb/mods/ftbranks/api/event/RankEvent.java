@@ -5,9 +5,9 @@ import dev.architectury.event.Event;
 import dev.architectury.event.EventFactory;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 /**
@@ -35,7 +35,7 @@ public class RankEvent {
      * Get the rank manager
      * @return the rank manager
      */
-    @Nonnull
+    @NotNull
     public RankManager getManager() {
         return manager;
     }
@@ -64,7 +64,7 @@ public class RankEvent {
          * Get the player's game profile. Not that the player is not necessarily online at this time.
          * @return the player's game profile
          */
-        @Nonnull
+        @NotNull
         public GameProfile getPlayer() {
             return player;
         }

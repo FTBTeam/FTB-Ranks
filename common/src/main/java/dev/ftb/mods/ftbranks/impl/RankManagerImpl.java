@@ -23,9 +23,9 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,11 +79,6 @@ public class RankManagerImpl implements RankManager {
 	@Override
 	public Optional<Rank> getRank(String id) {
 		return Optional.ofNullable(ranks.get(id));
-	}
-
-	@Override
-	public RankImpl createRank(String id) {
-		return createRank(id, "default", 1);
 	}
 
 	@Override
@@ -141,7 +136,7 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	@Nonnull
+	@NotNull
 	public PermissionValue getPermissionValue(ServerPlayer player, String node) {
 		if (node.isEmpty() || sortedRanks.isEmpty()) {
 			return PermissionValue.MISSING;

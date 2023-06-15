@@ -2,9 +2,9 @@ package dev.ftb.mods.ftbranks.api;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Collection;
 
 /**
@@ -57,7 +57,7 @@ public interface Rank {
 	 * @param node the node name
 	 * @return the permission value
 	 */
-	@Nonnull
+	@NotNull
 	PermissionValue getPermission(String node);
 
 	/**

@@ -2,9 +2,8 @@ package dev.ftb.mods.ftbranks.api;
 
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.annotation.Nonnull;
 
 /**
  * Top-level API object
@@ -36,7 +35,7 @@ public abstract class FTBRanksAPI {
 	 * @param node the node to check
 	 * @return the permission value, or {@link PermissionValue#MISSING} if the node is not found
 	 */
-	@Nonnull
+	@NotNull
 	public static PermissionValue getPermissionValue(ServerPlayer player, String node) {
 		return instance.getManager().getPermissionValue(player, node);
 	}

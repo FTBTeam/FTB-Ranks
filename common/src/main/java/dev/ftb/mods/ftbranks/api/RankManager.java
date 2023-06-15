@@ -4,9 +4,9 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -31,16 +31,6 @@ public interface RankManager {
 	 * @return the optional rank
 	 */
 	Optional<Rank> getRank(String id);
-
-	/**
-	 * Create a rank with the given ID, with a default display name and power of 1.
-	 *
-	 * @param id the unique rank ID
-	 * @return the newly-created rank
-	 * @deprecated use {@link #createRank(String, String, int)}
-	 */
-	@Deprecated
-	Rank createRank(String id);
 
 	/**
 	 * Create a new rank with the given ID, name &amp; power.
@@ -103,7 +93,7 @@ public interface RankManager {
 	 * @param node the node name
 	 * @return the permission value
 	 */
-	@Nonnull
+	@NotNull
 	PermissionValue getPermissionValue(ServerPlayer player, String node);
 
 	/**

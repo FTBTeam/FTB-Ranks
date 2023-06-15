@@ -7,8 +7,8 @@ import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
@@ -22,9 +22,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	private final Map<String, PermissionValue> permissions = new LinkedHashMap<>();
 	private final String name;
 	private final int power;
-	@Nonnull private RankCondition condition;
+	@NotNull
+	private RankCondition condition;
 
-	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, @Nonnull RankCondition condition) {
+	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition) {
 		return new RankImpl(manager, id, name, power, condition);
 	}
 
@@ -34,7 +35,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return rank;
 	}
 
-	private RankImpl(RankManagerImpl manager, String id, String name, int power, @Nonnull RankCondition condition) {
+	private RankImpl(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition) {
 		this.manager = manager;
 		this.id = id;
 		this.name = name;
@@ -99,13 +100,13 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	@Nonnull
+	@NotNull
 	public PermissionValue getPermission(String node) {
 		return permissions.getOrDefault(node, PermissionValue.MISSING);
 	}
 
 	@Override
-	@Nonnull
+	@NotNull
 	public RankCondition getCondition() {
 		return condition;
 	}
