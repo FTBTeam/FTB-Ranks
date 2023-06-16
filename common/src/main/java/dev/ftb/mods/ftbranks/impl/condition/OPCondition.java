@@ -1,12 +1,12 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import dev.ftb.mods.ftbranks.api.SimpleRankCondition;
+import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
  * @author LatvianModder
  */
-public class OPCondition implements SimpleRankCondition {
+public class OPCondition implements RankCondition.Simple {
 	@Override
 	public String getType() {
 		return "op";

@@ -3,15 +3,16 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
  * @author LatvianModder
  */
 public class NotCondition implements RankCondition {
-	public final RankCondition condition;
+	private final RankCondition condition;
 
-	public NotCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
+	public NotCondition(Rank rank, SNBTCompoundTag tag) throws RankException {
 		condition = rank.getManager().createCondition(rank, tag.get("condition"));
 	}
 

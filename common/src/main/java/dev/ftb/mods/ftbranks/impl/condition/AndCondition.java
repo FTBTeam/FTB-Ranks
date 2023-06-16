@@ -3,6 +3,7 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,9 +15,9 @@ import java.util.List;
  * @author LatvianModder
  */
 public class AndCondition implements RankCondition {
-	public final List<RankCondition> conditions;
+	private final List<RankCondition> conditions;
 
-	public AndCondition(Rank rank, SNBTCompoundTag tag) throws Exception {
+	public AndCondition(Rank rank, SNBTCompoundTag tag) throws RankException {
 		conditions = new ArrayList<>();
 
 		for (Tag t : tag.getList("conditions", Tag.class)) {
@@ -31,13 +32,7 @@ public class AndCondition implements RankCondition {
 
 	@Override
 	public boolean isRankActive(ServerPlayer player) {
-		for (RankCondition condition : conditions) {
-			if (!condition.isRankActive(player)) {
-				return false;
-			}
-		}
-
-		return true;
+		return conditions.stream().allMatch(condition -> condition.isRankActive(player));
 	}
 
 	@Override

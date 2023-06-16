@@ -1,4 +1,4 @@
-package dev.ftb.mods.ftbranks.impl;
+package dev.ftb.mods.ftbranks.impl.permission;
 
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 
@@ -7,9 +7,6 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
-/**
- * @author LatvianModder
- */
 public class NumberPermissionValue implements PermissionValue {
 	public static final NumberPermissionValue ZERO = new NumberPermissionValue(0);
 
@@ -63,7 +60,7 @@ public class NumberPermissionValue implements PermissionValue {
 
 	@Override
 	public boolean equals(Object o) {
-		return this == o || o instanceof NumberPermissionValue && value.equals(((NumberPermissionValue) o).value);
+		return this == o || o instanceof NumberPermissionValue n && value.equals(n.value);
 	}
 
 	@Override

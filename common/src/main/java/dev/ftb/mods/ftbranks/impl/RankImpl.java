@@ -1,35 +1,46 @@
 package dev.ftb.mods.ftbranks.impl;
 
 import com.mojang.authlib.GameProfile;
+import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
-import dev.ftb.mods.ftbranks.api.PermissionValue;
-import dev.ftb.mods.ftbranks.api.Rank;
-import dev.ftb.mods.ftbranks.api.RankCondition;
-import dev.ftb.mods.ftbranks.api.RankManager;
+import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.*;
+import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import org.jetbrains.annotations.NotNull;
 
-import java.time.Instant;
 import java.util.*;
 
 /**
  * @author LatvianModder
  */
 public class RankImpl implements Rank, Comparable<RankImpl> {
-	public final RankManagerImpl manager;
-	public final String id;
-	public final Map<String, PermissionValue> permissions;
-	public String name;
-	public int power;
-	public RankCondition condition;
+	private static final Set<String> SPECIAL_FIELDS = Set.of("name", "power", "condition");
 
-	public RankImpl(RankManagerImpl m, String s) {
-		manager = m;
-		id = s;
-		permissions = new LinkedHashMap<>();
-		name = "";
-		power = 50;
-		condition = new DefaultCondition(this);
+	private final RankManagerImpl manager;
+	private final String id;
+	private final Map<String, PermissionValue> permissions = new LinkedHashMap<>();
+	private final String name;
+	private final int power;
+	@NotNull
+	private RankCondition condition;
+
+	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition) {
+		return new RankImpl(manager, id, name, power, condition);
+	}
+
+	public static RankImpl create(RankManagerImpl manager, String id, String name, int power) {
+		RankImpl rank = new RankImpl(manager, id, name, power, AlwaysActiveCondition.INSTANCE);
+		rank.setCondition(new DefaultCondition(rank));
+		return rank;
+	}
+
+	private RankImpl(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition) {
+		this.manager = manager;
+		this.id = id;
+		this.name = name;
+		this.power = power;
+		this.condition = condition;
 	}
 
 	@Override
@@ -84,36 +95,34 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			if (node.equals("ftbranks.name_format")) {
 				PlayerNameFormatting.refreshPlayerNames();
 			}
-			manager.saveRanks();
+			manager.markRanksDirty();
 		}
 	}
 
 	@Override
+	@NotNull
 	public PermissionValue getPermission(String node) {
-		return permissions.getOrDefault(node, PermissionValue.DEFAULT);
+		return permissions.getOrDefault(node, PermissionValue.MISSING);
 	}
 
 	@Override
+	@NotNull
 	public RankCondition getCondition() {
 		return condition;
 	}
 
 	@Override
-	public void setCondition(RankCondition condition) {
+	public void setCondition(RankCondition newCondition) {
 		RankCondition oldCondition = this.condition;
-		this.condition = condition;
-		RankEvent.CONDITION_CHANGED.invoker().accept(new ConditionChangedEvent(manager, this, oldCondition, condition));
+		this.condition = newCondition;
+		RankEvent.CONDITION_CHANGED.invoker().accept(new ConditionChangedEvent(manager, this, oldCondition, newCondition));
 		PlayerNameFormatting.refreshPlayerNames();
-		manager.saveRanks();
+		manager.markRanksDirty();
 	}
 
 	@Override
 	public boolean add(GameProfile profile) {
-		PlayerRankData data = manager.getPlayerData(profile);
-
-		if (!data.added.containsKey(this)) {
-			data.added.put(this, Instant.now());
-			manager.savePlayers();
+		if (manager.getOrCreatePlayerData(profile).addRank(this)) {
 			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, profile));
 			PlayerNameFormatting.refreshPlayerNames();
 			return true;
@@ -124,10 +133,8 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public boolean remove(GameProfile profile) {
-		PlayerRankData data = manager.getPlayerData(profile);
-
-		if (data.added.remove(this) != null) {
-			manager.savePlayers();
+		if (manager.getOrCreatePlayerData(profile).removeRank(this)) {
+			manager.markPlayerDataDirty();
 			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, profile));
 			PlayerNameFormatting.refreshPlayerNames();
 			return true;
@@ -144,8 +151,54 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	@Override
 	public Collection<String> getPermissions() {
 		Set<String> nodes = new HashSet<>(permissions.keySet());
-		nodes.remove("name");
-		nodes.remove("power");
+		nodes.removeAll(SPECIAL_FIELDS);
 		return nodes;
 	}
+
+	public static RankImpl readSNBT(RankManagerImpl manager, String rankId, SNBTCompoundTag tag) throws RankException {
+		String displayName = tag.getString("name").isEmpty() ? rankId : tag.getString("name");
+		RankImpl rank = create(manager, rankId, displayName, tag.getInt("power"));
+
+		if (tag.contains("condition")) {
+			rank.setCondition(manager.createCondition(rank, tag.get("condition")));
+		}
+
+		for (String key : tag.getAllKeys()) {
+			if (!SPECIAL_FIELDS.contains(key)) {
+				while (key.endsWith(".*")) {
+					key = key.substring(0, key.length() - 2);
+					manager.markRanksDirty();
+				}
+
+				if (!key.isEmpty()) {
+					rank.permissions.put(key, RankManagerImpl.ofTag(tag, key));
+				}
+			}
+		}
+
+		return rank;
+	}
+
+	public SNBTCompoundTag writeSNBT() {
+		SNBTCompoundTag res = new SNBTCompoundTag();
+
+		res.putString("name", name);
+		res.putInt("power", power);
+
+		if (!condition.isDefaultCondition()) {
+			if (condition.isSimple()) {
+				res.putString("condition", condition.getType());
+			} else {
+				SNBTCompoundTag c = new SNBTCompoundTag();
+				c.putString("type", condition.getType());
+				condition.save(c);
+				res.put("condition", c);
+			}
+		}
+
+		RankManagerImpl.writePermissions(permissions, res);
+
+		return res;
+	}
+
 }

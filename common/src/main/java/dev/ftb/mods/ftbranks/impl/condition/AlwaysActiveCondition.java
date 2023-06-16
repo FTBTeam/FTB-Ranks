@@ -1,12 +1,12 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import dev.ftb.mods.ftbranks.api.SimpleRankCondition;
+import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
  * @author LatvianModder
  */
-public class AlwaysActiveCondition implements SimpleRankCondition {
+public class AlwaysActiveCondition implements RankCondition.Simple {
 	public static final AlwaysActiveCondition INSTANCE = new AlwaysActiveCondition();
 
 	private AlwaysActiveCondition() {

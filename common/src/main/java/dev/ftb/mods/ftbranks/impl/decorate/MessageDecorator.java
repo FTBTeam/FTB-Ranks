@@ -1,4 +1,4 @@
-package dev.ftb.mods.ftbranks;
+package dev.ftb.mods.ftbranks.impl.decorate;
 
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import net.minecraft.ChatFormatting;

@@ -3,8 +3,7 @@ package dev.ftb.mods.ftbranks;
 import dev.architectury.utils.GameInstance;
 import dev.ftb.mods.ftblibrary.util.PlayerDisplayNameUtil;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
-import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
-import dev.ftb.mods.ftbranks.impl.TextComponentParser;
+import dev.ftb.mods.ftbranks.impl.decorate.TextComponentParser;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -20,12 +19,6 @@ public class PlayerNameFormatting {
         String format = FTBRanksAPI.getPermissionValue(serverPlayer, "ftbranks.name_format").asString().orElse("");
 
         if (!format.isEmpty()) {
-            if (format.startsWith("<")) {
-                // TODO remove in 1.20
-                FTBRanksAPIImpl.manager.migrateOldNameFormats();
-                format = FTBRanksAPI.getPermissionValue(serverPlayer, "ftbranks.name_format").asString().orElse("");
-            }
-
             try {
                 return TextComponentParser.parse(format, s -> s.equals("name") ? originalName : null);
             } catch (Exception ex) {

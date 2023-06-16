@@ -3,9 +3,11 @@ package dev.ftb.mods.ftbranks.api.event;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-
+/**
+ * Fired when the value of a permission node in a rank changes, via the {@code /ftbranks node} command.
+ */
 public class PermissionNodeChangedEvent extends RankEvent {
     private final String node;
     private final PermissionValue oldValue;
@@ -22,10 +24,18 @@ public class PermissionNodeChangedEvent extends RankEvent {
         return node;
     }
 
+    /**
+     * Get the node's old value
+     * @return the old value
+     */
     public PermissionValue getOldValue() {
         return oldValue;
     }
 
+    /**
+     * Get the node's new value
+     * @return the new value
+     */
     public PermissionValue getNewValue() {
         return newValue;
     }

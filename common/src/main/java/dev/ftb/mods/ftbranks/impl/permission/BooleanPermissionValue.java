@@ -1,30 +1,28 @@
-package dev.ftb.mods.ftbranks.impl;
+package dev.ftb.mods.ftbranks.impl.permission;
 
-import dev.ftb.mods.ftbranks.api.OptionalBoolean;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 
-/**
- * @author LatvianModder
- */
+import java.util.Optional;
+
 public class BooleanPermissionValue implements PermissionValue {
 	public static final BooleanPermissionValue TRUE = new BooleanPermissionValue(true);
 	public static final BooleanPermissionValue FALSE = new BooleanPermissionValue(false);
+
+	public final boolean value;
+	private final Boolean cachedValue;
 
 	public static BooleanPermissionValue of(boolean value) {
 		return value ? TRUE : FALSE;
 	}
 
-	public final boolean value;
-	private final OptionalBoolean cachedValue;
-
 	private BooleanPermissionValue(boolean v) {
 		value = v;
-		cachedValue = OptionalBoolean.of(value);
+		cachedValue = value;
 	}
 
 	@Override
-	public OptionalBoolean asBoolean() {
-		return cachedValue;
+	public Optional<Boolean> asBoolean() {
+		return Optional.of(cachedValue);
 	}
 
 	@Override

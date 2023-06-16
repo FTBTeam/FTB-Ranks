@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+[1902.1.16]
+
+### Fixed
+* Correctly report errors and stop when a syntax error in ranks.snbt or players.snbt prevents the file from loading
+  * Don't tell the player it loaded OK then wipe the current runtime config...
+
 [1902.1.15]
 
 ### Added

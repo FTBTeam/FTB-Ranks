@@ -19,8 +19,8 @@ public class PlaytimeCondition implements RankCondition {
 	public static final int DAYS = HOURS * 24;
 	public static final int WEEKS = DAYS * 7;
 
-	public final int time;
-	public final int timeUnit;
+	private final int time;
+	private final int timeUnit;
 	private final Stat<ResourceLocation> stat;
 
 	public PlaytimeCondition(SNBTCompoundTag tag) {

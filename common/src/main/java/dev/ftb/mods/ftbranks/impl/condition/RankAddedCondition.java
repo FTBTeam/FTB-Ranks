@@ -5,14 +5,12 @@ import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.Optional;
-
 /**
  * @author LatvianModder
  */
 public final class RankAddedCondition implements RankCondition {
-	public final Rank original;
-	public final String id;
+	private final Rank original;
+	private final String id;
 
 	public RankAddedCondition(Rank r, SNBTCompoundTag tag) {
 		original = r;
@@ -26,8 +24,8 @@ public final class RankAddedCondition implements RankCondition {
 
 	@Override
 	public boolean isRankActive(ServerPlayer player) {
-		Optional<Rank> rank = original.getManager().getRank(id);
-		Rank r = rank.orElse(null);
-		return r != null && r != original && r.isAdded(player);
+		return original.getManager().getRank(id)
+				.map(rank -> rank != original && rank.isAdded(player))
+				.orElse(false);
 	}
 }
