@@ -8,8 +8,6 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.message.v1.ServerMessageDecoratorEvent;
 import net.minecraft.network.chat.MutableComponent;
 
-import java.util.concurrent.CompletableFuture;
-
 public class FTBRanksFabric implements ModInitializer {
 	@Override
 	public void onInitialize() {
@@ -19,10 +17,10 @@ public class FTBRanksFabric implements ModInitializer {
 			if (sender != null) {
 				MutableComponent mutableComponent = message.copy();
 				if (MessageDecorator.decorateMessage(sender, mutableComponent)) {
-					return CompletableFuture.completedFuture(mutableComponent);
+					return mutableComponent;
 				}
 			}
-			return CompletableFuture.completedFuture(message);
+			return message;
 		});
 
 		PlayerDisplayNameCallback.EVENT.register(PlayerNameFormatting::formatPlayerName);
