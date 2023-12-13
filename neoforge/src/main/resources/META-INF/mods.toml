@@ -1,0 +1,45 @@
+modLoader = "javafml"
+loaderVersion = "[${neoforgeloaderversion},)"
+issueTrackerURL = "https://go.ftb.team/support-mod-issues"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "ftbranks"
+version = "${version}"
+displayName = "FTB Ranks"
+authors = "FTB Team"
+description = '''
+A simple mod that lets you create ranks for players, similar to Discord roles, and manage permissions for them
+'''
+
+[[mixins]]
+config = "ftbranks-common.mixins.json"
+
+[[dependencies.ftbranks]]
+modId = "neoforge"
+mandatory = true
+versionRange = "[${neoforgeversion},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ftbranks]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[${mcversion},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ftbranks]]
+modId = "architectury"
+mandatory = true
+versionRange = "[${archversion},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.ftbranks]]
+modId = "ftblibrary"
+mandatory = true
+versionRange = "[${ftblibraryversion},)"
+ordering = "AFTER"
+side = "CLIENT"
+
