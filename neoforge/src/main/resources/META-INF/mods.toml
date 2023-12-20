@@ -17,28 +17,28 @@ config = "ftbranks-common.mixins.json"
 
 [[dependencies.ftbranks]]
 modId = "neoforge"
-mandatory = true
+type = "required"
 versionRange = "[${neoforgeversion},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "minecraft"
-mandatory = true
+type = "required"
 versionRange = "[${mcversion},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "architectury"
-mandatory = true
+type = "required"
 versionRange = "[${archversion},)"
 ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "ftblibrary"
-mandatory = true
+type = "required"
 versionRange = "[${ftblibraryversion},)"
 ordering = "AFTER"
 side = "CLIENT"
