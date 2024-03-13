@@ -11,4 +11,4 @@ include("fabric")
 include("forge")
 include("neoforge")
 
-rootProject.name = 'FTB-Ranks-1.20.2'
+rootProject.name = 'FTB-Ranks-1.20.4'
