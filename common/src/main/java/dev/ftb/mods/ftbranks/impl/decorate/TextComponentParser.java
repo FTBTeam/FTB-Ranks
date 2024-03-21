@@ -116,7 +116,7 @@ public class TextComponentParser {
 						System.arraycopy(c, i + 1, rrggbb, 1, 6);
 
 						i += 6;
-						style = style.withColor(TextColor.parseColor(new String(rrggbb)));
+						style = style.withColor(TextColor.parseColor(new String(rrggbb)).result().orElse(TextColor.fromRgb(0xFFFFFF)));
 					} else {
 						ChatFormatting formatting = CODE_TO_FORMATTING.get(c[i]);
 

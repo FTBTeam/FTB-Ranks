@@ -1,26 +1,22 @@
-package dev.ftb.mods.ftbranks.forge;
+package dev.ftb.mods.ftbranks.neoforge;
 
-import dev.architectury.platform.forge.EventBuses;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.impl.decorate.MessageDecorator;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.fml.IExtensionPoint.DisplayTest;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.fml.IExtensionPoint.DisplayTest;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @Mod(FTBRanks.MOD_ID)
-public class FTBRanksForge {
-	public FTBRanksForge() {
-		EventBuses.registerModEventBus(FTBRanks.MOD_ID, FMLJavaModLoadingContext.get().getModEventBus());
-
-		MinecraftForge.EVENT_BUS.addListener(this::playerNameFormatting);
-		MinecraftForge.EVENT_BUS.addListener(this::serverChat);
+public class FTBRanksNeoForge {
+	public FTBRanksNeoForge() {
+		NeoForge.EVENT_BUS.addListener(this::playerNameFormatting);
+		NeoForge.EVENT_BUS.addListener(this::serverChat);
 
 		FTBRanks.init();
 

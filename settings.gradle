@@ -9,5 +9,6 @@ pluginManagement {
 include("common")
 include("fabric")
 include("forge")
+include("neoforge")
 
-rootProject.name = 'FTB-Ranks-1.20.1'
+rootProject.name = 'FTB-Ranks-1.20.4'
