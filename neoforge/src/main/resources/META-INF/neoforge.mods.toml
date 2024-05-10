@@ -11,6 +11,7 @@ authors = "FTB Team"
 description = '''
 A simple mod that lets you create ranks for players, similar to Discord roles, and manage permissions for them
 '''
+displayTest="IGNORE_SERVER_VERSION"
 
 [[mixins]]
 config = "ftbranks-common.mixins.json"
