@@ -187,7 +187,7 @@ public class FTBRanksCommands {
 				.withStyle(Style.EMPTY
 						.withClickEvent(new ClickEvent(Action.RUN_COMMAND, "/ftbranks show_rank " + rank.getId()))
 						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, isDef ?
-								Component.literal("Players must be explicitly added to this rank\nwith '/ftbranks add <player> <rank>'").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC) :
+								Component.literal("Players must be explicitly added to this rank\nwith '/ftbranks add <player> " + rank.getId() + "'").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC) :
 								Component.literal("Rank condition: " + rank.getCondition().asString()).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC))
 						)
 				);
