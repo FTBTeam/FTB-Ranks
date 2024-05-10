@@ -24,7 +24,11 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.ClickEvent.Action;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.io.IOException;
@@ -176,11 +180,24 @@ public class FTBRanksCommands {
 		return 1;
 	}
 
+	private static Component makeRankNameClicky(Rank rank) {
+		boolean isDef = rank.getCondition().isDefaultCondition();
+		return Component.literal(rank.getName())
+				.withStyle(isDef ? ChatFormatting.AQUA : ChatFormatting.YELLOW)
+				.withStyle(Style.EMPTY
+						.withClickEvent(new ClickEvent(Action.RUN_COMMAND, "/ftbranks show_rank " + rank.getId()))
+						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, isDef ?
+								Component.literal("Players must be explicitly added to this rank\nwith '/ftbranks add <player> <rank>'").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC) :
+								Component.literal("Rank condition: " + rank.getCondition().asString()).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC))
+						)
+				);
+	}
+
 	private static int listAllRanks(CommandSourceStack source) {
 		source.sendSuccess(() -> Component.literal("Ranks:"), false);
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
-			source.sendSuccess(() -> Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
+			source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 		}
 
 		return 1;
@@ -234,7 +251,7 @@ public class FTBRanksCommands {
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
 			if (rank.isActive(player)) {
-				source.sendSuccess(() -> Component.literal("- " + rank.getName()).withStyle(rank.getCondition().isDefaultCondition() ? ChatFormatting.AQUA : ChatFormatting.YELLOW), false);
+				source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 			}
 		}
 
