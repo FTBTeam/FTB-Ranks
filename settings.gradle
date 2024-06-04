@@ -1,14 +1,14 @@
 pluginManagement {
 	repositories {
+		maven { url "https://maven.architectury.dev/" }
 		maven { url "https://maven.creeperhost.net/" }
-		maven { url "https://maven.shedaniel.me/" }
 		gradlePluginPortal()
 	}
 }
 
 include("common")
 include("fabric")
-include("forge")
+//include("forge")
 include("neoforge")
 
-rootProject.name = 'FTB-Ranks-1.20.4'
+rootProject.name = 'FTB-Ranks-1.20.6'

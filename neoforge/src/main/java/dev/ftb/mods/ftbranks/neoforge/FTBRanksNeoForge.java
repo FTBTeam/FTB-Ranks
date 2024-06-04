@@ -5,8 +5,6 @@ import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.impl.decorate.MessageDecorator;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.fml.IExtensionPoint.DisplayTest;
-import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ServerChatEvent;
@@ -22,8 +20,6 @@ public class FTBRanksNeoForge {
 
 		// Nope.
 		// PermissionAPI.setPermissionHandler(new PermissionAPIWrapper(PermissionAPI.getPermissionHandler()));
-
-		ModLoadingContext.get().registerExtensionPoint(DisplayTest.class, () -> new DisplayTest(() -> DisplayTest.IGNORESERVERONLY, (a, b) -> true));
 	}
 
 	private void playerNameFormatting(PlayerEvent.NameFormat event) {
