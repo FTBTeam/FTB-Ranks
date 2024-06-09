@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author LatvianModder
@@ -25,7 +26,9 @@ public class StatCondition implements RankCondition {
 
 	public StatCondition(SNBTCompoundTag tag) {
 		statId = new ResourceLocation(tag.getString("stat"));
-		stat = Stats.CUSTOM.get(statId);
+		stat = findMatchingStat(statId);
+		if (stat == null)
+			throw new RuntimeException(String.format("%s is not a valid Stat", statId));
 		value = tag.getInt("value");
 
 		switch (tag.getString("value_check")) {
@@ -36,6 +39,19 @@ public class StatCondition implements RankCondition {
 			case "lesser_or_equal", "<=" -> valueCheck = LESSER_OR_EQUAL;
 			default -> valueCheck = EQUALS;
 		}
+	}
+
+	/**
+	 * Due to {@link net.minecraft.stats.StatType StatType} using an {@link java.util.IdentityHashMap IdentityHashMap}
+	 * we don't have the luxury of using a ResourceLocation we constructed to get the desired stat, so this utility
+	 * method finds it the hard way
+	 */
+	@Nullable
+	private Stat<ResourceLocation> findMatchingStat(ResourceLocation statId) {
+		for(Stat<ResourceLocation> s : Stats.CUSTOM) {
+			if(s.getValue().equals(statId)) return s;
+		}
+		return null; // No match found
 	}
 
 	@Override
