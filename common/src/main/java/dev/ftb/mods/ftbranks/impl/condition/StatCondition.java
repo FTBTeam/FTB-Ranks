@@ -2,11 +2,13 @@ package dev.ftb.mods.ftbranks.impl.condition;
 
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.NoSuchElementException;
 
 /**
  * @author LatvianModder
@@ -26,9 +28,13 @@ public class StatCondition implements RankCondition {
 
 	public StatCondition(SNBTCompoundTag tag) {
 		statId = new ResourceLocation(tag.getString("stat"));
-		stat = findMatchingStat(statId);
-		if (stat == null)
-			throw new RuntimeException(String.format("%s is not a valid Stat", statId));
+		stat = Registry.CUSTOM_STAT.getOptional(statId)
+			.map(Stats.CUSTOM::get)
+			.orElseThrow(
+				() -> new NoSuchElementException(
+					String.format("%s does not match any known stat", statId)
+				)
+			);
 		value = tag.getInt("value");
 
 		switch (tag.getString("value_check")) {
@@ -39,19 +45,6 @@ public class StatCondition implements RankCondition {
 			case "lesser_or_equal", "<=" -> valueCheck = LESSER_OR_EQUAL;
 			default -> valueCheck = EQUALS;
 		}
-	}
-
-	/**
-	 * Due to {@link net.minecraft.stats.StatType StatType} using an {@link java.util.IdentityHashMap IdentityHashMap}
-	 * we don't have the luxury of using a ResourceLocation we constructed to get the desired stat, so this utility
-	 * method finds it the hard way
-	 */
-	@Nullable
-	private Stat<ResourceLocation> findMatchingStat(ResourceLocation statId) {
-		for(Stat<ResourceLocation> s : Stats.CUSTOM) {
-			if(s.getValue().equals(statId)) return s;
-		}
-		return null; // No match found
 	}
 
 	@Override
