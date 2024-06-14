@@ -13,9 +13,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.math.NumberUtils;
 
-/**
- * @author LatvianModder
- */
 public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static RankManagerImpl manager;
 

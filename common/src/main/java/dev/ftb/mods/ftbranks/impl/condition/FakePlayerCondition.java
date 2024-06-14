@@ -4,9 +4,6 @@ import dev.architectury.hooks.level.entity.PlayerHooks;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
-/**
- * @author LatvianModder
- */
 public class FakePlayerCondition implements RankCondition.Simple {
 	@Override
 	public String getType() {

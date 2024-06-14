@@ -11,9 +11,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author LatvianModder
- */
 public class XorCondition implements RankCondition {
 	private final List<RankCondition> conditions;
 

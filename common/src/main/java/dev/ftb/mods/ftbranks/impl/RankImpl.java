@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author LatvianModder
- */
 public class RankImpl implements Rank, Comparable<RankImpl> {
 	private static final Set<String> SPECIAL_FIELDS = Set.of("name", "power", "condition");
 

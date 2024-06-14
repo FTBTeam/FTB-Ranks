@@ -7,9 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 
-/**
- * @author LatvianModder
- */
 public class SpawnCondition implements RankCondition.Simple {
 	@Override
 	public String getType() {

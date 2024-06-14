@@ -8,9 +8,6 @@ import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * @author LatvianModder
- */
 public class FTBRanks {
 	public static final String MOD_ID = "ftbranks";
 	public static final Logger LOGGER = LogManager.getLogger("FTB Ranks");

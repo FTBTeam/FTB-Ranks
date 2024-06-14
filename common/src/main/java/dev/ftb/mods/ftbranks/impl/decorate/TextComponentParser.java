@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-/**
- * @author LatvianModder
- */
 public class TextComponentParser {
 	public static final Char2ObjectOpenHashMap<ChatFormatting> CODE_TO_FORMATTING = new Char2ObjectOpenHashMap<>();
 
