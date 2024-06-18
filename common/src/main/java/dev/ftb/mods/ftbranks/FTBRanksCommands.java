@@ -36,9 +36,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * @author LatvianModder
- */
 public class FTBRanksCommands {
 	public static final DynamicCommandExceptionType ERROR_UNKNOWN_RANK = new DynamicCommandExceptionType(
 			(object) -> Component.literal("Unknown rank: " + object.toString())

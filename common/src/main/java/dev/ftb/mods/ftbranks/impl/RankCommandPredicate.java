@@ -8,9 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-/**
- * @author LatvianModder
- */
 public class RankCommandPredicate implements Predicate<CommandSourceStack> {
 	private final Predicate<CommandSourceStack> original;
 	private final String nodeName;

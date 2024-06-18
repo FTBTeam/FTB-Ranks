@@ -2,14 +2,14 @@ package dev.ftb.mods.ftbranks.impl.condition;
 
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 
-/**
- * @author LatvianModder
- */
+import java.util.NoSuchElementException;
+
 public class StatCondition implements RankCondition {
 	public static final int EQUALS = 1;
 	public static final int NOT_EQUALS = 2;
@@ -24,8 +24,12 @@ public class StatCondition implements RankCondition {
 	private final Stat<?> stat;
 
 	public StatCondition(SNBTCompoundTag tag) {
-		statId = new ResourceLocation(tag.getString("stat"));
-		stat = Stats.CUSTOM.get(statId);
+		statId = ResourceLocation.parse(tag.getString("stat"));
+		stat = BuiltInRegistries.CUSTOM_STAT.getOptional(statId)
+				.map(Stats.CUSTOM::get)
+				.orElseThrow(() ->
+						new NoSuchElementException(String.format("%s does not match any known stat", statId))
+				);
 		value = tag.getInt("value");
 
 		switch (tag.getString("value_check")) {

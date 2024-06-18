@@ -4,9 +4,6 @@ import dev.ftb.mods.ftbranks.api.PermissionValue;
 
 import java.util.Optional;
 
-/**
- * @author LatvianModder
- */
 public class StringPermissionValue implements PermissionValue {
 	public static final StringPermissionValue EMPTY = new StringPermissionValue("");
 

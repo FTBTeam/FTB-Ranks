@@ -10,9 +10,6 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
-/**
- * @author LatvianModder
- */
 public class PlayerRankData {
 	private final RankManagerImpl manager;
 	private final UUID playerId;

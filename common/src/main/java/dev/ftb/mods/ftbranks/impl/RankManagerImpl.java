@@ -35,9 +35,6 @@ import java.util.stream.Collectors;
 
 import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
 
-/**
- * @author LatvianModder
- */
 public class RankManagerImpl implements RankManager {
 	public static final LevelResource FOLDER_NAME = new LevelResource("serverconfig/ftbranks");
 	private static final Path DEFAULT_RANK_FILE = ConfigUtil.DEFAULT_CONFIG_DIR.resolve(MOD_ID).resolve("ranks.snbt");

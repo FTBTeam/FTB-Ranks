@@ -8,9 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 
-/**
- * @author LatvianModder
- */
 public class PlaytimeCondition implements RankCondition {
 	public static final int TICKS = 1;
 	public static final int SECONDS = TICKS * 20;

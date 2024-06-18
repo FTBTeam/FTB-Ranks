@@ -4,9 +4,6 @@ import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
-/**
- * @author LatvianModder
- */
 public class DefaultCondition implements RankCondition.Simple {
 	public final Rank original;
 

@@ -5,9 +5,6 @@ import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
-/**
- * @author LatvianModder
- */
 public final class RankAddedCondition implements RankCondition {
 	private final Rank original;
 	private final String id;
