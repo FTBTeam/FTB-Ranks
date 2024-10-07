@@ -177,7 +177,7 @@ public class FTBRanksCommands {
 		return 1;
 	}
 
-	private static Component makeRankNameClicky(Rank rank) {
+	private static Component  makeRankNameClicky(Rank rank) {
 		boolean isDef = rank.getCondition().isDefaultCondition();
 		return Component.literal(rank.getName())
 				.withStyle(isDef ? ChatFormatting.AQUA : ChatFormatting.YELLOW)
