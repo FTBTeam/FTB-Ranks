@@ -19,7 +19,7 @@ config = "ftbranks-common.mixins.json"
 [[dependencies.ftbranks]]
 modId = "neoforge"
 type = "required"
-versionRange = "[${neoforgeversion},)"
+versionRange = "${neoforgeversionrange}"
 ordering = "NONE"
 side = "BOTH"
 

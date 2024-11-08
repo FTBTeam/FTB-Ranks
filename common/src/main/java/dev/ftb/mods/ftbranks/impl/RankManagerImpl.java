@@ -44,7 +44,7 @@ public class RankManagerImpl implements RankManager {
 	private final Path rankFile;
 	private final Path playerFile;
 
-	private boolean shouldSaveRanks;
+    private boolean shouldSaveRanks;
 	private boolean shouldSavePlayers;
 
 	private Map<String, RankImpl> ranks;
@@ -81,7 +81,7 @@ public class RankManagerImpl implements RankManager {
 	@Override
 	public RankImpl createRank(String id, String name, int power) {
 		deleteRank(id);
-		RankImpl rank = RankImpl.create(this, id, name, power);
+		RankImpl rank = RankImpl.create(this, id, name, power, RankFileSource.SERVER);
 		ranks.put(id, rank);
 		rebuildSortedRanks();
 		markRanksDirty();
@@ -194,21 +194,9 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		Map<String, RankImpl> tempRanks = new LinkedHashMap<>();
-		SNBTCompoundTag rankFileTag = SNBT.read(rankFile);
-		if (rankFileTag != null) {
-			for (String rankId : rankFileTag.getAllKeys()) {
-				try {
-					RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getCompound(rankId));
-					tempRanks.put(rank.getId(), rank);
-				} catch (RankException e) {
-					FTBRanks.LOGGER.error("Failed to read rank {} from SNBT: {}", rankId, e.getMessage());
-				}
-			}
-			if (tempRanks.isEmpty()) {
-				FTBRanks.LOGGER.warn("No ranks found!");
-			}
-		} else {
-			throw new RuntimeException("ranks.snbt failed to load! check your server log for errors");
+		readRankFile(RankFileSource.SERVER, tempRanks);
+		if (Files.exists(RankFileSource.MODPACK.getPath(server))) {
+			readRankFile(RankFileSource.MODPACK, tempRanks);
 		}
 
 		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
@@ -233,20 +221,43 @@ public class RankManagerImpl implements RankManager {
 
 		PlayerNameFormatting.refreshPlayerNames();
 
-		FTBRanks.LOGGER.info("Loaded " + ranks.size() + " ranks");
+        FTBRanks.LOGGER.info("Loaded {} ranks", ranks.size());
+	}
+
+	private void readRankFile(RankFileSource source, Map<String, RankImpl> rankMap) {
+		Path inputFile = source.getPath(server);
+		SNBTCompoundTag rankFileTag = SNBT.read(inputFile);
+		if (rankFileTag != null) {
+			int size = rankMap.size();
+			for (String rankId : rankFileTag.getAllKeys()) {
+				try {
+					RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getCompound(rankId), source);
+					if (rankMap.putIfAbsent(rank.getId(), rank) != null) {
+						FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, ignoring", rank.getId(), inputFile);
+					}
+				} catch (RankException e) {
+					FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", rankId, inputFile, e.getMessage());
+				}
+			}
+			if (rankMap.size() == size) {
+				FTBRanks.LOGGER.warn("No ranks found in {}!", inputFile);
+			}
+		} else {
+			throw new RuntimeException(inputFile + " failed to load! check your server log for errors");
+		}
 	}
 
 	private void createDefaultRanks() {
 		ranks = new LinkedHashMap<>();
 
-		RankImpl memberRank = RankImpl.create(this, "member", "Member", 1, AlwaysActiveCondition.INSTANCE);
+		RankImpl memberRank = RankImpl.create(this, "member", "Member", 1, AlwaysActiveCondition.INSTANCE, RankFileSource.SERVER);
 		ranks.put("member", memberRank);
 
-		RankImpl vipRank = RankImpl.create(this, "vip", "VIP", 50);
+		RankImpl vipRank = RankImpl.create(this, "vip", "VIP", 50, RankFileSource.SERVER);
 		vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&bVIP {name}"));
 		ranks.put("vip", vipRank);
 
-		RankImpl adminRank = RankImpl.create(this, "admin", "Admin", 1000, new OPCondition());
+		RankImpl adminRank = RankImpl.create(this, "admin", "Admin", 1000, new OPCondition(), RankFileSource.SERVER);
 		adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&2{name}"));
 		ranks.put("admin", adminRank);
 
@@ -312,13 +323,16 @@ public class RankManagerImpl implements RankManager {
 
 	void saveRanksNow() {
 		if (shouldSaveRanks) {
-			SNBTCompoundTag tag = new SNBTCompoundTag();
+			Map<RankFileSource,SNBTCompoundTag> map = new EnumMap<>(RankFileSource.class);
 			for (RankImpl rank : ranks.values()) {
-				tag.put(rank.getId(), rank.writeSNBT());
+				map.computeIfAbsent(rank.getSource(), k -> new SNBTCompoundTag())
+						.put(rank.getId(), rank.writeSNBT());
 			}
-			if (!SNBT.write(rankFile, tag)) {
-				FTBRanks.LOGGER.warn("Failed to save ranks.snbt!");
-			}
+			map.forEach((source, tag) -> {
+				if (!SNBT.write(source.getPath(server), tag)) {
+					FTBRanks.LOGGER.warn("Failed to save {}}!", source.getPath(server));
+				}
+			});
 			shouldSaveRanks = false;
 		}
 	}

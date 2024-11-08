@@ -19,25 +19,27 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	private final Map<String, PermissionValue> permissions = new LinkedHashMap<>();
 	private final String name;
 	private final int power;
+	private final RankFileSource source;
 	@NotNull
 	private RankCondition condition;
 
-	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition) {
-		return new RankImpl(manager, id, name, power, condition);
+	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition, RankFileSource source) {
+		return new RankImpl(manager, id, name, power, condition, source);
 	}
 
-	public static RankImpl create(RankManagerImpl manager, String id, String name, int power) {
-		RankImpl rank = new RankImpl(manager, id, name, power, AlwaysActiveCondition.INSTANCE);
+	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankFileSource source) {
+		RankImpl rank = new RankImpl(manager, id, name, power, AlwaysActiveCondition.INSTANCE, source);
 		rank.setCondition(new DefaultCondition(rank));
 		return rank;
 	}
 
-	private RankImpl(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition) {
+	private RankImpl(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition, RankFileSource source) {
 		this.manager = manager;
 		this.id = id;
 		this.name = name;
 		this.power = power;
 		this.condition = condition;
+		this.source = source;
 	}
 
 	@Override
@@ -152,9 +154,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return nodes;
 	}
 
-	public static RankImpl readSNBT(RankManagerImpl manager, String rankId, SNBTCompoundTag tag) throws RankException {
+	public static RankImpl readSNBT(RankManagerImpl manager, String rankId, SNBTCompoundTag tag, RankFileSource source) throws RankException {
 		String displayName = tag.getString("name").isEmpty() ? rankId : tag.getString("name");
-		RankImpl rank = create(manager, rankId, displayName, tag.getInt("power"));
+		RankImpl rank = create(manager, rankId, displayName, tag.getInt("power"), source);
 
 		if (tag.contains("condition")) {
 			rank.setCondition(manager.createCondition(rank, tag.get("condition")));
@@ -198,4 +200,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return res;
 	}
 
+	public RankFileSource getSource() {
+		return source;
+	}
 }
