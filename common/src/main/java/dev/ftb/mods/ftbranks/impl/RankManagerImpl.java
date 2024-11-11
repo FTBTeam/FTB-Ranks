@@ -79,14 +79,33 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public RankImpl createRank(String id, String name, int power) {
-		deleteRank(id);
+	public Rank createRank(String id, String displayName, int power) {
+		return createRank(displayName, power, false);
+	}
+
+	@Override
+	public RankImpl createRank(String name, int power, boolean forceCreate) {
+		String id = normalizeRankName(name);
+
+		if (forceCreate) {
+			deleteRank(id);
+		} else if (ranks.containsKey(id)) {
+			throw new RankException("Rank '" + id + "' already exists");
+		}
+
 		RankImpl rank = RankImpl.create(this, id, name, power, RankFileSource.SERVER);
 		ranks.put(id, rank);
 		rebuildSortedRanks();
 		markRanksDirty();
 		RankEvent.CREATED.invoker().accept(new RankCreatedEvent(this, rank));
 		return rank;
+	}
+
+	private static String normalizeRankName(String name) {
+		return name.toLowerCase()
+				.replace("+", "_plus")
+				.replaceAll("[^a-z0-9_]", "_")
+				.replaceAll("_{2,}", "_");
 	}
 
 	@Override
