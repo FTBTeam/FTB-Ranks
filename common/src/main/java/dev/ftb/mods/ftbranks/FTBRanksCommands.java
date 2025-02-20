@@ -316,11 +316,18 @@ public class FTBRanksCommands {
 
 		source.sendSuccess(() -> Component.literal("=".repeat(50)).withStyle(ChatFormatting.GREEN), false);
 
-		source.sendSuccess(() -> Component.literal(String.format("Rank ID: %s, Rank Name: %s, Power: %d", rank.getId(), rank.getName(), rank.getPower())).withStyle(ChatFormatting.YELLOW), false);
+		source.sendSuccess(() -> Component.literal("Rank ID: ").withStyle(ChatFormatting.YELLOW)
+						.append(Component.literal(rank.getId()).withStyle(ChatFormatting.WHITE))
+						.append(Component.literal(", Rank Name: ").withStyle(ChatFormatting.YELLOW))
+						.append(Component.literal(rank.getName()).withStyle(ChatFormatting.WHITE))
+						.append(Component.literal(", Power: ").withStyle(ChatFormatting.YELLOW))
+						.append(Component.literal(String.valueOf(rank.getPower())).withStyle(ChatFormatting.WHITE)),
+				true);
 
 		String condStr = rank.getCondition().asString();
 		Component c = condStr.isEmpty() ?
-				Component.literal("(none: players must be added)").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) : Component.literal(condStr);
+				Component.literal("(none: players must be added)").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) :
+				Component.literal(condStr).withStyle(ChatFormatting.WHITE);
 		source.sendSuccess(() -> Component.literal("Condition: ").append(c).withStyle(ChatFormatting.YELLOW), false);
 
 		source.sendSuccess(() -> Component.literal("Permission nodes:").withStyle(ChatFormatting.YELLOW), false);
