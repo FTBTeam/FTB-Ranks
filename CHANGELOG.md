@@ -4,13 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2101.1.1
+[2100.1.2]
 
-### Added
-* We now load a supplementary `config/ftbranks-pack.snbt` file alongside the default file
-  * Intended to augment existing ranks from ranks.snbt with pack-specific settings, to be created by modpack makers, and independent from the server admin settings.
+### Changed
+* API change for RankManager#createRank
+  * Added new RankManager#createRank(String, int, boolean) method, deprecated the existing RankManager#createRank(String, String, int) method
+  * Note: minor API break here: both methods now throw a RankException if the rank already exists, rather than blindly overwrite it
 
-## 2100.1.0
+[2100.1.1]
+
+### Changed
+* Now loads a supplementary `config/ftbranks-pack.snbt` file alongside the default file
+  * Intended to augment existing ranks from `ranks.snbt` with pack-specific settings, to be created by modpack makers, independent of the server admin settings.
+
+[2100.1.0]
 
 ### Changed
 * Ported to Minecraft 1.21. Support for Fabric and NeoForge.

@@ -39,8 +39,24 @@ public interface RankManager {
 	 * @param displayName rank display name
 	 * @param power rank power
 	 * @return the newly-created rank
+	 * @deprecated use {@link #createRank(String, int, boolean)}
 	 */
+	@Deprecated
 	Rank createRank(String id, String displayName, int power);
+
+	/**
+	 * Create a new rank with the given name &amp; power. A canonical rank ID is derived from the name, by
+	 * converting to lower case, then substituting the "+" symbol with "_plus" and all other non-alphanumeric characters
+	 * with underscores. Finally, runs of multiple consecutive underscores are replaced with a single underscore.
+	 * E.g. "Alice + Bob's rank" will be converted to "alice_plus_bob_s_rank"
+	 *
+	 * @param displayName rank display name
+	 * @param power rank power
+	 * @param forceCreate if true, any existing rank is replaced; if false, an exception is thrown if a rank exists
+	 * @return the newly-created rank
+	 * @throws RankException if {@code forceCreate} is false and a rank with the same canonical ID already exists
+	 */
+	Rank createRank(String displayName, int power, boolean forceCreate);
 
 	/**
 	 * Delete the rank with the given ID.
