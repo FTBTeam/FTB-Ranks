@@ -25,4 +25,9 @@ public final class RankAddedCondition implements RankCondition {
 				.map(rank -> rank != original && rank.isAdded(player))
 				.orElse(false);
 	}
+
+	@Override
+	public void save(SNBTCompoundTag tag) {
+		tag.putString("rank", id);
+	}
 }
