@@ -11,7 +11,7 @@ public final class RankAddedCondition implements RankCondition {
 
 	public RankAddedCondition(Rank r, SNBTCompoundTag tag) {
 		original = r;
-		id = tag.getString("rank");
+		id = tag.getStringOr("rank", "");
 	}
 
 	@Override

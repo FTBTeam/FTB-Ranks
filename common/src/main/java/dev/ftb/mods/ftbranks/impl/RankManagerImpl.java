@@ -140,11 +140,11 @@ public class RankManagerImpl implements RankManager {
 	public RankCondition createCondition(Rank rank, @Nullable Tag tag) throws RankException {
 		SNBTCompoundTag compoundTag = new SNBTCompoundTag();
 		if (tag instanceof StringTag) {
-			compoundTag.putString("type", tag.getAsString());
+			compoundTag.putString("type", tag.asString().orElseThrow());
 		} else if (tag instanceof SNBTCompoundTag c) {
 			compoundTag = c;
 		}
-		String key = compoundTag.getString("type");
+		String key = compoundTag.getStringOr("type", "");
 		if (!conditions.containsKey(key)) {
 			throw new IllegalArgumentException("Can't create condition from tag: '" + tag + "'");
 		}
@@ -221,8 +221,8 @@ public class RankManagerImpl implements RankManager {
 		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
 		SNBTCompoundTag playerFileTag = SNBT.read(playerFile);
 		if (playerFileTag != null) {
-			for (String key : playerFileTag.getAllKeys()) {
-				SNBTCompoundTag o = playerFileTag.getCompound(key);
+			for (String key : playerFileTag.keySet()) {
+				SNBTCompoundTag o = playerFileTag.getAsSnbtComponent(key);
 				UUID id = UUID.fromString(key);
 				PlayerRankData data = PlayerRankData.fromSNBT(this, id, o, tempRanks);
 				tempPlayerData.put(id, data);
@@ -248,9 +248,9 @@ public class RankManagerImpl implements RankManager {
 		SNBTCompoundTag rankFileTag = SNBT.read(inputFile);
 		if (rankFileTag != null) {
 			int size = rankMap.size();
-			for (String rankId : rankFileTag.getAllKeys()) {
+			for (String rankId : rankFileTag.keySet()) {
 				try {
-					RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getCompound(rankId), source);
+					RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getAsSnbtComponent(rankId), source);
 					if (rankMap.putIfAbsent(rank.getId(), rank) != null) {
 						FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, ignoring", rank.getId(), inputFile);
 					}
@@ -372,7 +372,7 @@ public class RankManagerImpl implements RankManager {
 
 	static PermissionValue ofTag(SNBTCompoundTag tag, String key) {
 		if (tag.isBoolean(key)) {
-			return BooleanPermissionValue.of(tag.getBoolean(key));
+			return BooleanPermissionValue.of(tag.getBooleanOr(key, false)); // TODO: False default might not be ideal
 		}
 
 		Tag v = tag.get(key);
@@ -380,9 +380,9 @@ public class RankManagerImpl implements RankManager {
 		if (v == null || v instanceof EndTag) {
 			return PermissionValue.MISSING;
 		} else if (v instanceof NumericTag) {
-			return NumberPermissionValue.of(((NumericTag) v).getAsNumber());
+			return NumberPermissionValue.of(v.asNumber().orElseThrow());
 		} else if (v instanceof StringTag) {
-			return StringPermissionValue.of(v.getAsString());
+			return StringPermissionValue.of(v.asString().orElseThrow());
 		}
 
 		return StringPermissionValue.of(v.toString());

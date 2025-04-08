@@ -26,7 +26,7 @@ public class PlayerNameFormatting {
                 FTBRanks.LOGGER.error(s);
                 return Component.literal("BrokenFormatting").withStyle(Style.EMPTY
                         .withColor(ChatFormatting.RED)
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(s)))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.literal(s)))
                 );
             }
         } else {

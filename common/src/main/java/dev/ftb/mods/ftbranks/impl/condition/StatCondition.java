@@ -24,15 +24,15 @@ public class StatCondition implements RankCondition {
 	private final Stat<?> stat;
 
 	public StatCondition(SNBTCompoundTag tag) {
-		statId = ResourceLocation.parse(tag.getString("stat"));
+		statId = ResourceLocation.parse(tag.getStringOr("stat", ""));
 		stat = BuiltInRegistries.CUSTOM_STAT.getOptional(statId)
 				.map(Stats.CUSTOM::get)
 				.orElseThrow(() ->
 						new NoSuchElementException(String.format("%s does not match any known stat", statId))
 				);
-		value = tag.getInt("value");
+		value = tag.getIntOr("value", 0);
 
-		switch (tag.getString("value_check")) {
+		switch (tag.getStringOr("value_check", "")) {
 			case "not_equals", "not", "!=" -> valueCheck = NOT_EQUALS;
 			case "greater", ">" -> valueCheck = GREATER;
 			case "greater_or_equal", ">=" -> valueCheck = GREATER_OR_EQUAL;
