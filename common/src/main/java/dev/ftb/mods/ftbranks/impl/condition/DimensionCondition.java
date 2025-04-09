@@ -8,9 +8,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
-/**
- * @author LatvianModder
- */
 public class DimensionCondition implements RankCondition {
 	private final ResourceKey<Level> dimension;
 
