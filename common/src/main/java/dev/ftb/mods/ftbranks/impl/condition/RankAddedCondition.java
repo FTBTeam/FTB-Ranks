@@ -5,9 +5,9 @@ import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
-public final class RankAddedCondition implements RankCondition {
-	private final Rank original;
-	private final String id;
+public class RankAddedCondition implements RankCondition {
+	protected final Rank original;
+	protected final String id;
 
 	public RankAddedCondition(Rank r, SNBTCompoundTag tag) {
 		original = r;
