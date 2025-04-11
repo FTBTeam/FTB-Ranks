@@ -12,7 +12,7 @@ public class DimensionCondition implements RankCondition {
 	private final ResourceKey<Level> dimension;
 
 	public DimensionCondition(SNBTCompoundTag tag) {
-		dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("dimension")));
+		dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getStringOr("dimension", "")));
 	}
 
 	@Override

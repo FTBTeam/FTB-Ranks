@@ -21,12 +21,12 @@ public class PlaytimeCondition implements RankCondition {
 	private final Stat<ResourceLocation> stat;
 
 	public PlaytimeCondition(SNBTCompoundTag tag) {
-		time = tag.getInt("time");
+		time = tag.getIntOr("time", 0);
 
 		if (!tag.contains("time_unit")) {
 			FTBRanks.LOGGER.warn("missing 'time_unit' field in playtime condition - assuming 'ticks'");
 		}
-		switch (tag.getString("time_unit")) {
+		switch (tag.getStringOr("time_unit", "seconds")) {
 			case "seconds" -> timeUnit = SECONDS;
 			case "minutes" -> timeUnit = MINUTES;
 			case "hours" -> timeUnit = HOURS;

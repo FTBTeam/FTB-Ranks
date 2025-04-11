@@ -155,14 +155,14 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	public static RankImpl readSNBT(RankManagerImpl manager, String rankId, SNBTCompoundTag tag, RankFileSource source) throws RankException {
-		String displayName = tag.getString("name").isEmpty() ? rankId : tag.getString("name");
-		RankImpl rank = create(manager, rankId, displayName, tag.getInt("power"), source);
+		String displayName = tag.getStringOr("name", rankId);
+		RankImpl rank = create(manager, rankId, displayName, tag.getIntOr("power", 0), source); // TODO: A default of 0 might not be ideal
 
 		if (tag.contains("condition")) {
 			rank.setCondition(manager.createCondition(rank, tag.get("condition")));
 		}
 
-		for (String key : tag.getAllKeys()) {
+		for (String key : tag.keySet()) {
 			if (!SPECIAL_FIELDS.contains(key)) {
 				while (key.endsWith(".*")) {
 					key = key.substring(0, key.length() - 2);
