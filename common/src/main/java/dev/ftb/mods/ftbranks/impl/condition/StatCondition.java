@@ -10,6 +10,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 
+import java.util.NoSuchElementException;
+
 /**
  * @author LatvianModder
  */
@@ -29,22 +31,11 @@ public class StatCondition implements RankCondition {
 	public StatCondition(SNBTCompoundTag tag) {
 		statId = new ResourceLocation(tag.getString("stat"));
 
-		ResourceLocation actualId = BuiltInRegistries.CUSTOM_STAT.get(statId);
-		if (actualId == null) {
-			// workaround for a bug where mods might register a modded stat in the vanilla namespace
-			// https://github.com/FTBTeam/FTB-Mods-Issues/issues/724
-			actualId = BuiltInRegistries.CUSTOM_STAT.get(new ResourceLocation(statId.getPath()));
-		}
-		if (actualId == null) {
-			// shouldn't happen, but in case the stat is missing...
-			stat = null;
-			value = 0;
-			valueCheck = EQUALS;
-			FTBRanks.LOGGER.warn("could not get stat for {} / {} - condition will not function", getType(), statId);
-			throw new RankException("Invalid stat ID: " + statId);
-		}
-
-		stat = Stats.CUSTOM.get(actualId);
+		stat = BuiltInRegistries.CUSTOM_STAT.getOptional(statId)
+				.map(Stats.CUSTOM::get)
+				.orElseThrow(() ->
+						new NoSuchElementException(String.format("%s does not match any known stat", statId))
+				);
 		value = tag.getInt("value");
 
 		switch (tag.getString("value_check")) {
