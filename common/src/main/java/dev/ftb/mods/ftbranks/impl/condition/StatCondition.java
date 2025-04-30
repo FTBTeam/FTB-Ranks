@@ -1,7 +1,10 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import dev.ftb.mods.ftbranks.api.RankException;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
@@ -25,7 +28,23 @@ public class StatCondition implements RankCondition {
 
 	public StatCondition(SNBTCompoundTag tag) {
 		statId = new ResourceLocation(tag.getString("stat"));
-		stat = Stats.CUSTOM.get(statId);
+
+		ResourceLocation actualId = BuiltInRegistries.CUSTOM_STAT.get(statId);
+		if (actualId == null) {
+			// workaround for a bug where mods might register a modded stat in the vanilla namespace
+			// https://github.com/FTBTeam/FTB-Mods-Issues/issues/724
+			actualId = BuiltInRegistries.CUSTOM_STAT.get(new ResourceLocation(statId.getPath()));
+		}
+		if (actualId == null) {
+			// shouldn't happen, but in case the stat is missing...
+			stat = null;
+			value = 0;
+			valueCheck = EQUALS;
+			FTBRanks.LOGGER.warn("could not get stat for {} / {} - condition will not function", getType(), statId);
+			throw new RankException("Invalid stat ID: " + statId);
+		}
+
+		stat = Stats.CUSTOM.get(actualId);
 		value = tag.getInt("value");
 
 		switch (tag.getString("value_check")) {
@@ -45,6 +64,8 @@ public class StatCondition implements RankCondition {
 
 	@Override
 	public boolean isRankActive(ServerPlayer player) {
+		if (stat == null) return false;
+
 		int v = player.getStats().getValue(stat);
 
 		return switch (valueCheck) {
