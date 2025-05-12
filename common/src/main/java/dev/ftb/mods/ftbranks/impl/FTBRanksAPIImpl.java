@@ -67,6 +67,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static void registerConditions(RegisterConditionsEvent event) {
 		event.register("always_active", (rank, json) -> AlwaysActiveCondition.INSTANCE);
 		event.register("rank_added", RankAddedCondition::new);
+		event.register("rank_applies", RankAppliesCondition::new);
 
 		event.register("not", NotCondition::new);
 		event.register("or", OrCondition::new);
