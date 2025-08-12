@@ -1,5 +1,6 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.RankManager;
@@ -12,6 +13,8 @@ import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.math.NumberUtils;
+
+import java.io.IOException;
 
 public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static RankManagerImpl manager;
@@ -45,8 +48,8 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static void serverStarted(MinecraftServer server) {
 		try {
 			manager.load();
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		} catch (IOException ex) {
+			FTBRanks.LOGGER.error("failed to load ranks data: {} / {}", ex.getClass().getName(), ex.getMessage());
 		}
 	}
 

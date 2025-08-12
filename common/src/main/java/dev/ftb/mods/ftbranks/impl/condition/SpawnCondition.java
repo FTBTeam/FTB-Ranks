@@ -15,11 +15,11 @@ public class SpawnCondition implements RankCondition.Simple {
 
 	@Override
 	public boolean isRankActive(ServerPlayer player) {
-		if (player.level() instanceof ServerLevel serverLevel && serverLevel.dimension() == Level.OVERWORLD && player.server.getSpawnProtectionRadius() > 0) {
+		if (player.level() instanceof ServerLevel serverLevel && serverLevel.dimension() == Level.OVERWORLD && serverLevel.getServer().getSpawnProtectionRadius() > 0) {
 			BlockPos spawn = serverLevel.getSharedSpawnPos();
 			int x = Mth.abs(Mth.floor(player.getX()) - spawn.getX());
 			int z = Mth.abs(Mth.floor(player.getZ()) - spawn.getZ());
-			return Math.max(x, z) <= player.server.getSpawnProtectionRadius();
+			return Math.max(x, z) <= serverLevel.getServer().getSpawnProtectionRadius();
 		}
 
 		return false;

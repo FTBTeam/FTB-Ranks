@@ -44,7 +44,7 @@ public class RankManagerImpl implements RankManager {
 	private final Path rankFile;
 	private final Path playerFile;
 
-    private boolean shouldSaveRanks;
+	private boolean shouldSaveRanks;
 	private boolean shouldSavePlayers;
 
 	private Map<String, RankImpl> ranks;
@@ -162,8 +162,7 @@ public class RankManagerImpl implements RankManager {
 			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
 			return getPermissionValue(getOrCreatePlayerData(player.getGameProfile()), list, node);
 		} catch (Exception ex) {
-			FTBRanks.LOGGER.error("Error getting permission value for node " + node + "!");
-			ex.printStackTrace();
+            FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
 		}
 
 		return PermissionValue.MISSING;
@@ -195,7 +194,7 @@ public class RankManagerImpl implements RankManager {
 		return i == -1 ? PermissionValue.MISSING : getPermissionValue(data, ranks, node.substring(0, i));
 	}
 
-	public void reload() throws Exception {
+	public void reload() throws IOException {
 		shouldSaveRanks = false;
 
 		if (Files.notExists(rankFile)) {
@@ -219,16 +218,12 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
-		SNBTCompoundTag playerFileTag = SNBT.read(playerFile);
-		if (playerFileTag != null) {
-			for (String key : playerFileTag.keySet()) {
-				SNBTCompoundTag o = playerFileTag.getAsSnbtComponent(key);
-				UUID id = UUID.fromString(key);
-				PlayerRankData data = PlayerRankData.fromSNBT(this, id, o, tempRanks);
-				tempPlayerData.put(id, data);
-			}
-		} else {
-			throw new RuntimeException("players.snbt failed to load! check your server log for errors");
+		SNBTCompoundTag playerFileTag = SNBT.tryRead(playerFile);
+		for (String key : playerFileTag.keySet()) {
+			SNBTCompoundTag o = playerFileTag.getAsSnbtComponent(key);
+			UUID id = UUID.fromString(key);
+			PlayerRankData data = PlayerRankData.fromSNBT(this, id, o, tempRanks);
+			tempPlayerData.put(id, data);
 		}
 
 		ranks = new LinkedHashMap<>(tempRanks);
@@ -240,29 +235,25 @@ public class RankManagerImpl implements RankManager {
 
 		PlayerNameFormatting.refreshPlayerNames();
 
-        FTBRanks.LOGGER.info("Loaded {} ranks", ranks.size());
+		FTBRanks.LOGGER.info("Loaded {} ranks", ranks.size());
 	}
 
-	private void readRankFile(RankFileSource source, Map<String, RankImpl> rankMap) {
+	private void readRankFile(RankFileSource source, Map<String, RankImpl> rankMap) throws IOException {
 		Path inputFile = source.getPath(server);
-		SNBTCompoundTag rankFileTag = SNBT.read(inputFile);
-		if (rankFileTag != null) {
-			int size = rankMap.size();
-			for (String rankId : rankFileTag.keySet()) {
-				try {
-					RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getAsSnbtComponent(rankId), source);
-					if (rankMap.putIfAbsent(rank.getId(), rank) != null) {
-						FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, ignoring", rank.getId(), inputFile);
-					}
-				} catch (RankException e) {
-					FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", rankId, inputFile, e.getMessage());
+		SNBTCompoundTag rankFileTag = SNBT.tryRead(inputFile);
+		int size = rankMap.size();
+		for (String rankId : rankFileTag.keySet()) {
+			try {
+				RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getAsSnbtComponent(rankId), source);
+				if (rankMap.putIfAbsent(rank.getId(), rank) != null) {
+					FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, ignoring", rank.getId(), inputFile);
 				}
+			} catch (RankException e) {
+				FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", rankId, inputFile, e.getMessage());
 			}
-			if (rankMap.size() == size) {
-				FTBRanks.LOGGER.warn("No ranks found in {}!", inputFile);
-			}
-		} else {
-			throw new RuntimeException(inputFile + " failed to load! check your server log for errors");
+		}
+		if (rankMap.size() == size) {
+			FTBRanks.LOGGER.warn("No ranks found in {}!", inputFile);
 		}
 	}
 
@@ -328,7 +319,7 @@ public class RankManagerImpl implements RankManager {
 		}
 	}
 
-	void load() throws Exception {
+	void load() throws IOException {
 		if (Files.notExists(directory)) {
 			Files.createDirectories(directory);
 		}
@@ -348,9 +339,11 @@ public class RankManagerImpl implements RankManager {
 						.put(rank.getId(), rank.writeSNBT());
 			}
 			map.forEach((source, tag) -> {
-				if (!SNBT.write(source.getPath(server), tag)) {
-					FTBRanks.LOGGER.warn("Failed to save {}}!", source.getPath(server));
-				}
+                try {
+                    SNBT.tryWrite(source.getPath(server), tag);
+                } catch (IOException e) {
+					FTBRanks.LOGGER.warn("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
+                }
 			});
 			shouldSaveRanks = false;
 		}
@@ -363,9 +356,11 @@ public class RankManagerImpl implements RankManager {
 				playerTag.put(data.getPlayerId().toString(), data.writeSNBT());
 			}
 
-			if (!SNBT.write(playerFile, playerTag)) {
-				FTBRanks.LOGGER.warn("Failed to save players.snbt!");
-			}
+            try {
+                SNBT.tryWrite(playerFile, playerTag);
+            } catch (IOException e) {
+				FTBRanks.LOGGER.warn("Failed to save players.snbt! {} / {}", e.getClass().getName(), e.getMessage());
+            }
 			shouldSavePlayers = false;
 		}
 	}
@@ -377,16 +372,15 @@ public class RankManagerImpl implements RankManager {
 
 		Tag v = tag.get(key);
 
-		if (v == null || v instanceof EndTag) {
-			return PermissionValue.MISSING;
-		} else if (v instanceof NumericTag) {
-			return NumberPermissionValue.of(v.asNumber().orElseThrow());
-		} else if (v instanceof StringTag) {
-			return StringPermissionValue.of(v.asString().orElseThrow());
-		}
+        return switch (v) {
+            case null -> PermissionValue.MISSING;
+            case EndTag ignored -> PermissionValue.MISSING;
+            case NumericTag n -> NumberPermissionValue.of(n.asNumber().orElseThrow());
+            case StringTag s -> StringPermissionValue.of(s.asString().orElseThrow());
+            default -> StringPermissionValue.of(v.toString());
+        };
 
-		return StringPermissionValue.of(v.toString());
-	}
+    }
 
 	static SNBTCompoundTag writePermissions(Map<String, PermissionValue> map, SNBTCompoundTag res) {
 		map.forEach((key, value) -> {
