@@ -3,7 +3,7 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
@@ -18,13 +18,13 @@ public class StatCondition implements RankCondition {
 	public static final int LESSER = 5;
 	public static final int LESSER_OR_EQUAL = 6;
 
-	private final ResourceLocation statId;
+	private final Identifier statId;
 	private final int value;
 	private final int valueCheck;
 	private final Stat<?> stat;
 
 	public StatCondition(SNBTCompoundTag tag) {
-		statId = ResourceLocation.parse(tag.getStringOr("stat", ""));
+		statId = Identifier.parse(tag.getStringOr("stat", ""));
 		stat = BuiltInRegistries.CUSTOM_STAT.getOptional(statId)
 				.map(Stats.CUSTOM::get)
 				.orElseThrow(() ->

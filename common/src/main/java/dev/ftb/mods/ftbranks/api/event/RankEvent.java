@@ -1,10 +1,10 @@
 package dev.ftb.mods.ftbranks.api.event;
 
-import com.mojang.authlib.GameProfile;
 import dev.architectury.event.Event;
 import dev.architectury.event.EventFactory;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
+import net.minecraft.server.players.NameAndId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +53,9 @@ public class RankEvent {
      * Common superclass for rank events with a player involved
      */
     public static class Player extends RankEvent {
-        private final GameProfile player;
+        private final NameAndId player;
 
-        public Player(RankManager manager, Rank rank, GameProfile player) {
+        public Player(RankManager manager, Rank rank, NameAndId player) {
             super(manager, rank);
             this.player = player;
         }
@@ -65,7 +65,7 @@ public class RankEvent {
          * @return the player's game profile
          */
         @NotNull
-        public GameProfile getPlayer() {
+        public NameAndId getPlayer() {
             return player;
         }
     }

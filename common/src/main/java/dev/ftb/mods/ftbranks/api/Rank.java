@@ -1,7 +1,7 @@
 package dev.ftb.mods.ftbranks.api;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +92,7 @@ public interface Rank {
 	 * @return true if the player has been added, false otherwise
 	 */
 	default boolean isAdded(ServerPlayer player) {
-		return getManager().getAddedRanks(player.getGameProfile()).contains(this);
+		return getManager().getAddedRanks(player.nameAndId()).contains(this);
 	}
 
 	/**
@@ -101,7 +101,7 @@ public interface Rank {
 	 * @param profile the game profile
 	 * @return true if the profile was added, false it was already present
 	 */
-	boolean add(GameProfile profile);
+	boolean add(NameAndId profile);
 
 	/**
 	 * Remove the given player game profile from this rank.
@@ -109,7 +109,7 @@ public interface Rank {
 	 * @param profile the game profile
 	 * @return true if the profile was removed, false if it was not present
 	 */
-	boolean remove(GameProfile profile);
+	boolean remove(NameAndId profile);
 
 	/**
 	 * Get all the permission node names which have been defined for this rank.

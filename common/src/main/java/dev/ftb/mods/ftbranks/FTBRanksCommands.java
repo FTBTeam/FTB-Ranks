@@ -1,6 +1,5 @@
 package dev.ftb.mods.ftbranks;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -23,11 +22,12 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.ClickEvent.Action;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.server.players.NameAndId;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -43,7 +43,7 @@ public class FTBRanksCommands {
 		// source.getServer() *can* return null: https://github.com/FTBTeam/FTB-Mods-Issues/issues/766
 		//noinspection ConstantValue
 		dispatcher.register(Commands.literal("ftbranks")
-				.requires(source -> source.getServer() != null && source.getServer().isSingleplayer() || source.hasPermission(2))
+				.requires(source -> source.getServer() != null && source.getServer().isSingleplayer() || source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 				.then(Commands.literal("reload")
 						.executes(context -> reloadRanks(context.getSource()))
 				)
@@ -217,22 +217,22 @@ public class FTBRanksCommands {
 		return Command.SINGLE_SUCCESS;
 	}
 
-	private static int addRank(CommandSourceStack source, Collection<GameProfile> players, String rankName) throws CommandSyntaxException {
+	private static int addRank(CommandSourceStack source, Collection<NameAndId> players, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
-		for (GameProfile profile : players) {
+		for (NameAndId profile : players) {
 			if (rank.add(profile)) {
-				source.sendSuccess(() -> Component.literal(String.format("Player %s added to rank '%s'!", profile.getName(), rank.getName())), false);
+				source.sendSuccess(() -> Component.literal(String.format("Player %s added to rank '%s'!", profile.name(), rank.getName())), false);
 			}
 		}
 
 		return Command.SINGLE_SUCCESS;
 	}
 
-	private static int removeRank(CommandSourceStack source, Collection<GameProfile> players, String rankName) throws CommandSyntaxException {
+	private static int removeRank(CommandSourceStack source, Collection<NameAndId> players, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
-		for (GameProfile profile : players) {
+		for (NameAndId profile : players) {
 			if (rank.remove(profile)) {
-				source.sendSuccess(() -> Component.literal(String.format("Player %s removed from rank '%s'!", profile.getName(), rank.getName())), false);
+				source.sendSuccess(() -> Component.literal(String.format("Player %s removed from rank '%s'!", profile.name(), rank.getName())), false);
 			}
 		}
 
@@ -240,7 +240,7 @@ public class FTBRanksCommands {
 	}
 
 	private static int listRanksOf(CommandSourceStack source, ServerPlayer player) {
-		source.sendSuccess(() -> Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().getName())), false);
+		source.sendSuccess(() -> Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().name())), false);
 
 		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
 			if (rank.isActive(player)) {

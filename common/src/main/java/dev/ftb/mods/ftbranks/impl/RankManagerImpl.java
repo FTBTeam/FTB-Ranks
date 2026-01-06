@@ -1,6 +1,5 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import com.mojang.authlib.GameProfile;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftblibrary.snbt.config.ConfigUtil;
@@ -22,6 +21,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +132,7 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public Set<Rank> getAddedRanks(GameProfile profile) {
+	public Set<Rank> getAddedRanks(NameAndId profile) {
 		return getOrCreatePlayerData(profile).addedRanks();
 	}
 
@@ -160,7 +160,7 @@ public class RankManagerImpl implements RankManager {
 
 		try {
 			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
-			return getPermissionValue(getOrCreatePlayerData(player.getGameProfile()), list, node);
+			return getPermissionValue(getOrCreatePlayerData(player.nameAndId()), list, node);
 		} catch (Exception ex) {
             FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
 		}
@@ -301,12 +301,12 @@ public class RankManagerImpl implements RankManager {
 		sortedRanks.addAll(ranks.values().stream().sorted().toList());
 	}
 
-	PlayerRankData getOrCreatePlayerData(GameProfile profile) {
-		PlayerRankData data = playerData.get(profile.getId());
+	PlayerRankData getOrCreatePlayerData(NameAndId profile) {
+		PlayerRankData data = playerData.get(profile.id());
 
 		if (data == null) {
-			data = new PlayerRankData(this, profile.getId(), profile.getName());
-			playerData.put(profile.getId(), data);
+			data = new PlayerRankData(this, profile.id(), profile.name());
+			playerData.put(profile.id(), data);
 			markRanksDirty();
 		}
 

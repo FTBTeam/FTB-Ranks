@@ -1,9 +1,9 @@
 package dev.ftb.mods.ftbranks.api;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,11 +73,11 @@ public interface RankManager {
 	 * @param profile the game profile to check
 	 * @return the ranks to which the profile has been added
 	 */
-	Set<Rank> getAddedRanks(GameProfile profile);
+	Set<Rank> getAddedRanks(NameAndId profile);
 
 	/**
 	 * Get a list of the ranks which currently apply to the given player. Note this is distinct from the result of
-	 * {@link #getAddedRanks(GameProfile)}, since it can include any ranks which implicitly apply to the player.
+	 * {@link #getAddedRanks(NameAndId)}, since it can include any ranks which implicitly apply to the player.
 	 *
 	 * @param player the player
 	 * @return a list of ranks

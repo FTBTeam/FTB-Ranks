@@ -1,12 +1,12 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import com.mojang.authlib.GameProfile;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import net.minecraft.server.players.NameAndId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -120,7 +120,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public boolean add(GameProfile profile) {
+	public boolean add(NameAndId profile) {
 		if (manager.getOrCreatePlayerData(profile).addRank(this)) {
 			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, profile));
 			PlayerNameFormatting.refreshPlayerNames();
@@ -131,7 +131,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public boolean remove(GameProfile profile) {
+	public boolean remove(NameAndId profile) {
 		if (manager.getOrCreatePlayerData(profile).removeRank(this)) {
 			manager.markPlayerDataDirty();
 			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, profile));

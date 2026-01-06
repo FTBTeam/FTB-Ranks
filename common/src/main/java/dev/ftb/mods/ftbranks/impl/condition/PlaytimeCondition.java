@@ -3,7 +3,7 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.RankCondition;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
@@ -18,7 +18,7 @@ public class PlaytimeCondition implements RankCondition {
 
 	private final int time;
 	private final int timeUnit;
-	private final Stat<ResourceLocation> stat;
+	private final Stat<Identifier> stat;
 
 	public PlaytimeCondition(SNBTCompoundTag tag) {
 		time = tag.getIntOr("time", 0);
