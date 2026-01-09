@@ -96,20 +96,20 @@ public interface Rank {
 	}
 
 	/**
-	 * Add the given player game profile to this rank.
+	 * Add the given player to this rank.
 	 *
-	 * @param profile the game profile
-	 * @return true if the profile was added, false it was already present
+	 * @param nameAndId the player's name and ID
+	 * @return true if the player was added, false it was already present
 	 */
-	boolean add(NameAndId profile);
+	boolean add(NameAndId nameAndId);
 
 	/**
-	 * Remove the given player game profile from this rank.
+	 * Remove the given player from this rank.
 	 *
-	 * @param profile the game profile
-	 * @return true if the profile was removed, false if it was not present
+	 * @param nameAndId the player's name and ID
+	 * @return true if the player was removed, false if it was not present
 	 */
-	boolean remove(NameAndId profile);
+	boolean remove(NameAndId nameAndId);
 
 	/**
 	 * Get all the permission node names which have been defined for this rank.

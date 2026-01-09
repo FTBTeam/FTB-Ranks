@@ -1,8 +1,8 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.ftb.mods.ftblibrary.config.ConfigUtil;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
-import dev.ftb.mods.ftblibrary.snbt.config.ConfigUtil;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
@@ -132,8 +132,8 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public Set<Rank> getAddedRanks(NameAndId profile) {
-		return getOrCreatePlayerData(profile).addedRanks();
+	public Set<Rank> getAddedRanks(NameAndId nameAndId) {
+		return getOrCreatePlayerData(nameAndId).addedRanks();
 	}
 
 	@Override

@@ -68,12 +68,12 @@ public interface RankManager {
 	Rank deleteRank(String id);
 
 	/**
-	 * Get all the ranks to which the given game profile has been specifically added.
+	 * Get all the ranks to which the given player has been specifically added.
 	 *
-	 * @param profile the game profile to check
-	 * @return the ranks to which the profile has been added
+	 * @param nameAndId the player's name and ID to check
+	 * @return the ranks to which the player has been added
 	 */
-	Set<Rank> getAddedRanks(NameAndId profile);
+	Set<Rank> getAddedRanks(NameAndId nameAndId);
 
 	/**
 	 * Get a list of the ranks which currently apply to the given player. Note this is distinct from the result of

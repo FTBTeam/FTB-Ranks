@@ -120,9 +120,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public boolean add(NameAndId profile) {
-		if (manager.getOrCreatePlayerData(profile).addRank(this)) {
-			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, profile));
+	public boolean add(NameAndId nameAndId) {
+		if (manager.getOrCreatePlayerData(nameAndId).addRank(this)) {
+			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, nameAndId));
 			PlayerNameFormatting.refreshPlayerNames();
 			return true;
 		}
@@ -131,10 +131,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public boolean remove(NameAndId profile) {
-		if (manager.getOrCreatePlayerData(profile).removeRank(this)) {
+	public boolean remove(NameAndId nameAndId) {
+		if (manager.getOrCreatePlayerData(nameAndId).removeRank(this)) {
 			manager.markPlayerDataDirty();
-			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, profile));
+			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, nameAndId));
 			PlayerNameFormatting.refreshPlayerNames();
 			return true;
 		}

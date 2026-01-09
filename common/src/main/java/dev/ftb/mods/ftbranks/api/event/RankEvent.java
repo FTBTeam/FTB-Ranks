@@ -61,8 +61,8 @@ public class RankEvent {
         }
 
         /**
-         * Get the player's game profile. Not that the player is not necessarily online at this time.
-         * @return the player's game profile
+         * Get the player's name and ID. Note that the player is not necessarily online at this time.
+         * @return the player's name and ID
          */
         @NotNull
         public NameAndId getPlayer() {
