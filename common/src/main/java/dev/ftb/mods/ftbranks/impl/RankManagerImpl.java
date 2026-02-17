@@ -23,7 +23,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.level.storage.LevelResource;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -33,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static dev.ftb.mods.ftbranks.FTBRanks.LOGGER;
 import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
 
 public class RankManagerImpl implements RankManager {
@@ -47,10 +47,10 @@ public class RankManagerImpl implements RankManager {
 	private boolean shouldSaveRanks;
 	private boolean shouldSavePlayers;
 
-	private Map<String, RankImpl> ranks;
+	private Map<String, RankImpl> ranks = new HashMap<>();
 	private final List<Rank> sortedRanks = new ArrayList<>();
 	private final Map<String, RankConditionFactory> conditions = new ConcurrentHashMap<>();
-	private Map<UUID, PlayerRankData> playerData;
+	private Map<UUID, PlayerRankData> playerData = new HashMap<>();
 
 	public RankManagerImpl(MinecraftServer server) {
 		this.server = server;
@@ -79,16 +79,13 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public Rank createRank(String id, String displayName, int power) {
-		return createRank(displayName, power, false);
-	}
-
-	@Override
 	public RankImpl createRank(String name, int power, boolean forceCreate) {
 		String id = normalizeRankName(name);
 
 		if (forceCreate) {
-			deleteRank(id);
+			if (deleteRank(id) != null) {
+				LOGGER.warn("forcibly overwriting existing rank {}", name);
+			}
 		} else if (ranks.containsKey(id)) {
 			throw new RankException("Rank '" + id + "' already exists");
 		}
@@ -152,7 +149,6 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	@NotNull
 	public PermissionValue getPermissionValue(ServerPlayer player, String node) {
 		if (node.isEmpty() || sortedRanks.isEmpty()) {
 			return PermissionValue.MISSING;
@@ -162,7 +158,7 @@ public class RankManagerImpl implements RankManager {
 			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
 			return getPermissionValue(getOrCreatePlayerData(player.nameAndId()), list, node);
 		} catch (Exception ex) {
-            FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
+			FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
 		}
 
 		return PermissionValue.MISSING;
@@ -276,22 +272,17 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	public void refreshReadme() throws IOException {
-		List<String> lines = new ArrayList<>();
-		lines.add("=== FTB Ranks ===");
-		lines.add("");
-		lines.add("Last README file update: " + new Date());
-		lines.add("Wiki: https://www.notion.so/feedthebeast/FTB-Mod-Documentation-da2e359bad2449459d58d787edda3168");
-		lines.add("To refresh this file, run /ftbranks refresh_readme");
-		lines.add("");
-		lines.add("= All available command nodes =");
-		lines.add("command");
-
-		List<String> commandList = FTBRanksCommandManager.INSTANCE.commandMap.values().stream()
-				.map(RankCommandPredicate::getNodeName)
-				.distinct()
-				.sorted()
-				.toList();
-		lines.addAll(commandList);
+		List<String> lines = new ArrayList<>(List.of(
+				"=== FTB Ranks ===",
+				"",
+				"Last README file update: " + new Date(),
+				"Wiki: https://docs.feed-the-beast.com/mod-docs/mods/suite/Ranks/",
+				"To refresh this file, run /ftbranks refresh_readme",
+				"",
+				"= All available command nodes =",
+				"command"
+		));
+		lines.addAll(FTBRanksCommandManager.allNodes());
 
 		Files.write(directory.resolve("README.txt"), lines);
 	}
@@ -339,11 +330,11 @@ public class RankManagerImpl implements RankManager {
 						.put(rank.getId(), rank.writeSNBT());
 			}
 			map.forEach((source, tag) -> {
-                try {
-                    SNBT.tryWrite(source.getPath(server), tag);
-                } catch (IOException e) {
+				try {
+					SNBT.tryWrite(source.getPath(server), tag);
+				} catch (IOException e) {
 					FTBRanks.LOGGER.warn("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
-                }
+				}
 			});
 			shouldSaveRanks = false;
 		}
@@ -356,11 +347,11 @@ public class RankManagerImpl implements RankManager {
 				playerTag.put(data.getPlayerId().toString(), data.writeSNBT());
 			}
 
-            try {
-                SNBT.tryWrite(playerFile, playerTag);
-            } catch (IOException e) {
+			try {
+				SNBT.tryWrite(playerFile, playerTag);
+			} catch (IOException e) {
 				FTBRanks.LOGGER.warn("Failed to save players.snbt! {} / {}", e.getClass().getName(), e.getMessage());
-            }
+			}
 			shouldSavePlayers = false;
 		}
 	}
@@ -372,15 +363,15 @@ public class RankManagerImpl implements RankManager {
 
 		Tag v = tag.get(key);
 
-        return switch (v) {
-            case null -> PermissionValue.MISSING;
-            case EndTag ignored -> PermissionValue.MISSING;
-            case NumericTag n -> NumberPermissionValue.of(n.asNumber().orElseThrow());
-            case StringTag s -> StringPermissionValue.of(s.asString().orElseThrow());
-            default -> StringPermissionValue.of(v.toString());
-        };
+		return switch (v) {
+			case null -> PermissionValue.MISSING;
+			case EndTag ignored -> PermissionValue.MISSING;
+			case NumericTag n -> NumberPermissionValue.of(n.asNumber().orElseThrow());
+			case StringTag s -> StringPermissionValue.of(s.asString().orElseThrow());
+			default -> StringPermissionValue.of(v.toString());
+		};
 
-    }
+	}
 
 	static SNBTCompoundTag writePermissions(Map<String, PermissionValue> map, SNBTCompoundTag res) {
 		map.forEach((key, value) -> {

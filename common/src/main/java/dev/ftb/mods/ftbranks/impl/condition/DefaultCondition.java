@@ -4,13 +4,7 @@ import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
-public class DefaultCondition implements RankCondition.Simple {
-	public final Rank original;
-
-	public DefaultCondition(Rank original) {
-		this.original = original;
-	}
-
+public record DefaultCondition(Rank original) implements RankCondition.Simple {
 	@Override
 	public String getType() {
 		return "default";

@@ -7,7 +7,7 @@ import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 import net.minecraft.server.players.NameAndId;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -20,10 +20,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	private final String name;
 	private final int power;
 	private final RankFileSource source;
-	@NotNull
 	private RankCondition condition;
 
-	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition, RankFileSource source) {
+	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankCondition condition, RankFileSource source) {
 		return new RankImpl(manager, id, name, power, condition, source);
 	}
 
@@ -33,7 +32,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return rank;
 	}
 
-	private RankImpl(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition, RankFileSource source) {
+	private RankImpl(RankManagerImpl manager, String id, String name, int power, RankCondition condition, RankFileSource source) {
 		this.manager = manager;
 		this.id = id;
 		this.name = name;
@@ -78,7 +77,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public void setPermission(String node, PermissionValue value) {
+	public void setPermission(String node, @Nullable PermissionValue value) {
 		if (node.equals("condition")) {
 			throw new IllegalArgumentException("use '/ftbranks condition' to set conditions");
 		}
@@ -99,13 +98,11 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	@NotNull
 	public PermissionValue getPermission(String node) {
 		return permissions.getOrDefault(node, PermissionValue.MISSING);
 	}
 
 	@Override
-	@NotNull
 	public RankCondition getCondition() {
 		return condition;
 	}

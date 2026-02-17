@@ -3,7 +3,6 @@ package dev.ftb.mods.ftbranks.impl;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
-import dev.ftb.mods.ftbranks.api.RankManager;
 import dev.ftb.mods.ftbranks.api.event.RankEvent;
 import dev.ftb.mods.ftbranks.api.event.RegisterConditionsEvent;
 import dev.ftb.mods.ftbranks.impl.condition.*;
@@ -13,19 +12,23 @@ import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class FTBRanksAPIImpl extends FTBRanksAPI {
+	@Nullable
 	public static RankManagerImpl manager;
 
 	@Override
-	protected RankManager getManager() {
-		return manager;
+	protected RankManagerImpl getManager() {
+		return Objects.requireNonNull(manager);
 	}
 
 	@Override
-	public PermissionValue parsePermissionValue(String str) {
+	@Nullable
+	public PermissionValue parsePermissionValue(@Nullable String str) {
 		if (str == null) {
 			return null;
 		} else if (str.startsWith("\"") && str.endsWith("\"")) {
@@ -45,19 +48,21 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		RankEvent.REGISTER_CONDITIONS.invoker().accept(new RegisterConditionsEvent((id, factory) -> manager.registerCondition(id, factory)));
 	}
 
-	public static void serverStarted(MinecraftServer server) {
-		try {
-			manager.load();
-		} catch (IOException ex) {
-			FTBRanks.LOGGER.error("failed to load ranks data: {} / {}", ex.getClass().getName(), ex.getMessage());
+	public static void serverStarted(MinecraftServer ignoredServer) {
+		if (manager != null) {
+			try {
+				manager.load();
+			} catch (IOException ex) {
+				FTBRanks.LOGGER.error("failed to load ranks data: {} / {}", ex.getClass().getName(), ex.getMessage());
+			}
 		}
 	}
 
-	public static void serverStopped(MinecraftServer server) {
+	public static void serverStopped(MinecraftServer ignoredServer) {
 		manager = null;
 	}
 
-	public static void worldSaved(ServerLevel event) {
+	public static void worldSaved(ServerLevel ignoredEvent) {
 		if (manager != null) {
 			manager.saveRanksNow();
 			manager.savePlayersNow();
@@ -65,7 +70,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	}
 
 	public static void registerConditions(RegisterConditionsEvent event) {
-		event.register("always_active", (rank, json) -> AlwaysActiveCondition.INSTANCE);
+		event.register("always_active", (rank, tag) -> AlwaysActiveCondition.INSTANCE);
 		event.register("rank_added", RankAddedCondition::new);
 		event.register("rank_applies", RankAppliesCondition::new);
 

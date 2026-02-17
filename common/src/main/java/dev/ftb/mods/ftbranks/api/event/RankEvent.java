@@ -5,8 +5,7 @@ import dev.architectury.event.EventFactory;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
 import net.minecraft.server.players.NameAndId;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -24,9 +23,10 @@ public class RankEvent {
     public static final Event<Consumer<RegisterConditionsEvent>> REGISTER_CONDITIONS = EventFactory.createConsumerLoop();
 
     private final RankManager manager;
+    @Nullable
     private final Rank rank;
 
-    public RankEvent(RankManager manager, Rank rank) {
+    public RankEvent(RankManager manager, @Nullable Rank rank) {
         this.manager = manager;
         this.rank = rank;
     }
@@ -35,7 +35,6 @@ public class RankEvent {
      * Get the rank manager
      * @return the rank manager
      */
-    @NotNull
     public RankManager getManager() {
         return manager;
     }
@@ -64,7 +63,6 @@ public class RankEvent {
          * Get the player's name and ID. Note that the player is not necessarily online at this time.
          * @return the player's name and ID
          */
-        @NotNull
         public NameAndId getPlayer() {
             return player;
         }

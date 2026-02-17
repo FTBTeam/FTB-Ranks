@@ -4,8 +4,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,18 +32,6 @@ public interface RankManager {
 	Optional<Rank> getRank(String id);
 
 	/**
-	 * Create a new rank with the given ID, name &amp; power.
-	 *
-	 * @param id the unique rank ID
-	 * @param displayName rank display name
-	 * @param power rank power
-	 * @return the newly-created rank
-	 * @deprecated use {@link #createRank(String, int, boolean)}
-	 */
-	@Deprecated
-	Rank createRank(String id, String displayName, int power);
-
-	/**
 	 * Create a new rank with the given name &amp; power. A canonical rank ID is derived from the name, by
 	 * converting to lower case, then substituting the "+" symbol with "_plus" and all other non-alphanumeric characters
 	 * with underscores. Finally, runs of multiple consecutive underscores are replaced with a single underscore.
@@ -52,7 +39,7 @@ public interface RankManager {
 	 *
 	 * @param displayName rank display name
 	 * @param power rank power
-	 * @param forceCreate if true, any existing rank is replaced; if false, an exception is thrown if a rank exists
+	 * @param forceCreate if true, any existing rank is replaced (and a warning is logged); if false, an exception is thrown if a rank exists
 	 * @return the newly-created rank
 	 * @throws RankException if {@code forceCreate} is false and a rank with the same canonical ID already exists
 	 */
@@ -109,7 +96,6 @@ public interface RankManager {
 	 * @param node the node name
 	 * @return the permission value
 	 */
-	@NotNull
 	PermissionValue getPermissionValue(ServerPlayer player, String node);
 
 	/**

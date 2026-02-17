@@ -40,12 +40,7 @@ public class BooleanPermissionValue implements PermissionValue {
 		return value ? "true" : "false";
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		return this == o;
-	}
-
-	@Override
+    @Override
 	public int hashCode() {
 		return Boolean.hashCode(value);
 	}

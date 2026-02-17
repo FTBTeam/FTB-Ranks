@@ -4,7 +4,6 @@ import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankException;
-import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -63,7 +62,6 @@ public class PlayerRankData {
 		return Objects.hash(playerId);
 	}
 
-	@NotNull
 	public PermissionValue getPermission(String node) {
 		return permissions.getOrDefault(node, PermissionValue.MISSING);
 	}

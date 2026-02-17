@@ -2,7 +2,6 @@ package dev.ftb.mods.ftbranks.api;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -57,7 +56,6 @@ public interface Rank {
 	 * @param node the node name
 	 * @return the permission value
 	 */
-	@NotNull
 	PermissionValue getPermission(String node);
 
 	/**

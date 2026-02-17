@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class CommandsMixin {
 	@Inject(method = "<init>", at = @At("RETURN"))
 	private void initFTBR(Commands.CommandSelection commandSelection, CommandBuildContext commandBuildContext, CallbackInfo ci) {
-		FTBRanksCommandManager.INSTANCE = new FTBRanksCommandManager((Commands) (Object) this);
+		FTBRanksCommandManager.init((Commands) (Object) this);
 	}
 }
