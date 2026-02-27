@@ -2,13 +2,15 @@ package dev.ftb.mods.ftbranks.api;
 
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Top-level API object
  */
 public abstract class FTBRanksAPI {
+	@Nullable
 	private static FTBRanksAPI instance;
 
 	/**
@@ -16,15 +18,16 @@ public abstract class FTBRanksAPI {
 	 * @return the API
 	 */
 	public static FTBRanksAPI getInstance() {
-		return instance;
+		return Objects.requireNonNull(instance);
 	}
 
 	/**
 	 * Convenience method to get the Ranks Manager instance
 	 * @return the manager
+	 * @throws NullPointerException if called before the Minecraft server has started
 	 */
 	public static RankManager manager() {
-		return instance.getManager();
+		return getInstance().getManager();
 	}
 
 	/**
@@ -35,9 +38,8 @@ public abstract class FTBRanksAPI {
 	 * @param node the node to check
 	 * @return the permission value, or {@link PermissionValue#MISSING} if the node is not found
 	 */
-	@NotNull
 	public static PermissionValue getPermissionValue(ServerPlayer player, String node) {
-		return instance.getManager().getPermissionValue(player, node);
+		return manager().getPermissionValue(player, node);
 	}
 
 	/**
@@ -62,9 +64,6 @@ public abstract class FTBRanksAPI {
 		instance = theInstance;
 	}
 
-	/**
-	 * Get the manager
-	 * @return the manager
-	 */
+	@ApiStatus.Internal
 	protected abstract RankManager getManager();
 }

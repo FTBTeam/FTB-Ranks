@@ -1,13 +1,13 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import com.mojang.authlib.GameProfile;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.server.players.NameAndId;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -20,10 +20,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	private final String name;
 	private final int power;
 	private final RankFileSource source;
-	@NotNull
 	private RankCondition condition;
 
-	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition, RankFileSource source) {
+	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankCondition condition, RankFileSource source) {
 		return new RankImpl(manager, id, name, power, condition, source);
 	}
 
@@ -33,7 +32,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return rank;
 	}
 
-	private RankImpl(RankManagerImpl manager, String id, String name, int power, @NotNull RankCondition condition, RankFileSource source) {
+	private RankImpl(RankManagerImpl manager, String id, String name, int power, RankCondition condition, RankFileSource source) {
 		this.manager = manager;
 		this.id = id;
 		this.name = name;
@@ -78,7 +77,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public void setPermission(String node, PermissionValue value) {
+	public void setPermission(String node, @Nullable PermissionValue value) {
 		if (node.equals("condition")) {
 			throw new IllegalArgumentException("use '/ftbranks condition' to set conditions");
 		}
@@ -99,13 +98,11 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	@NotNull
 	public PermissionValue getPermission(String node) {
 		return permissions.getOrDefault(node, PermissionValue.MISSING);
 	}
 
 	@Override
-	@NotNull
 	public RankCondition getCondition() {
 		return condition;
 	}
@@ -120,9 +117,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public boolean add(GameProfile profile) {
-		if (manager.getOrCreatePlayerData(profile).addRank(this)) {
-			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, profile));
+	public boolean add(NameAndId nameAndId) {
+		if (manager.getOrCreatePlayerData(nameAndId).addRank(this)) {
+			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, nameAndId));
 			PlayerNameFormatting.refreshPlayerNames();
 			return true;
 		}
@@ -131,10 +128,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public boolean remove(GameProfile profile) {
-		if (manager.getOrCreatePlayerData(profile).removeRank(this)) {
+	public boolean remove(NameAndId nameAndId) {
+		if (manager.getOrCreatePlayerData(nameAndId).removeRank(this)) {
 			manager.markPlayerDataDirty();
-			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, profile));
+			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, nameAndId));
 			PlayerNameFormatting.refreshPlayerNames();
 			return true;
 		}
@@ -155,14 +152,14 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	public static RankImpl readSNBT(RankManagerImpl manager, String rankId, SNBTCompoundTag tag, RankFileSource source) throws RankException {
-		String displayName = tag.getString("name").isEmpty() ? rankId : tag.getString("name");
-		RankImpl rank = create(manager, rankId, displayName, tag.getInt("power"), source);
+		String displayName = tag.getStringOr("name", rankId);
+		RankImpl rank = create(manager, rankId, displayName, tag.getIntOr("power", 0), source); // TODO: A default of 0 might not be ideal
 
 		if (tag.contains("condition")) {
 			rank.setCondition(manager.createCondition(rank, tag.get("condition")));
 		}
 
-		for (String key : tag.getAllKeys()) {
+		for (String key : tag.keySet()) {
 			if (!SPECIAL_FIELDS.contains(key)) {
 				while (key.endsWith(".*")) {
 					key = key.substring(0, key.length() - 2);

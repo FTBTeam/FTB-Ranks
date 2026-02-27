@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.api;
 
 import net.minecraft.server.level.ServerPlayer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -110,7 +111,8 @@ public interface PermissionValue {
 	/**
 	 * See {@link FTBRanksAPI#parsePermissionValue(String)}
 	 */
-	static PermissionValue parse(String str) {
+	@Nullable
+	static PermissionValue parse(@Nullable String str) {
 		return FTBRanksAPI.getInstance().parsePermissionValue(str);
 	}
 }

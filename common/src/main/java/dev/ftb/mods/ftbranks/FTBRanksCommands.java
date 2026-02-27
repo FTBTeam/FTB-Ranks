@@ -1,6 +1,5 @@
 package dev.ftb.mods.ftbranks;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -23,15 +22,18 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.ClickEvent.Action;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.server.players.NameAndId;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class FTBRanksCommands {
@@ -39,11 +41,11 @@ public class FTBRanksCommands {
 			(object) -> Component.literal("Unknown rank: " + object.toString())
 	);
 
-	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ignoredContext, Commands.CommandSelection ignoredSelection) {
 		// source.getServer() *can* return null: https://github.com/FTBTeam/FTB-Mods-Issues/issues/766
 		//noinspection ConstantValue
 		dispatcher.register(Commands.literal("ftbranks")
-				.requires(source -> source.getServer() != null && source.getServer().isSingleplayer() || source.hasPermission(2))
+				.requires(source -> source.getServer() != null && source.getServer().isSingleplayer() || source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 				.then(Commands.literal("reload")
 						.executes(context -> reloadRanks(context.getSource()))
 				)
@@ -140,16 +142,9 @@ public class FTBRanksCommands {
 		return SharedSuggestionProvider.suggest(FTBRanksAPI.manager().getAllRanks().stream().map(Rank::getId), builder);
 	}
 
-	private static String normalizeRankName(String name) {
-		return name.toLowerCase()
-				.replace("+", "_plus")
-				.replaceAll("[^a-z0-9_]", "_")
-				.replaceAll("_{2,}", "_");
-	}
-
 	private static int reloadRanks(CommandSourceStack source) {
 		try {
-			FTBRanksAPIImpl.manager.reload();
+			Objects.requireNonNull(FTBRanksAPIImpl.manager).reload();
 			source.sendSuccess(() -> Component.literal("Ranks reloaded from disk!"), true);
 
 			for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
@@ -166,7 +161,7 @@ public class FTBRanksCommands {
 
 	private static int refreshReadme(CommandSourceStack source) {
 		try {
-			FTBRanksAPIImpl.manager.refreshReadme();
+			Objects.requireNonNull(FTBRanksAPIImpl.manager).refreshReadme();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -180,8 +175,8 @@ public class FTBRanksCommands {
 		return Component.literal(rank.getName())
 				.withStyle(isDef ? ChatFormatting.AQUA : ChatFormatting.YELLOW)
 				.withStyle(Style.EMPTY
-						.withClickEvent(new ClickEvent(Action.RUN_COMMAND, "/ftbranks show_rank " + rank.getId()))
-						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, isDef ?
+						.withClickEvent(new ClickEvent.RunCommand("/ftbranks show_rank " + rank.getId()))
+						.withHoverEvent(new HoverEvent.ShowText(isDef ?
 								Component.literal("Players must be explicitly added to this rank\nwith '/ftbranks add <player> " + rank.getId() + "'").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC) :
 								Component.literal("Rank condition: " + rank.getCondition().asString()).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC))
 						)
@@ -191,7 +186,7 @@ public class FTBRanksCommands {
 	private static int listAllRanks(CommandSourceStack source) {
 		source.sendSuccess(() -> Component.literal("Ranks:"), false);
 
-		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
+		for (Rank rank : Objects.requireNonNull(FTBRanksAPIImpl.manager).getAllRanks()) {
 			source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 		}
 
@@ -211,28 +206,30 @@ public class FTBRanksCommands {
 
 	private static int deleteRank(CommandSourceStack source, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
-		FTBRanksAPI.manager().deleteRank(rank.getId());
-		source.sendSuccess(() -> Component.literal("Rank '" + rank.getName() + "' deleted!"), false);
+		if (FTBRanksAPI.manager().deleteRank(rank.getId()) != null) {
+			source.sendSuccess(() -> Component.literal("Rank '" + rank.getName() + "' deleted!"), false);
 
-		return Command.SINGLE_SUCCESS;
+			return Command.SINGLE_SUCCESS;
+		}
+		return 0;
 	}
 
-	private static int addRank(CommandSourceStack source, Collection<GameProfile> players, String rankName) throws CommandSyntaxException {
+	private static int addRank(CommandSourceStack source, Collection<NameAndId> players, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
-		for (GameProfile profile : players) {
+		for (NameAndId profile : players) {
 			if (rank.add(profile)) {
-				source.sendSuccess(() -> Component.literal(String.format("Player %s added to rank '%s'!", profile.getName(), rank.getName())), false);
+				source.sendSuccess(() -> Component.literal(String.format("Player %s added to rank '%s'!", profile.name(), rank.getName())), false);
 			}
 		}
 
 		return Command.SINGLE_SUCCESS;
 	}
 
-	private static int removeRank(CommandSourceStack source, Collection<GameProfile> players, String rankName) throws CommandSyntaxException {
+	private static int removeRank(CommandSourceStack source, Collection<NameAndId> players, String rankName) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
-		for (GameProfile profile : players) {
+		for (NameAndId profile : players) {
 			if (rank.remove(profile)) {
-				source.sendSuccess(() -> Component.literal(String.format("Player %s removed from rank '%s'!", profile.getName(), rank.getName())), false);
+				source.sendSuccess(() -> Component.literal(String.format("Player %s removed from rank '%s'!", profile.name(), rank.getName())), false);
 			}
 		}
 
@@ -240,9 +237,9 @@ public class FTBRanksCommands {
 	}
 
 	private static int listRanksOf(CommandSourceStack source, ServerPlayer player) {
-		source.sendSuccess(() -> Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().getName())), false);
+		source.sendSuccess(() -> Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().name())), false);
 
-		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
+		for (Rank rank : Objects.requireNonNull(FTBRanksAPIImpl.manager).getAllRanks()) {
 			if (rank.isActive(player)) {
 				source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 			}
@@ -274,16 +271,16 @@ public class FTBRanksCommands {
 		} else {
 			source.sendSuccess(() -> Component.literal(String.format("%d permission node(s) in rank '%s':", nodes.size(), rankName)).withStyle(ChatFormatting.GREEN), false);
 			source.sendSuccess(() -> Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
-			nodes.forEach(node -> {
-				source.sendSuccess(() -> Component.literal(String.format("%s = %s", node, rank.getPermission(node))).withStyle(ChatFormatting.YELLOW), false);
-			});
+			nodes.forEach(node ->
+					source.sendSuccess(() -> Component.literal(String.format("%s = %s", node, rank.getPermission(node))).withStyle(ChatFormatting.YELLOW), false)
+			);
 			source.sendSuccess(() -> Component.literal("-".repeat(20)).withStyle(ChatFormatting.GREEN), false);
 		}
 
 		return Command.SINGLE_SUCCESS;
 	}
 
-	private static int setNode(CommandSourceStack source, String rankName, String node, String value) throws CommandSyntaxException {
+	private static int setNode(CommandSourceStack source, String rankName, String node, @Nullable String value) throws CommandSyntaxException {
 		Rank rank = getRank(rankName);
 
 		try {

@@ -11,6 +11,6 @@ public class OPCondition implements RankCondition.Simple {
 
 	@Override
 	public boolean isRankActive(ServerPlayer player) {
-		return player.server.getPlayerList().isOp(player.getGameProfile());
+		return player.level().getServer().getPlayerList().isOp(player.nameAndId());
 	}
 }

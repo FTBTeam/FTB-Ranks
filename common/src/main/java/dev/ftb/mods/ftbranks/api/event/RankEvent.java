@@ -1,12 +1,11 @@
 package dev.ftb.mods.ftbranks.api.event;
 
-import com.mojang.authlib.GameProfile;
 import dev.architectury.event.Event;
 import dev.architectury.event.EventFactory;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.server.players.NameAndId;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -24,9 +23,10 @@ public class RankEvent {
     public static final Event<Consumer<RegisterConditionsEvent>> REGISTER_CONDITIONS = EventFactory.createConsumerLoop();
 
     private final RankManager manager;
+    @Nullable
     private final Rank rank;
 
-    public RankEvent(RankManager manager, Rank rank) {
+    public RankEvent(RankManager manager, @Nullable Rank rank) {
         this.manager = manager;
         this.rank = rank;
     }
@@ -35,7 +35,6 @@ public class RankEvent {
      * Get the rank manager
      * @return the rank manager
      */
-    @NotNull
     public RankManager getManager() {
         return manager;
     }
@@ -53,19 +52,18 @@ public class RankEvent {
      * Common superclass for rank events with a player involved
      */
     public static class Player extends RankEvent {
-        private final GameProfile player;
+        private final NameAndId player;
 
-        public Player(RankManager manager, Rank rank, GameProfile player) {
+        public Player(RankManager manager, Rank rank, NameAndId player) {
             super(manager, rank);
             this.player = player;
         }
 
         /**
-         * Get the player's game profile. Not that the player is not necessarily online at this time.
-         * @return the player's game profile
+         * Get the player's name and ID. Note that the player is not necessarily online at this time.
+         * @return the player's name and ID
          */
-        @NotNull
-        public GameProfile getPlayer() {
+        public NameAndId getPlayer() {
             return player;
         }
     }

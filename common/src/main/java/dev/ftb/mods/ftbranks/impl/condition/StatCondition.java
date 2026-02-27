@@ -3,7 +3,7 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
@@ -18,21 +18,21 @@ public class StatCondition implements RankCondition {
 	public static final int LESSER = 5;
 	public static final int LESSER_OR_EQUAL = 6;
 
-	private final ResourceLocation statId;
+	private final Identifier statId;
 	private final int value;
 	private final int valueCheck;
 	private final Stat<?> stat;
 
 	public StatCondition(SNBTCompoundTag tag) {
-		statId = ResourceLocation.parse(tag.getString("stat"));
+		statId = Identifier.parse(tag.getStringOr("stat", ""));
 		stat = BuiltInRegistries.CUSTOM_STAT.getOptional(statId)
 				.map(Stats.CUSTOM::get)
 				.orElseThrow(() ->
 						new NoSuchElementException(String.format("%s does not match any known stat", statId))
 				);
-		value = tag.getInt("value");
+		value = tag.getIntOr("value", 0);
 
-		switch (tag.getString("value_check")) {
+		switch (tag.getStringOr("value_check", "")) {
 			case "not_equals", "not", "!=" -> valueCheck = NOT_EQUALS;
 			case "greater", ">" -> valueCheck = GREATER;
 			case "greater_or_equal", ">=" -> valueCheck = GREATER_OR_EQUAL;

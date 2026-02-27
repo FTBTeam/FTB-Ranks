@@ -4,7 +4,6 @@ import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankException;
-import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -63,7 +62,6 @@ public class PlayerRankData {
 		return Objects.hash(playerId);
 	}
 
-	@NotNull
 	public PermissionValue getPermission(String node) {
 		return permissions.getOrDefault(node, PermissionValue.MISSING);
 	}
@@ -92,22 +90,22 @@ public class PlayerRankData {
 	}
 
 	static PlayerRankData fromSNBT(RankManagerImpl manager, UUID playerId, SNBTCompoundTag tag, Map<String,RankImpl> tempRanks) {
-		PlayerRankData data = new PlayerRankData(manager, playerId, tag.getString("name"));
+		PlayerRankData data = new PlayerRankData(manager, playerId, tag.getStringOr("name", ""));
 
-		SNBTCompoundTag ranksTag = tag.getCompound("ranks");
-		for (String rankKey : ranksTag.getAllKeys()) {
+		SNBTCompoundTag ranksTag = tag.getAsSnbtComponent("ranks");
+		for (String rankKey : ranksTag.keySet()) {
 			RankImpl rank = tempRanks.get(rankKey);
 			if (rank != null) {
 				try {
-					data.added.put(rank, Instant.parse(ranksTag.getString(rankKey)));
+					data.added.put(rank, Instant.parse(ranksTag.getStringOr(rankKey, "")));
 				} catch (DateTimeParseException e) {
 					throw new RankException(e.getMessage());
 				}
 			}
 		}
 
-		SNBTCompoundTag permTag = tag.getCompound("permissions");
-		for (String permKey : permTag.getAllKeys()) {
+		SNBTCompoundTag permTag = tag.getAsSnbtComponent("permissions");
+		for (String permKey : permTag.keySet()) {
 			while (permKey.endsWith(".*")) {
 				permKey = permKey.substring(0, permKey.length() - 2);
 				manager.markPlayerDataDirty();

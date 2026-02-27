@@ -4,6 +4,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -12,6 +13,7 @@ public class RankCommandPredicate implements Predicate<CommandSourceStack> {
 	private final Predicate<CommandSourceStack> original;
 	private final String nodeName;
 
+	@Nullable
 	private Supplier<RankCommandPredicate> redirect;
 
 	public RankCommandPredicate(CommandNode<CommandSourceStack> commandNode, String nodeName) {
@@ -21,7 +23,7 @@ public class RankCommandPredicate implements Predicate<CommandSourceStack> {
 	}
 
 	public String getNodeName() {
-		return redirect == null || redirect.get() == null ? nodeName : redirect.get().getNodeName();
+		return redirect == null ? nodeName : redirect.get().getNodeName();
 	}
 
 	public void setRedirect(Supplier<RankCommandPredicate> redirect) {
@@ -30,7 +32,7 @@ public class RankCommandPredicate implements Predicate<CommandSourceStack> {
 
 	@Override
 	public boolean test(CommandSourceStack source) {
-		if (source.getEntity() instanceof ServerPlayer sp && FTBRanksAPI.manager() != null) {
+		if (source.getEntity() instanceof ServerPlayer sp) {
 			return FTBRanksAPI.getPermissionValue(sp, getNodeName()).asBoolean().orElseGet(() -> original.test(source));
 		}
 

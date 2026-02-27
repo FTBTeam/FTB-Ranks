@@ -1,8 +1,7 @@
 package dev.ftb.mods.ftbranks.api;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.server.level.ServerPlayer;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.server.players.NameAndId;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -57,7 +56,6 @@ public interface Rank {
 	 * @param node the node name
 	 * @return the permission value
 	 */
-	@NotNull
 	PermissionValue getPermission(String node);
 
 	/**
@@ -92,24 +90,24 @@ public interface Rank {
 	 * @return true if the player has been added, false otherwise
 	 */
 	default boolean isAdded(ServerPlayer player) {
-		return getManager().getAddedRanks(player.getGameProfile()).contains(this);
+		return getManager().getAddedRanks(player.nameAndId()).contains(this);
 	}
 
 	/**
-	 * Add the given player game profile to this rank.
+	 * Add the given player to this rank.
 	 *
-	 * @param profile the game profile
-	 * @return true if the profile was added, false it was already present
+	 * @param nameAndId the player's name and ID
+	 * @return true if the player was added, false it was already present
 	 */
-	boolean add(GameProfile profile);
+	boolean add(NameAndId nameAndId);
 
 	/**
-	 * Remove the given player game profile from this rank.
+	 * Remove the given player from this rank.
 	 *
-	 * @param profile the game profile
-	 * @return true if the profile was removed, false if it was not present
+	 * @param nameAndId the player's name and ID
+	 * @return true if the player was removed, false if it was not present
 	 */
-	boolean remove(GameProfile profile);
+	boolean remove(NameAndId nameAndId);
 
 	/**
 	 * Get all the permission node names which have been defined for this rank.

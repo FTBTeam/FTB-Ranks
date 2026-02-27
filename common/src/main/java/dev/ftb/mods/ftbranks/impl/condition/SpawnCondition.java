@@ -2,6 +2,8 @@ package dev.ftb.mods.ftbranks.impl.condition;
 
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -15,13 +17,17 @@ public class SpawnCondition implements RankCondition.Simple {
 
 	@Override
 	public boolean isRankActive(ServerPlayer player) {
-		if (player.level() instanceof ServerLevel serverLevel && serverLevel.dimension() == Level.OVERWORLD && player.server.getSpawnProtectionRadius() > 0) {
-			BlockPos spawn = serverLevel.getSharedSpawnPos();
+		if (player.level() instanceof ServerLevel serverLevel && serverLevel.dimension() == Level.OVERWORLD && getSpawnProtectionRadius(serverLevel.getServer()) > 0) {
+			BlockPos spawn = serverLevel.getRespawnData().pos();
 			int x = Mth.abs(Mth.floor(player.getX()) - spawn.getX());
 			int z = Mth.abs(Mth.floor(player.getZ()) - spawn.getZ());
-			return Math.max(x, z) <= player.server.getSpawnProtectionRadius();
+			return Math.max(x, z) <= getSpawnProtectionRadius(serverLevel.getServer());
 		}
 
 		return false;
+	}
+
+	private static int getSpawnProtectionRadius(MinecraftServer server) {
+		return server instanceof DedicatedServer d ? d.spawnProtectionRadius() : 0;
 	}
 }

@@ -1,11 +1,10 @@
 package dev.ftb.mods.ftbranks.api;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.server.players.NameAndId;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,18 +32,6 @@ public interface RankManager {
 	Optional<Rank> getRank(String id);
 
 	/**
-	 * Create a new rank with the given ID, name &amp; power.
-	 *
-	 * @param id the unique rank ID
-	 * @param displayName rank display name
-	 * @param power rank power
-	 * @return the newly-created rank
-	 * @deprecated use {@link #createRank(String, int, boolean)}
-	 */
-	@Deprecated
-	Rank createRank(String id, String displayName, int power);
-
-	/**
 	 * Create a new rank with the given name &amp; power. A canonical rank ID is derived from the name, by
 	 * converting to lower case, then substituting the "+" symbol with "_plus" and all other non-alphanumeric characters
 	 * with underscores. Finally, runs of multiple consecutive underscores are replaced with a single underscore.
@@ -52,7 +39,7 @@ public interface RankManager {
 	 *
 	 * @param displayName rank display name
 	 * @param power rank power
-	 * @param forceCreate if true, any existing rank is replaced; if false, an exception is thrown if a rank exists
+	 * @param forceCreate if true, any existing rank is replaced (and a warning is logged); if false, an exception is thrown if a rank exists
 	 * @return the newly-created rank
 	 * @throws RankException if {@code forceCreate} is false and a rank with the same canonical ID already exists
 	 */
@@ -68,16 +55,16 @@ public interface RankManager {
 	Rank deleteRank(String id);
 
 	/**
-	 * Get all the ranks to which the given game profile has been specifically added.
+	 * Get all the ranks to which the given player has been specifically added.
 	 *
-	 * @param profile the game profile to check
-	 * @return the ranks to which the profile has been added
+	 * @param nameAndId the player's name and ID to check
+	 * @return the ranks to which the player has been added
 	 */
-	Set<Rank> getAddedRanks(GameProfile profile);
+	Set<Rank> getAddedRanks(NameAndId nameAndId);
 
 	/**
 	 * Get a list of the ranks which currently apply to the given player. Note this is distinct from the result of
-	 * {@link #getAddedRanks(GameProfile)}, since it can include any ranks which implicitly apply to the player.
+	 * {@link #getAddedRanks(NameAndId)}, since it can include any ranks which implicitly apply to the player.
 	 *
 	 * @param player the player
 	 * @return a list of ranks
@@ -109,7 +96,6 @@ public interface RankManager {
 	 * @param node the node name
 	 * @return the permission value
 	 */
-	@NotNull
 	PermissionValue getPermissionValue(ServerPlayer player, String node);
 
 	/**
