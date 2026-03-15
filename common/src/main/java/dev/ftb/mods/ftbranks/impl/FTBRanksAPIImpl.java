@@ -1,16 +1,15 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.ftb.mods.ftblibrary.platform.event.EventPostingHandler;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
-import dev.ftb.mods.ftbranks.api.event.RankEvent;
 import dev.ftb.mods.ftbranks.api.event.RegisterConditionsEvent;
 import dev.ftb.mods.ftbranks.impl.condition.*;
 import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -45,7 +44,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static void serverStarting(MinecraftServer server) {
 		manager = new RankManagerImpl(server);
 
-		RankEvent.REGISTER_CONDITIONS.invoker().accept(new RegisterConditionsEvent((id, factory) -> manager.registerCondition(id, factory)));
+		EventPostingHandler.INSTANCE.postEvent(new RegisterConditionsEvent.Data((id, factory) -> manager.registerCondition(id, factory)));
 	}
 
 	public static void serverStarted(MinecraftServer ignoredServer) {
@@ -62,14 +61,14 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		manager = null;
 	}
 
-	public static void worldSaved(ServerLevel ignoredEvent) {
+	public static void worldSaved() {
 		if (manager != null) {
 			manager.saveRanksNow();
 			manager.savePlayersNow();
 		}
 	}
 
-	public static void registerConditions(RegisterConditionsEvent event) {
+	public static void registerConditions(RegisterConditionsEvent.Data event) {
 		event.register("always_active", (rank, tag) -> AlwaysActiveCondition.INSTANCE);
 		event.register("rank_added", RankAddedCondition::new);
 		event.register("rank_applies", RankAppliesCondition::new);

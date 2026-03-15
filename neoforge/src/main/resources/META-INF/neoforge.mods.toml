@@ -33,7 +33,6 @@ side = "BOTH"
 [[dependencies.ftbranks]]
 modId = "architectury"
 type = "required"
-versionRange = "[${archversion},)"
 ordering = "AFTER"
 side = "BOTH"
 

@@ -1,6 +1,6 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import dev.architectury.platform.Platform;
+import dev.ftb.mods.ftblibrary.platform.Platform;
 import net.minecraft.server.MinecraftServer;
 
 import java.nio.file.Path;
@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 public enum RankFileSource {
     SERVER(server -> server.getWorldPath(RankManagerImpl.FOLDER_NAME).resolve("ranks.snbt")),
-    MODPACK(server -> Platform.getConfigFolder().resolve("ftbranks-pack.snbt"));
+    MODPACK(server -> Platform.get().paths().configPath().resolve("ftbranks-pack.snbt"));
 
     private final Function<MinecraftServer, Path> pathFunction;
 

@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.impl;
 
 import dev.ftb.mods.ftblibrary.config.ConfigUtil;
+import dev.ftb.mods.ftblibrary.platform.event.EventPostingHandler;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.FTBRanks;
@@ -8,7 +9,6 @@ import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.RankCreatedEvent;
 import dev.ftb.mods.ftbranks.api.event.RankDeletedEvent;
-import dev.ftb.mods.ftbranks.api.event.RankEvent;
 import dev.ftb.mods.ftbranks.api.event.RanksReloadedEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
@@ -94,7 +94,7 @@ public class RankManagerImpl implements RankManager {
 		ranks.put(id, rank);
 		rebuildSortedRanks();
 		markRanksDirty();
-		RankEvent.CREATED.invoker().accept(new RankCreatedEvent(this, rank));
+		EventPostingHandler.INSTANCE.postEvent(new RankCreatedEvent.Data(this, rank));
 		return rank;
 	}
 
@@ -121,7 +121,7 @@ public class RankManagerImpl implements RankManager {
 
 			rebuildSortedRanks();
 
-			RankEvent.DELETED.invoker().accept(new RankDeletedEvent(this, rank));
+			EventPostingHandler.INSTANCE.postEvent(new RankDeletedEvent.Data(this, rank));
 			markRanksDirty();
 		}
 
@@ -227,9 +227,9 @@ public class RankManagerImpl implements RankManager {
 
 		rebuildSortedRanks();
 
-		RankEvent.RELOADED.invoker().accept(new RanksReloadedEvent(FTBRanksAPI.manager()));
+		EventPostingHandler.INSTANCE.postEvent(new RanksReloadedEvent.Data(FTBRanksAPI.manager()));
 
-		PlayerNameFormatting.refreshPlayerNames();
+		PlayerNameFormatting.refreshPlayerNames(this.server);
 
 		FTBRanks.LOGGER.info("Loaded {} ranks", ranks.size());
 	}
