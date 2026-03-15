@@ -1,11 +1,13 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.ftb.mods.ftblibrary.platform.event.EventPostingHandler;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.players.NameAndId;
 import org.jspecify.annotations.Nullable;
 
@@ -89,9 +91,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			} else {
 				permissions.remove(node);
 			}
-			RankEvent.PERMISSION_CHANGED.invoker().accept(new PermissionNodeChangedEvent(manager, this, node, oldValue, value));
+			EventPostingHandler.INSTANCE.postEvent(new PermissionNodeChangedEvent.Data(manager, this, node, oldValue, value));
 			if (node.equals("ftbranks.name_format")) {
-				PlayerNameFormatting.refreshPlayerNames();
+				PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			}
 			manager.markRanksDirty();
 		}
@@ -111,16 +113,16 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public void setCondition(RankCondition newCondition) {
 		RankCondition oldCondition = this.condition;
 		this.condition = newCondition;
-		RankEvent.CONDITION_CHANGED.invoker().accept(new ConditionChangedEvent(manager, this, oldCondition, newCondition));
-		PlayerNameFormatting.refreshPlayerNames();
+		EventPostingHandler.INSTANCE.postEvent(new ConditionChangedEvent.Data(manager, this, oldCondition, newCondition));
+		PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 		manager.markRanksDirty();
 	}
 
 	@Override
 	public boolean add(NameAndId nameAndId) {
 		if (manager.getOrCreatePlayerData(nameAndId).addRank(this)) {
-			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, nameAndId));
-			PlayerNameFormatting.refreshPlayerNames();
+			EventPostingHandler.INSTANCE.postEvent(new PlayerAddedToRankEvent.Data(manager, this, nameAndId));
+			PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			return true;
 		}
 
@@ -131,8 +133,8 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public boolean remove(NameAndId nameAndId) {
 		if (manager.getOrCreatePlayerData(nameAndId).removeRank(this)) {
 			manager.markPlayerDataDirty();
-			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, nameAndId));
-			PlayerNameFormatting.refreshPlayerNames();
+			EventPostingHandler.INSTANCE.postEvent(new PlayerRemovedFromRankEvent.Data(manager, this, nameAndId));
+			PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			return true;
 		}
 

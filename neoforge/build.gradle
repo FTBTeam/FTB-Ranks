@@ -1,26 +1,36 @@
 plugins {
-	id "com.github.johnrengelman.shadow" version "7.1.0"
-	id "com.matthewprenger.cursegradle" version "1.4.0"
+	id 'net.neoforged.moddev'
 }
 
-architectury {
-	platformSetupLoomIde()
-	neoForge()
-}
+neoForge {
+	version = project.neoforge_version
+//    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
 
-configurations {
-	common
-	shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
-	compileClasspath.extendsFrom common
-	runtimeClasspath.extendsFrom common
-	developmentNeoForge.extendsFrom common
-}
+	runs {
+		client {
+			client()
+			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+		}
 
-//loom {
-//	forge {
-//		mixinConfigs = ["ftbranks-common.mixins.json"]
-//	}
-//}
+		server {
+			server()
+			programArgument '--nogui'
+			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+		}
+
+		configureEach {
+			systemProperty 'forge.logging.markers', 'REGISTRIES'
+			logLevel = org.slf4j.event.Level.DEBUG
+		}
+	}
+
+	mods {
+		"${mod_id}" {
+			sourceSet(sourceSets.main)
+			sourceSet(project(":common").sourceSets.main)
+		}
+	}
+}
 
 repositories {
 	maven {
@@ -28,45 +38,12 @@ repositories {
 	}
 }
 
-dependencies {
-	neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
-
-	modApi "dev.architectury:architectury-neoforge:${rootProject.architectury_version}"
-	modApi("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}")
-
-	common(project(path: ":common", configuration: "namedElements")) { transitive false }
-	shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
-}
-
 apply from: "https://raw.githubusercontent.com/FTBTeam/mods-meta/main/gradle/extra-local-mods.gradle"
 
-processResources {
-	exclude '.cache'
-
-	inputs.property "version", project.version
-
-	filesMatching("META-INF/neoforge.mods.toml") {
-		expand "version": project.version,
-				"archversion": project.architectury_version,
-				"neoforgeversionrange": project.neoforge_version_range,
-				"neoforgeloaderversion": project.neoforge_loader_version,
-				"mcversion": project.minecraft_version,
-				"ftblibraryversion": project.ftb_library_version
+dependencies {
+	implemenation("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}") {
+		exclude module: 'me.shedaniel:RoughlyEnoughItems-neoforge'
 	}
-}
-
-shadowJar {
-	exclude "fabric.mod.json"
-
-	configurations = [project.configurations.shadowCommon]
-	setArchiveClassifier("dev-shadow")
-}
-
-remapJar {
-	input.set shadowJar.archiveFile
-	dependsOn shadowJar
-	archiveBaseName.set "${rootProject.archives_base_name}-${project.name}"
-	archiveClassifier.set null
 }
 
 jar {
@@ -80,14 +57,6 @@ jar {
 				"Implementation-Vendor"   : project.mod_author,
 				"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
 		])
-	}
-
-	setArchiveClassifier("dev")
-}
-
-components.java {
-	withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-		skip()
 	}
 }
 

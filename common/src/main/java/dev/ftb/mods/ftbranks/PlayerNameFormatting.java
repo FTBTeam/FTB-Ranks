@@ -1,7 +1,6 @@
 package dev.ftb.mods.ftbranks;
 
-import dev.architectury.utils.GameInstance;
-import dev.ftb.mods.ftblibrary.util.PlayerDisplayNameUtil;
+import dev.ftb.mods.ftblibrary.platform.Platform;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.impl.decorate.TextComponentParser;
 import net.minecraft.ChatFormatting;
@@ -34,10 +33,11 @@ public class PlayerNameFormatting {
         }
     }
 
-    public static void refreshPlayerNames() {
-        MinecraftServer server = GameInstance.getServer();
-        if (server != null) {
-            server.getPlayerList().getPlayers().forEach(PlayerDisplayNameUtil::refreshDisplayName);
+    public static void refreshPlayerNames(MinecraftServer server) {
+        if (server == null) {
+            return;
         }
+
+        server.getPlayerList().getPlayers().forEach(e -> Platform.get().misc().refreshDisplayName(e));
     }
 }

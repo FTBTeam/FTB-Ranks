@@ -1,13 +1,14 @@
 package dev.ftb.mods.ftbranks.api.event;
 
 import dev.ftb.mods.ftbranks.api.Rank;
-import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
+import dev.ftb.mods.ftbranks.api.RankManager;
 
 /**
  * Fired when a rank is deleted, with the {@code /ftbranks delete} command.
  */
-public class RankDeletedEvent extends RankEvent {
-    public RankDeletedEvent(RankManagerImpl rankManager, Rank rank) {
-        super(rankManager, rank);
-    }
+@FunctionalInterface
+public interface RankDeletedEvent {
+    void onRankDeleted(Data data);
+
+    record Data(RankManager manager, Rank rank) {}
 }
