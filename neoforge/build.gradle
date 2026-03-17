@@ -48,8 +48,6 @@ repositories {
 	}
 }
 
-apply from: "https://raw.githubusercontent.com/FTBTeam/mods-meta/main/gradle/extra-local-mods.gradle"
-
 dependencies {
 	implementation("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}")
 }
