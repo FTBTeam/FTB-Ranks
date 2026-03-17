@@ -1,16 +1,17 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import de.marhali.json5.Json5Object;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.UnknownNullability;
 
 public class NotCondition implements RankCondition {
 	private final RankCondition condition;
 
-	public NotCondition(Rank rank, SNBTCompoundTag tag) throws RankException {
-		condition = rank.getManager().createCondition(rank, tag.get("condition"));
+	public NotCondition(Rank rank, Json5Object tag) throws RankException {
+		condition = getConditionList(tag, "condition", rank).getFirst();
 	}
 
 	@Override
@@ -24,10 +25,10 @@ public class NotCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(SNBTCompoundTag tag) {
-		SNBTCompoundTag c = new SNBTCompoundTag();
-		c.putString("type", condition.getType());
-		condition.save(c);
-		tag.put("condition", c);
+	public Json5Object save(@UnknownNullability Json5Object json) {
+		Json5Object sub = new Json5Object();
+		sub.addProperty("type", condition.getType());
+		json.add("condition", condition.save(sub));
+		return json;
 	}
 }

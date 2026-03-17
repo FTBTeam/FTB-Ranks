@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import de.marhali.json5.Json5Object;
+import dev.ftb.mods.ftblibrary.util.Json5Util;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -23,16 +24,16 @@ public class StatCondition implements RankCondition {
 	private final int valueCheck;
 	private final Stat<?> stat;
 
-	public StatCondition(SNBTCompoundTag tag) {
-		statId = Identifier.parse(tag.getStringOr("stat", ""));
+	public StatCondition(Json5Object json) {
+		statId = Identifier.parse(Json5Util.getString(json, "stat").orElse(""));
 		stat = BuiltInRegistries.CUSTOM_STAT.getOptional(statId)
 				.map(Stats.CUSTOM::get)
 				.orElseThrow(() ->
 						new NoSuchElementException(String.format("%s does not match any known stat", statId))
 				);
-		value = tag.getIntOr("value", 0);
+		value = Json5Util.getInt(json, "value").orElse(0);
 
-		switch (tag.getStringOr("value_check", "")) {
+		switch (Json5Util.getString(json, "value_check").orElse("")) {
 			case "not_equals", "not", "!=" -> valueCheck = NOT_EQUALS;
 			case "greater", ">" -> valueCheck = GREATER;
 			case "greater_or_equal", ">=" -> valueCheck = GREATER_OR_EQUAL;
@@ -62,17 +63,19 @@ public class StatCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(SNBTCompoundTag tag) {
-		tag.putString("stat", statId.toString());
-		tag.putInt("value", value);
+	public Json5Object save(Json5Object json) {
+		json.addProperty("stat", statId.toString());
+		json.addProperty("value", value);
 
 		switch (valueCheck) {
-			case NOT_EQUALS -> tag.putString("value_check", "!=");
-			case GREATER -> tag.putString("value_check", ">");
-			case GREATER_OR_EQUAL -> tag.putString("value_check", ">=");
-			case LESSER -> tag.putString("value_check", "<");
-			case LESSER_OR_EQUAL -> tag.putString("value_check", "<=");
-			default -> tag.putString("value_check", "==");
+			case NOT_EQUALS -> json.addProperty("value_check", "!=");
+			case GREATER -> json.addProperty("value_check", ">");
+			case GREATER_OR_EQUAL -> json.addProperty("value_check", ">=");
+			case LESSER -> json.addProperty("value_check", "<");
+			case LESSER_OR_EQUAL -> json.addProperty("value_check", "<=");
+			default -> json.addProperty("value_check", "==");
 		}
+
+		return json;
 	}
 }

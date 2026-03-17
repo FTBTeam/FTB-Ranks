@@ -1,9 +1,15 @@
 package dev.ftb.mods.ftbranks.api;
 
-import dev.ftb.mods.ftblibrary.snbt.SNBT;
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import de.marhali.json5.Json5;
+import de.marhali.json5.Json5Element;
+import de.marhali.json5.Json5Object;
+import de.marhali.json5.config.Json5Options;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Util;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -49,11 +55,13 @@ public interface RankCondition extends Predicate<ServerPlayer> {
 	boolean isRankActive(ServerPlayer player);
 
 	/**
-	 * Save this condition to the given SNBTCompound tag.
+	 * Save this condition to the given Json5 object.
 	 *
-	 * @param tag the SNBT tag to write to
+	 * @param json the Json5 object to write to
+	 * @return the passed Json5 object with data written to it
 	 */
-	default void save(SNBTCompoundTag tag) {
+	default Json5Object save(Json5Object json) {
+		return json;
 	}
 
 	/**
@@ -67,17 +75,31 @@ public interface RankCondition extends Predicate<ServerPlayer> {
 		} else if (isSimple()) {
 			return getType();
 		} else {
-			SNBTCompoundTag tag = new SNBTCompoundTag();
-			tag.singleLine();
-			tag.putString("type", getType());
-			save(tag);
-			return String.join(" ", SNBT.writeLines(tag)).replace("\t", "");
+            try {
+				Json5Object json = new Json5Object();
+				json.addProperty("type", getType());
+				save(json);
+                return new Json5(Json5Options.builder().indentFactor(0).build()).serialize(json);
+            } catch (IOException e) {
+				return "<can't serialize rank>";
+            }
 		}
 	}
 
 	@Override
 	default boolean test(ServerPlayer player) {
 		return isRankActive(player);
+	}
+
+	default List<RankCondition> getConditionList(Json5Object json, String field, Rank rank) {
+		return Util.make(new ArrayList<>(), l -> {
+			Json5Element el = json.get(field);
+			if (el.isJson5Array()) {
+				for (Json5Element member : el.getAsJson5Array()) {
+					l.add(rank.getManager().createCondition(rank, member));
+				}
+			}
+		});
 	}
 
 	/**

@@ -21,7 +21,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static RankManagerImpl manager;
 
 	@Override
-	protected RankManagerImpl getManager() {
+	public RankManagerImpl getManager() {
 		return Objects.requireNonNull(manager);
 	}
 
@@ -69,7 +69,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	}
 
 	public static void registerConditions(RegisterConditionsEvent.Data event) {
-		event.register("always_active", (rank, tag) -> AlwaysActiveCondition.INSTANCE);
+		event.register("always_active", (rank, json) -> AlwaysActiveCondition.INSTANCE);
 		event.register("rank_added", RankAddedCondition::new);
 		event.register("rank_applies", RankAppliesCondition::new);
 
@@ -78,12 +78,12 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		event.register("and", AndCondition::new);
 		event.register("xor", XorCondition::new);
 
-		event.register("op", (rank, tag) -> new OPCondition());
-		event.register("spawn", (rank, tag) -> new SpawnCondition());
-		event.register("dimension", (rank, tag) -> new DimensionCondition(tag));
-		event.register("playtime", (rank, tag) -> new PlaytimeCondition(tag));
-		event.register("stat", (rank, tag) -> new StatCondition(tag));
-		event.register("fake_player", (rank, tag) -> new FakePlayerCondition());
-		event.register("creative_mode", (rank, tag) -> new CreativeModeCondition());
+		event.register("op", (rank, json) -> new OPCondition());
+		event.register("spawn", (rank, json) -> new SpawnCondition());
+		event.register("dimension", (rank, json) -> new DimensionCondition(json));
+		event.register("playtime", (rank, json) -> new PlaytimeCondition(json));
+		event.register("stat", (rank, json) -> new StatCondition(json));
+		event.register("fake_player", (rank, json) -> new FakePlayerCondition());
+		event.register("creative_mode", (rank, json) -> new CreativeModeCondition());
 	}
 }

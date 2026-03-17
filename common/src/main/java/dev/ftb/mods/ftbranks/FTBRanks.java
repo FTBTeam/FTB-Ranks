@@ -9,16 +9,7 @@ public class FTBRanks {
 	public static final String MOD_ID = "ftbranks";
 	public static final Logger LOGGER = LogManager.getLogger("FTB Ranks");
 
-	public static void init() {
+	public FTBRanks() {
 		FTBRanksAPI.setup(new FTBRanksAPIImpl());
-
-//		LifecycleEvent.SERVER_STARTING.register(FTBRanksAPIImpl::serverStarting);
-//		LifecycleEvent.SERVER_STARTED.register(FTBRanksAPIImpl::serverStarted);
-//		LifecycleEvent.SERVER_STOPPED.register(FTBRanksAPIImpl::serverStopped);
-//		LifecycleEvent.SERVER_LEVEL_SAVE.register(FTBRanksAPIImpl::worldSaved);
-
-//		RankEventData.REGISTER_CONDITIONS.register(FTBRanksAPIImpl::registerConditions);
-
-//		CommandRegistrationEvent.EVENT.register(FTBRanksCommands::register);
 	}
 }

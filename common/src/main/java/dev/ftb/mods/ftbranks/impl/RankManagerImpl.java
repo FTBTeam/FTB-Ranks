@@ -1,9 +1,11 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import de.marhali.json5.Json5Element;
+import de.marhali.json5.Json5Object;
+import de.marhali.json5.Json5Primitive;
 import dev.ftb.mods.ftblibrary.config.ConfigUtil;
 import dev.ftb.mods.ftblibrary.platform.event.EventPostingHandler;
-import dev.ftb.mods.ftblibrary.snbt.SNBT;
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import dev.ftb.mods.ftblibrary.util.Json5Util;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
@@ -15,10 +17,6 @@ import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
 import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
-import net.minecraft.nbt.EndTag;
-import net.minecraft.nbt.NumericTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
@@ -37,7 +35,7 @@ import static dev.ftb.mods.ftbranks.FTBRanks.MOD_ID;
 
 public class RankManagerImpl implements RankManager {
 	public static final LevelResource FOLDER_NAME = new LevelResource("serverconfig/ftbranks");
-	private static final Path DEFAULT_RANK_FILE = ConfigUtil.DEFAULT_CONFIG_DIR.resolve(MOD_ID).resolve("ranks.snbt");
+	private static final Path DEFAULT_RANK_FILE = ConfigUtil.DEFAULT_CONFIG_DIR.resolve(MOD_ID).resolve("ranks.json5");
 
 	private final MinecraftServer server;
 	private final Path directory;
@@ -56,8 +54,8 @@ public class RankManagerImpl implements RankManager {
 		this.server = server;
 
 		directory = server.getWorldPath(FOLDER_NAME);
-		rankFile = directory.resolve("ranks.snbt");
-		playerFile = directory.resolve("players.snbt");
+		rankFile = directory.resolve("ranks.json5");
+		playerFile = directory.resolve("players.json5");
 	}
 
 	public void markRanksDirty() {
@@ -134,18 +132,18 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public RankCondition createCondition(Rank rank, @Nullable Tag tag) throws RankException {
-		SNBTCompoundTag compoundTag = new SNBTCompoundTag();
-		if (tag instanceof StringTag) {
-			compoundTag.putString("type", tag.asString().orElseThrow());
-		} else if (tag instanceof SNBTCompoundTag c) {
-			compoundTag = c;
-		}
-		String key = compoundTag.getStringOr("type", "");
+	public RankCondition createCondition(Rank rank, Json5Element element) throws RankException {
+		Json5Object json = new Json5Object();
+        if (element.isJson5Primitive()) {
+            json.addProperty("type", element.getAsString());
+        } else if (element.isJson5Object()) {
+            json = element.getAsJson5Object();
+        }
+        String key = Json5Util.getString(json, "type").orElse("");
 		if (!conditions.containsKey(key)) {
-			throw new IllegalArgumentException("Can't create condition from tag: '" + tag + "'");
+			throw new IllegalArgumentException("Can't create condition from tag: '" + element + "'");
 		}
-		return conditions.get(key).create(rank, compoundTag);
+		return conditions.get(key).create(rank, json);
 	}
 
 	@Override
@@ -214,12 +212,14 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
-		SNBTCompoundTag playerFileTag = SNBT.tryRead(playerFile);
+		var playerFileTag = Json5Util.tryRead(playerFile);
 		for (String key : playerFileTag.keySet()) {
-			SNBTCompoundTag o = playerFileTag.getAsSnbtComponent(key);
-			UUID id = UUID.fromString(key);
-			PlayerRankData data = PlayerRankData.fromSNBT(this, id, o, tempRanks);
-			tempPlayerData.put(id, data);
+			var el = playerFileTag.get(key);
+			if (el.isJson5Object()) {
+				UUID id = UUID.fromString(key);
+				PlayerRankData data = PlayerRankData.fromJson(this, id, el.getAsJson5Object(), tempRanks);
+				tempPlayerData.put(id, data);
+			}
 		}
 
 		ranks = new LinkedHashMap<>(tempRanks);
@@ -236,11 +236,11 @@ public class RankManagerImpl implements RankManager {
 
 	private void readRankFile(RankFileSource source, Map<String, RankImpl> rankMap) throws IOException {
 		Path inputFile = source.getPath(server);
-		SNBTCompoundTag rankFileTag = SNBT.tryRead(inputFile);
+		Json5Object rankFileTag = Json5Util.tryRead(inputFile);
 		int size = rankMap.size();
 		for (String rankId : rankFileTag.keySet()) {
 			try {
-				RankImpl rank = RankImpl.readSNBT(this, rankId, rankFileTag.getAsSnbtComponent(rankId), source);
+				RankImpl rank = RankImpl.fromJson(this, rankId, rankFileTag.getAsJson5Object(rankId), source);
 				if (rankMap.putIfAbsent(rank.getId(), rank) != null) {
 					FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, ignoring", rank.getId(), inputFile);
 				}
@@ -324,14 +324,14 @@ public class RankManagerImpl implements RankManager {
 
 	void saveRanksNow() {
 		if (shouldSaveRanks) {
-			Map<RankFileSource,SNBTCompoundTag> map = new EnumMap<>(RankFileSource.class);
+			Map<RankFileSource, Json5Object> map = new EnumMap<>(RankFileSource.class);
 			for (RankImpl rank : ranks.values()) {
-				map.computeIfAbsent(rank.getSource(), k -> new SNBTCompoundTag())
-						.put(rank.getId(), rank.writeSNBT());
+				map.computeIfAbsent(rank.getSource(), k -> new Json5Object())
+						.add(rank.getId(), rank.toJson());
 			}
-			map.forEach((source, tag) -> {
+			map.forEach((source, json) -> {
 				try {
-					SNBT.tryWrite(source.getPath(server), tag);
+					Json5Util.tryWrite(source.getPath(server), json);
 				} catch (IOException e) {
 					FTBRanks.LOGGER.warn("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
 				}
@@ -342,49 +342,47 @@ public class RankManagerImpl implements RankManager {
 
 	void savePlayersNow() {
 		if (shouldSavePlayers) {
-			SNBTCompoundTag playerTag = new SNBTCompoundTag();
+			Json5Object playerTag = new Json5Object();
 			for (PlayerRankData data : playerData.values()) {
-				playerTag.put(data.getPlayerId().toString(), data.writeSNBT());
+				playerTag.add(data.getPlayerId().toString(), data.toJson());
 			}
 
 			try {
-				SNBT.tryWrite(playerFile, playerTag);
+				Json5Util.tryWrite(playerFile, playerTag);
 			} catch (IOException e) {
-				FTBRanks.LOGGER.warn("Failed to save players.snbt! {} / {}", e.getClass().getName(), e.getMessage());
+				FTBRanks.LOGGER.warn("Failed to save players.json5! {} / {}", e.getClass().getName(), e.getMessage());
 			}
 			shouldSavePlayers = false;
 		}
 	}
 
-	static PermissionValue ofTag(SNBTCompoundTag tag, String key) {
-		if (tag.isBoolean(key)) {
-			return BooleanPermissionValue.of(tag.getBooleanOr(key, false)); // TODO: False default might not be ideal
+	static PermissionValue readPermissions(Json5Object json, String key) {
+		Json5Element el = json.get(key);
+
+		if (!el.isJson5Primitive()) return PermissionValue.MISSING;
+		Json5Primitive primitive = el.getAsJson5Primitive();
+
+		if (primitive.isBoolean()) {
+			return BooleanPermissionValue.of(primitive.getAsBoolean());
+		} else if (primitive.isNumber()) {
+			return NumberPermissionValue.of(primitive.getAsNumber());
+		} else {
+			return StringPermissionValue.of(primitive.getAsString());
 		}
-
-		Tag v = tag.get(key);
-
-		return switch (v) {
-			case null -> PermissionValue.MISSING;
-			case EndTag ignored -> PermissionValue.MISSING;
-			case NumericTag n -> NumberPermissionValue.of(n.asNumber().orElseThrow());
-			case StringTag s -> StringPermissionValue.of(s.asString().orElseThrow());
-			default -> StringPermissionValue.of(v.toString());
-		};
-
 	}
 
-	static SNBTCompoundTag writePermissions(Map<String, PermissionValue> map, SNBTCompoundTag res) {
+	static Json5Object writePermissions(Map<String, PermissionValue> map, Json5Object res) {
 		map.forEach((key, value) -> {
-			if (value.isEmpty()) {
+			/*if (value.isEmpty()) {
 				res.putNull(key);
-			} else if (value instanceof BooleanPermissionValue b) {
-				res.putBoolean(key, b.value);
+			} else*/ if (value instanceof BooleanPermissionValue b) {
+				res.addProperty(key, b.value);
 			} else if (value instanceof StringPermissionValue s) {
-				res.putString(key, s.value);
+				res.addProperty(key, s.value);
 			} else if (value instanceof NumberPermissionValue n) {
-				res.putNumber(key, n.value);
+				res.addProperty(key, n.value);
 			} else {
-				res.putString(key, value.asString().orElse(""));
+				res.addProperty(key, value.asString().orElse(""));
 			}
 		});
 		return res;

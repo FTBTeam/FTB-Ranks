@@ -1,4 +1,4 @@
-package dev.ftb.mods.ftbranks.fabric;
+package dev.ftb.mods.ftbranks.api.fabric;
 
 import dev.ftb.mods.ftbranks.api.event.*;
 import net.fabricmc.fabric.api.event.Event;
@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.event.EventFactory;
 
 import java.util.Arrays;
 
-public class FTBRanksFabricEvents {
+public class FTBRanksEvents {
     public static Event<RegisterConditionsEvent> REGISTER_CONDITIONS = EventFactory.createArrayBacked(RegisterConditionsEvent.class,
             callbacks -> data -> Arrays.stream(callbacks).forEach(c -> c.registerConditions(data))
     );

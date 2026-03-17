@@ -1,25 +1,19 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import de.marhali.json5.Json5Array;
+import de.marhali.json5.Json5Object;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import dev.ftb.mods.ftbranks.api.RankException;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AndCondition implements RankCondition {
 	private final List<RankCondition> conditions;
 
-	public AndCondition(Rank rank, SNBTCompoundTag tag) throws RankException {
-		conditions = new ArrayList<>();
-
-		for (Tag t : tag.getList("conditions", Tag.class)) {
-			conditions.add(rank.getManager().createCondition(rank, t));
-		}
+	public AndCondition(Rank rank, Json5Object json) throws RankException {
+		conditions = getConditionList(json, "conditions", rank);
 	}
 
 	@Override
@@ -33,16 +27,16 @@ public class AndCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(SNBTCompoundTag tag) {
-		ListTag a = new ListTag();
+	public Json5Object save(Json5Object json) {
+		Json5Array a = new Json5Array();
 
 		for (RankCondition condition : conditions) {
-			SNBTCompoundTag c = new SNBTCompoundTag();
-			c.putString("type", condition.getType());
-			condition.save(c);
-			a.add(c);
+			Json5Object c = new Json5Object();
+			c.addProperty("type", condition.getType());
+			a.add(condition.save(c));
 		}
 
-		tag.put("conditions", a);
+		json.add("conditions", a);
+		return json;
 	}
 }

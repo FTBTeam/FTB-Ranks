@@ -1,6 +1,6 @@
 package dev.ftb.mods.ftbranks.api;
 
-import net.minecraft.nbt.Tag;
+import de.marhali.json5.Json5Element;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
@@ -21,7 +21,7 @@ public interface RankManager {
 	 *
 	 * @return all ranks
 	 */
-	Collection<Rank> getAllRanks();
+	Collection<? extends Rank> getAllRanks();
 
 	/**
 	 * Get the rank with the given ID, if it exists.
@@ -69,24 +69,25 @@ public interface RankManager {
 	 * @param player the player
 	 * @return a list of ranks
 	 */
-	default List<Rank> getRanks(ServerPlayer player) {
+	default List<? extends Rank> getRanks(ServerPlayer player) {
 		return getAllRanks().stream().filter(rank -> rank.isActive(player)).toList();
 	}
 
 	/**
-	 * Create a condition from an NBT tag. This is typically used when registering nested condition types; see the
+	 * Create a condition from a Json5 element. This is typically used when registering nested condition types; see the
 	 * built-in "and" / "or" / "not" conditions for examples.
 	 * <p>
-	 * The "type" field of the tag must be either a string tag, or a compound tag with a string "type" field. The value
-	 * of the tag (or field) must be a known condition ID, previously registered via
+	 * The Json5 element must be either a primitive string element of just the condition type, or a Json5 object with
+	 * a string "type" field holding the condition type (plus other fields relevant to the condition). The value of the
+	 * element or "type" field must be a known condition ID, previously registered via
 	 * {@link dev.ftb.mods.ftbranks.api.event.RegisterConditionsEvent}
 	 *
 	 * @param rank the rank to which this condition is to be applied
-	 * @param tag the NBT tag
+	 * @param element the Json5 element
 	 * @return a new condition
 	 * @throws RankException if the rank could not be created for any reason
 	 */
-	RankCondition createCondition(Rank rank, @Nullable Tag tag) throws RankException;
+	RankCondition createCondition(Rank rank, Json5Element element) throws RankException;
 
 	/**
 	 * Retrieve the value of the given node for the given player. Querying for an unknown node will result in the

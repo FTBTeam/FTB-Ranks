@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import de.marhali.json5.Json5Object;
+import dev.ftb.mods.ftblibrary.util.Json5Util;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankException;
@@ -66,54 +67,55 @@ public class PlayerRankData {
 		return permissions.getOrDefault(node, PermissionValue.MISSING);
 	}
 
-	SNBTCompoundTag writeSNBT() {
-		SNBTCompoundTag res = new SNBTCompoundTag();
+	Json5Object toJson() {
+		Json5Object res = new Json5Object();
 
-		res.putString("name", name);
+		res.addProperty("name", name);
 
-		SNBTCompoundTag ranksTag = new SNBTCompoundTag();
+		Json5Object ranksJson = new Json5Object();
 		added.forEach((rank, when) -> {
 			if (rank.getCondition().isDefaultCondition()) {
-				ranksTag.putString(rank.getId(), when.toString());
+				ranksJson.addProperty(rank.getId(), when.toString());
 			}
 		});
-		if (!ranksTag.isEmpty()) {
-			res.put("ranks", ranksTag);
+		if (!ranksJson.isEmpty()) {
+			res.add("ranks", ranksJson);
 		}
 
-		SNBTCompoundTag permTag = RankManagerImpl.writePermissions(permissions, new SNBTCompoundTag());
+		Json5Object permTag = RankManagerImpl.writePermissions(permissions, new Json5Object());
 		if (!permTag.isEmpty()) {
-			res.put("permissions", permTag);
+			res.add("permissions", permTag);
 		}
 
 		return res;
 	}
 
-	static PlayerRankData fromSNBT(RankManagerImpl manager, UUID playerId, SNBTCompoundTag tag, Map<String,RankImpl> tempRanks) {
-		PlayerRankData data = new PlayerRankData(manager, playerId, tag.getStringOr("name", ""));
+	static PlayerRankData fromJson(RankManagerImpl manager, UUID playerId, Json5Object json, Map<String,RankImpl> tempRanks) {
+		PlayerRankData data = new PlayerRankData(manager, playerId, Json5Util.getString(json, "name").orElse(""));
 
-		SNBTCompoundTag ranksTag = tag.getAsSnbtComponent("ranks");
-		for (String rankKey : ranksTag.keySet()) {
-			RankImpl rank = tempRanks.get(rankKey);
-			if (rank != null) {
-				try {
-					data.added.put(rank, Instant.parse(ranksTag.getStringOr(rankKey, "")));
-				} catch (DateTimeParseException e) {
-					throw new RankException(e.getMessage());
+		Json5Util.getJson5Object(json, "ranks").ifPresent(ranks -> {
+			for (String rankKey : ranks.keySet()) {
+				RankImpl rank = tempRanks.get(rankKey);
+				if (rank != null) {
+					try {
+						data.added.put(rank, Instant.parse(Json5Util.getString(ranks, rankKey).orElse("")));
+					} catch (DateTimeParseException e) {
+						throw new RankException(e.getMessage());
+					}
 				}
 			}
-		}
-
-		SNBTCompoundTag permTag = tag.getAsSnbtComponent("permissions");
-		for (String permKey : permTag.keySet()) {
-			while (permKey.endsWith(".*")) {
-				permKey = permKey.substring(0, permKey.length() - 2);
-				manager.markPlayerDataDirty();
+		});
+		Json5Util.getJson5Object(json, "permissions").ifPresent(perms -> {
+			for (String permKey : perms.keySet()) {
+				while (permKey.endsWith(".*")) {
+					permKey = permKey.substring(0, permKey.length() - 2);
+					manager.markPlayerDataDirty();
+				}
+				if (!permKey.isEmpty()) {
+					data.permissions.put(playerId.toString(), RankManagerImpl.readPermissions(perms, permKey));
+				}
 			}
-			if (!permKey.isEmpty()) {
-				data.permissions.put(playerId.toString(), RankManagerImpl.ofTag(permTag, permKey));
-			}
-		}
+		});
 
 		return data;
 	}

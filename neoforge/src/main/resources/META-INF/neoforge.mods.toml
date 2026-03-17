@@ -26,14 +26,9 @@ side = "BOTH"
 [[dependencies.ftbranks]]
 modId = "minecraft"
 type = "required"
-versionRange = "[${mcversion},)"
+#versionRange = "[${mcversion},)"
+versionRange = "[26.1-pre-2,)"
 ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.ftbranks]]
-modId = "architectury"
-type = "required"
-ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
