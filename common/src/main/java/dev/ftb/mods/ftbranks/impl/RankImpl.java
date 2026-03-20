@@ -1,7 +1,7 @@
 package dev.ftb.mods.ftbranks.impl;
 
 import de.marhali.json5.Json5Object;
-import dev.ftb.mods.ftblibrary.platform.event.EventPostingHandler;
+import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
 import dev.ftb.mods.ftblibrary.util.Json5Util;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
@@ -95,7 +95,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			} else {
 				permissions.remove(node);
 			}
-			EventPostingHandler.INSTANCE.postEvent(new PermissionNodeChangedEvent.Data(manager, this, node, oldValue, value));
+			NativeEventPosting.INSTANCE.postEvent(new PermissionNodeChangedEvent.Data(manager, this, node, oldValue, value));
 			if (node.equals("ftbranks.name_format")) {
 				PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			}
@@ -117,7 +117,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public void setCondition(RankCondition newCondition) {
 		RankCondition oldCondition = this.condition;
 		this.condition = newCondition;
-		EventPostingHandler.INSTANCE.postEvent(new ConditionChangedEvent.Data(manager, this, oldCondition, newCondition));
+		NativeEventPosting.INSTANCE.postEvent(new ConditionChangedEvent.Data(manager, this, oldCondition, newCondition));
 		PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 		manager.markRanksDirty();
 	}
@@ -125,7 +125,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	@Override
 	public boolean add(NameAndId nameAndId) {
 		if (manager.getOrCreatePlayerData(nameAndId).addRank(this)) {
-			EventPostingHandler.INSTANCE.postEvent(new PlayerAddedToRankEvent.Data(manager, this, nameAndId));
+			NativeEventPosting.INSTANCE.postEvent(new PlayerAddedToRankEvent.Data(manager, this, nameAndId));
 			PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			return true;
 		}
@@ -137,7 +137,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public boolean remove(NameAndId nameAndId) {
 		if (manager.getOrCreatePlayerData(nameAndId).removeRank(this)) {
 			manager.markPlayerDataDirty();
-			EventPostingHandler.INSTANCE.postEvent(new PlayerRemovedFromRankEvent.Data(manager, this, nameAndId));
+			NativeEventPosting.INSTANCE.postEvent(new PlayerRemovedFromRankEvent.Data(manager, this, nameAndId));
 			PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			return true;
 		}

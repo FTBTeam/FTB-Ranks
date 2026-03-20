@@ -5,12 +5,12 @@ import dev.ftb.mods.ftbranks.api.RankManager;
 import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import net.minecraft.server.players.NameAndId;
 
+import java.util.function.Consumer;
+
 /**
  * Fired when a player is removed from a rank, with the {@code /ftbranks remove} command.
  */
 @FunctionalInterface
-public interface PlayerRemovedFromRankEvent {
-    void onPlayerRemovedFromRank(Data data);
-
+public interface PlayerRemovedFromRankEvent extends Consumer<PlayerRemovedFromRankEvent.Data> {
     record Data(RankManager manager, Rank rank, NameAndId player) {}
 }

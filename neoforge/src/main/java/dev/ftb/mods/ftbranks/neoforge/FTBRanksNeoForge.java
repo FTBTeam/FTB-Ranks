@@ -1,12 +1,10 @@
 package dev.ftb.mods.ftbranks.neoforge;
 
-import dev.ftb.mods.ftblibrary.platform.event.EventPostingHandler;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.FTBRanksCommands;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.api.neoforge.FTBRanksEvent;
-import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import dev.ftb.mods.ftbranks.impl.decorate.MessageDecorator;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,43 +19,40 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
+import static dev.ftb.mods.ftblibrary.util.neoforge.NeoEventHelper.registerNeoEventPoster;
+
 @Mod(FTBRanks.MOD_ID)
 public class FTBRanksNeoForge {
 	private final FTBRanks ranks;
 
 	public FTBRanksNeoForge(IEventBus modBus) {
 		ranks = new FTBRanks();
+		var impl = ranks.getImplementation();
 
 		IEventBus bus = NeoForge.EVENT_BUS;
 
-		bus.addListener(ServerStartingEvent.class, event -> FTBRanksAPIImpl.serverStarting(event.getServer()));
-		bus.addListener(ServerStartedEvent.class, event -> FTBRanksAPIImpl.serverStarted(event.getServer()));
-		bus.addListener(ServerStoppedEvent.class, event -> FTBRanksAPIImpl.serverStopped(event.getServer()));
-		bus.addListener(LevelEvent.Save.class, ignored -> FTBRanksAPIImpl.worldSaved());
+		bus.addListener(ServerStartingEvent.class, event -> impl.serverStarting(event.getServer()));
+		bus.addListener(ServerStartedEvent.class, event -> impl.serverStarted(event.getServer()));
+		bus.addListener(ServerStoppedEvent.class, event -> impl.serverStopped(event.getServer()));
+		bus.addListener(LevelEvent.Save.class, ignored -> impl.worldSaved());
 		bus.addListener(this::playerNameFormatting);
 		bus.addListener(this::serverChat);
 		bus.addListener(this::registerCommands);
 
-		bus.addListener(FTBRanksEvent.RegisterConditions.class, event -> FTBRanksAPIImpl.registerConditions(event.getData()));
+		bus.addListener(FTBRanksEvent.RegisterConditions.class, event -> impl.registerConditions(event.getEventData()));
 
-		registerNativeEventPosting(bus);
+		registerNativeEventPosters(bus);
 	}
 
-	private static void registerNativeEventPosting(IEventBus bus) {
-		EventPostingHandler.INSTANCE.registerEvent(RegisterConditionsEvent.Data.class,
-				data -> bus.post(new FTBRanksEvent.RegisterConditions(data)));
-		EventPostingHandler.INSTANCE.registerEvent(RanksReloadedEvent.Data.class,
-				data -> bus.post(new FTBRanksEvent.Reloaded(data)));
-		EventPostingHandler.INSTANCE.registerEvent(RankDeletedEvent.Data.class,
-				data -> bus.post(new FTBRanksEvent.Deleted(data)));
-		EventPostingHandler.INSTANCE.registerEvent(RankCreatedEvent.Data.class,
-				data -> bus.post(new FTBRanksEvent.Created(data)));
-		EventPostingHandler.INSTANCE.registerEvent(PlayerRemovedFromRankEvent.Data.class,
-				data -> bus.post(new FTBRanksEvent.PlayerRemoved(data)));
-		EventPostingHandler.INSTANCE.registerEvent(PermissionNodeChangedEvent.Data.class,
-				data -> bus.post(new FTBRanksEvent.NodeChanged(data)));
-		EventPostingHandler.INSTANCE.registerEvent(ConditionChangedEvent.Data.class,
-				data -> bus.post(new FTBRanksEvent.ConditionChanged(data)));
+	private static void registerNativeEventPosters(IEventBus bus) {
+		registerNeoEventPoster(bus, RegisterConditionsEvent.Data.class, FTBRanksEvent.RegisterConditions::new);
+		registerNeoEventPoster(bus, RanksReloadedEvent.Data.class, FTBRanksEvent.Reloaded::new);
+		registerNeoEventPoster(bus, RankCreatedEvent.Data.class, FTBRanksEvent.Created::new);
+		registerNeoEventPoster(bus, RankDeletedEvent.Data.class, FTBRanksEvent.Deleted::new);
+		registerNeoEventPoster(bus, PlayerAddedToRankEvent.Data.class, FTBRanksEvent.PlayerAdded::new);
+		registerNeoEventPoster(bus, PlayerRemovedFromRankEvent.Data.class, FTBRanksEvent.PlayerRemoved::new);
+		registerNeoEventPoster(bus, PermissionNodeChangedEvent.Data.class, FTBRanksEvent.PermissionNodeChanged::new);
+		registerNeoEventPoster(bus, ConditionChangedEvent.Data.class, FTBRanksEvent.ConditionChanged::new);
 	}
 
 	private void registerCommands(RegisterCommandsEvent event) {
