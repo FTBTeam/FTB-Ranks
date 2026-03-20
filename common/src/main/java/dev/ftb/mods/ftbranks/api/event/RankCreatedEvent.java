@@ -6,9 +6,7 @@ import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 
 import java.util.function.Consumer;
 
-/**
- * Fired when a rank is created, with the {@code /ftbranks delete} command.
- */
+/// Fired when a rank is created, with the `/ftbranks delete` command.
 @FunctionalInterface
 public interface RankCreatedEvent extends Consumer<RankCreatedEvent.Data> {
     record Data(RankManager manager, Rank rank) {}

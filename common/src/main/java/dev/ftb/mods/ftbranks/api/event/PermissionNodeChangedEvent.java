@@ -7,9 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-/**
- * Fired when the value of a permission node in a rank changes, via the {@code /ftbranks node} command.
- */
+/// Fired when the value of a permission node in a rank changes, via the `/ftbranks node` command.
 @FunctionalInterface
 public interface PermissionNodeChangedEvent extends Consumer<PermissionNodeChangedEvent.Data> {
     record Data(RankManager manager, Rank rank, String node, @Nullable PermissionValue oldValue, @Nullable PermissionValue newValue) {

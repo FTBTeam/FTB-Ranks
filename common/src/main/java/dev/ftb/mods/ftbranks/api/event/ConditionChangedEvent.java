@@ -6,9 +6,7 @@ import dev.ftb.mods.ftbranks.api.RankManager;
 
 import java.util.function.Consumer;
 
-/**
- * Fired when a rank's condition changes, via the {@code /ftbranks condition} command.
- */
+/// Fired when a rank's condition changes, via the `/ftbranks condition` command.
 @FunctionalInterface
 public interface ConditionChangedEvent extends Consumer<ConditionChangedEvent.Data> {
     record Data(RankManager manager, Rank rank, RankCondition oldCondition, RankCondition newCondition) {}

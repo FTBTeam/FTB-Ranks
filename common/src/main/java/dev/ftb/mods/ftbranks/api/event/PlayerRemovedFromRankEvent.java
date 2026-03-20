@@ -7,9 +7,7 @@ import net.minecraft.server.players.NameAndId;
 
 import java.util.function.Consumer;
 
-/**
- * Fired when a player is removed from a rank, with the {@code /ftbranks remove} command.
- */
+/// Fired when a player is removed from a rank, with the `/ftbranks remove` command.
 @FunctionalInterface
 public interface PlayerRemovedFromRankEvent extends Consumer<PlayerRemovedFromRankEvent.Data> {
     record Data(RankManager manager, Rank rank, NameAndId player) {}
