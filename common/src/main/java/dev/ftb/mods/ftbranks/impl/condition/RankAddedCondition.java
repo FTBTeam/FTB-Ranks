@@ -1,11 +1,10 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
 import de.marhali.json5.Json5Object;
-import dev.ftb.mods.ftblibrary.util.Json5Util;
+import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
-import org.jetbrains.annotations.UnknownNullability;
 
 public class RankAddedCondition implements RankCondition {
 	protected final Rank original;
@@ -29,7 +28,7 @@ public class RankAddedCondition implements RankCondition {
 	}
 
 	@Override
-	public Json5Object save(@UnknownNullability Json5Object json) {
+	public Json5Object save(Json5Object json) {
 		json.addProperty("rank", id);
 		return json;
 	}

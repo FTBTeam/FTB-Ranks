@@ -44,7 +44,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public void serverStarting(MinecraftServer server) {
 		manager = new RankManagerImpl(server);
 
-		NativeEventPosting.INSTANCE.postEvent(new RegisterConditionsEvent.Data((id, factory) -> manager.registerCondition(id, factory)));
+		NativeEventPosting.get().postEvent(new RegisterConditionsEvent.Data((id, factory) -> manager.registerCondition(id, factory)));
 	}
 
 	public void serverStarted(MinecraftServer ignoredServer) {

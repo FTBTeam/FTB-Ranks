@@ -1,7 +1,7 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
 import de.marhali.json5.Json5Object;
-import dev.ftb.mods.ftblibrary.util.Json5Util;
+import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;

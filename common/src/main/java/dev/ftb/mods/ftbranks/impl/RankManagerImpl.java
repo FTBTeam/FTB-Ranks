@@ -4,8 +4,8 @@ import de.marhali.json5.Json5Element;
 import de.marhali.json5.Json5Object;
 import de.marhali.json5.Json5Primitive;
 import dev.ftb.mods.ftblibrary.config.ConfigUtil;
+import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
-import dev.ftb.mods.ftblibrary.util.Json5Util;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
@@ -92,7 +92,7 @@ public class RankManagerImpl implements RankManager {
 		ranks.put(id, rank);
 		rebuildSortedRanks();
 		markRanksDirty();
-		NativeEventPosting.INSTANCE.postEvent(new RankCreatedEvent.Data(this, rank));
+		NativeEventPosting.get().postEvent(new RankCreatedEvent.Data(this, rank));
 		return rank;
 	}
 
@@ -119,7 +119,7 @@ public class RankManagerImpl implements RankManager {
 
 			rebuildSortedRanks();
 
-			NativeEventPosting.INSTANCE.postEvent(new RankDeletedEvent.Data(this, rank));
+			NativeEventPosting.get().postEvent(new RankDeletedEvent.Data(this, rank));
 			markRanksDirty();
 		}
 
@@ -227,7 +227,7 @@ public class RankManagerImpl implements RankManager {
 
 		rebuildSortedRanks();
 
-		NativeEventPosting.INSTANCE.postEvent(new RanksReloadedEvent.Data(FTBRanksAPI.manager()));
+		NativeEventPosting.get().postEvent(new RanksReloadedEvent.Data(FTBRanksAPI.manager()));
 
 		PlayerNameFormatting.refreshPlayerNames(this.server);
 

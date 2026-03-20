@@ -5,7 +5,6 @@ import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.server.level.ServerPlayer;
-import org.jetbrains.annotations.UnknownNullability;
 
 public class NotCondition implements RankCondition {
 	private final RankCondition condition;
@@ -25,7 +24,7 @@ public class NotCondition implements RankCondition {
 	}
 
 	@Override
-	public Json5Object save(@UnknownNullability Json5Object json) {
+	public Json5Object save(Json5Object json) {
 		Json5Object sub = new Json5Object();
 		sub.addProperty("type", condition.getType());
 		json.add("condition", condition.save(sub));
