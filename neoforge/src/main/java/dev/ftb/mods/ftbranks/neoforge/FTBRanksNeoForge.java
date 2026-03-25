@@ -23,10 +23,9 @@ import static dev.ftb.mods.ftblibrary.util.neoforge.NeoEventHelper.registerNeoEv
 
 @Mod(FTBRanks.MOD_ID)
 public class FTBRanksNeoForge {
-	private final FTBRanks ranks;
 
-	public FTBRanksNeoForge(IEventBus modBus) {
-		ranks = new FTBRanks();
+    public FTBRanksNeoForge(IEventBus modBus) {
+        FTBRanks ranks = new FTBRanks();
 		var impl = ranks.getImplementation();
 
 		IEventBus bus = NeoForge.EVENT_BUS;
