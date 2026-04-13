@@ -18,10 +18,9 @@
 		]
 	},
 	"depends": {
-		"fabric": "${fabricapiversionrange}",
-		"minecraft": "~${mcversion}",
-		"architectury": ">=${archversion}",
-		"ftblibrary": ">=${ftblibraryversion}"
+		"fabric-api": "${fabricapi_version_range}",
+		"minecraft": "${minecraft_version_range_semver}",
+		"ftblibrary": "${ftb_library_version_range_semver}"
 	},
 	"mixins": [
 		"ftbranks-common.mixins.json"

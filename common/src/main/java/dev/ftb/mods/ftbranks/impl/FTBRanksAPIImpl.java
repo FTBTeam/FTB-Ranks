@@ -1,16 +1,15 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
-import dev.ftb.mods.ftbranks.api.event.RankEvent;
 import dev.ftb.mods.ftbranks.api.event.RegisterConditionsEvent;
 import dev.ftb.mods.ftbranks.impl.condition.*;
 import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -22,7 +21,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public static RankManagerImpl manager;
 
 	@Override
-	protected RankManagerImpl getManager() {
+	public RankManagerImpl getManager() {
 		return Objects.requireNonNull(manager);
 	}
 
@@ -42,13 +41,13 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		}
 	}
 
-	public static void serverStarting(MinecraftServer server) {
+	public void serverStarting(MinecraftServer server) {
 		manager = new RankManagerImpl(server);
 
-		RankEvent.REGISTER_CONDITIONS.invoker().accept(new RegisterConditionsEvent((id, factory) -> manager.registerCondition(id, factory)));
+		NativeEventPosting.get().postEvent(new RegisterConditionsEvent.Data((id, factory) -> manager.registerCondition(id, factory)));
 	}
 
-	public static void serverStarted(MinecraftServer ignoredServer) {
+	public void serverStarted(MinecraftServer ignoredServer) {
 		if (manager != null) {
 			try {
 				manager.load();
@@ -58,33 +57,33 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		}
 	}
 
-	public static void serverStopped(MinecraftServer ignoredServer) {
+	public void serverStopped(MinecraftServer ignoredServer) {
 		manager = null;
 	}
 
-	public static void worldSaved(ServerLevel ignoredEvent) {
+	public void worldSaved() {
 		if (manager != null) {
 			manager.saveRanksNow();
 			manager.savePlayersNow();
 		}
 	}
 
-	public static void registerConditions(RegisterConditionsEvent event) {
-		event.register("always_active", (rank, tag) -> AlwaysActiveCondition.INSTANCE);
-		event.register("rank_added", RankAddedCondition::new);
-		event.register("rank_applies", RankAppliesCondition::new);
+	public void registerConditions(RegisterConditionsEvent.Data data) {
+		data.registerSimple("always_active", () -> AlwaysActiveCondition.INSTANCE);
+		data.registerSimple("op", OPCondition::new);
+		data.registerSimple("spawn",SpawnCondition::new);
+		data.registerSimple("fake_player", FakePlayerCondition::new);
+		data.registerSimple("creative_mode",CreativeModeCondition::new);
 
-		event.register("not", NotCondition::new);
-		event.register("or", OrCondition::new);
-		event.register("and", AndCondition::new);
-		event.register("xor", XorCondition::new);
+		data.register("dimension", (ignored, json) -> new DimensionCondition(json));
+		data.register("playtime", (ignored, json) -> new PlaytimeCondition(json));
+		data.register("stat", (ignored, json) -> new StatCondition(json));
+		data.register("rank_added", RankAddedCondition::new);
+		data.register("rank_applies", RankAppliesCondition::new);
 
-		event.register("op", (rank, tag) -> new OPCondition());
-		event.register("spawn", (rank, tag) -> new SpawnCondition());
-		event.register("dimension", (rank, tag) -> new DimensionCondition(tag));
-		event.register("playtime", (rank, tag) -> new PlaytimeCondition(tag));
-		event.register("stat", (rank, tag) -> new StatCondition(tag));
-		event.register("fake_player", (rank, tag) -> new FakePlayerCondition());
-		event.register("creative_mode", (rank, tag) -> new CreativeModeCondition());
+		data.register("not", NotCondition::new);
+		data.register("or", OrCondition::new);
+		data.register("and", AndCondition::new);
+		data.register("xor", XorCondition::new);
 	}
 }

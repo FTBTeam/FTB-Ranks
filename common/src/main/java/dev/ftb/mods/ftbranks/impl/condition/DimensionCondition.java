@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.impl.condition;
 
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import de.marhali.json5.Json5Object;
+import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -11,8 +12,8 @@ import net.minecraft.world.level.Level;
 public class DimensionCondition implements RankCondition {
 	private final ResourceKey<Level> dimension;
 
-	public DimensionCondition(SNBTCompoundTag tag) {
-		dimension = ResourceKey.create(Registries.DIMENSION, Identifier.parse(tag.getStringOr("dimension", "")));
+	public DimensionCondition(Json5Object json) {
+		dimension = ResourceKey.create(Registries.DIMENSION, Identifier.parse(Json5Util.getString(json,"dimension").orElse("minecraft:overworld")));
 	}
 
 	@Override
@@ -26,7 +27,8 @@ public class DimensionCondition implements RankCondition {
 	}
 
 	@Override
-	public void save(SNBTCompoundTag tag) {
-		tag.putString("dimension", dimension.identifier().toString());
+	public Json5Object save(Json5Object json) {
+		json.addProperty("dimension", dimension.identifier().toString());
+		return json;
 	}
 }

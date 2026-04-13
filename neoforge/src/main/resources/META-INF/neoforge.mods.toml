@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[${neoforgeloaderversion},)"
+loaderVersion = "[${neoforge_loader_version},)"
 issueTrackerURL = "https://go.ftb.team/support-mod-issues"
 license = "All Rights Reserved"
 
@@ -19,28 +19,21 @@ config = "ftbranks-common.mixins.json"
 [[dependencies.ftbranks]]
 modId = "neoforge"
 type = "required"
-versionRange = "${neoforgeversionrange}"
+versionRange = "${neoforge_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "minecraft"
 type = "required"
-versionRange = "[${mcversion},)"
+versionRange = "${minecraft_version_range_maven}"
 ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.ftbranks]]
-modId = "architectury"
-type = "required"
-versionRange = "[${archversion},)"
-ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.ftbranks]]
 modId = "ftblibrary"
 type = "required"
-versionRange = "[${ftblibraryversion},)"
+versionRange = "${ftb_library_version_range_maven}"
 ordering = "AFTER"
 side = "CLIENT"
 

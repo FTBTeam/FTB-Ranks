@@ -3,11 +3,8 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import dev.ftb.mods.ftbranks.api.RankCondition;
 import net.minecraft.server.level.ServerPlayer;
 
-public class AlwaysActiveCondition implements RankCondition.Simple {
-	public static final AlwaysActiveCondition INSTANCE = new AlwaysActiveCondition();
-
-	private AlwaysActiveCondition() {
-	}
+public enum AlwaysActiveCondition implements RankCondition.Simple {
+	INSTANCE;
 
 	@Override
 	public String getType() {

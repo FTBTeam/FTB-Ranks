@@ -9,7 +9,8 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import dev.ftb.mods.ftblibrary.snbt.SNBT;
+import de.marhali.json5.Json5;
+import de.marhali.json5.Json5Primitive;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
@@ -20,7 +21,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -32,7 +32,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -305,9 +304,9 @@ public class FTBRanksCommands {
 			if (value.equals("default") || value.equals("\"\"")) {
 				condition = new DefaultCondition(rank);
 			} else if (value.startsWith("{") || value.contains(" ")) {
-				condition = FTBRanksAPI.manager().createCondition(rank, SNBT.readLines(Collections.singletonList(value)));
+				condition = FTBRanksAPI.manager().createCondition(rank, new Json5().parse(value));
 			} else {
-				condition = FTBRanksAPI.manager().createCondition(rank, StringTag.valueOf(value));
+				condition = FTBRanksAPI.manager().createCondition(rank, Json5Primitive.fromString(value));
 			}
 			rank.setCondition(condition);
 			source.sendSuccess(() -> Component.literal(String.format("Condition '%s' added to rank '%s'",  value, rank)), false);

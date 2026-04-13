@@ -1,12 +1,18 @@
 package dev.ftb.mods.ftbranks.impl;
 
-import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import de.marhali.json5.Json5Object;
+import dev.ftb.mods.ftblibrary.json5.Json5Util;
+import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
-import dev.ftb.mods.ftbranks.api.event.*;
+import dev.ftb.mods.ftbranks.api.event.ConditionChangedEvent;
+import dev.ftb.mods.ftbranks.api.event.PermissionNodeChangedEvent;
+import dev.ftb.mods.ftbranks.api.event.PlayerAddedToRankEvent;
+import dev.ftb.mods.ftbranks.api.event.PlayerRemovedFromRankEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 import net.minecraft.server.players.NameAndId;
+import net.minecraft.util.Util;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -89,9 +95,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			} else {
 				permissions.remove(node);
 			}
-			RankEvent.PERMISSION_CHANGED.invoker().accept(new PermissionNodeChangedEvent(manager, this, node, oldValue, value));
+			NativeEventPosting.get().postEvent(new PermissionNodeChangedEvent.Data(manager, this, node, oldValue, value));
 			if (node.equals("ftbranks.name_format")) {
-				PlayerNameFormatting.refreshPlayerNames();
+				PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			}
 			manager.markRanksDirty();
 		}
@@ -111,16 +117,16 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public void setCondition(RankCondition newCondition) {
 		RankCondition oldCondition = this.condition;
 		this.condition = newCondition;
-		RankEvent.CONDITION_CHANGED.invoker().accept(new ConditionChangedEvent(manager, this, oldCondition, newCondition));
-		PlayerNameFormatting.refreshPlayerNames();
+		NativeEventPosting.get().postEvent(new ConditionChangedEvent.Data(manager, this, oldCondition, newCondition));
+		PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 		manager.markRanksDirty();
 	}
 
 	@Override
 	public boolean add(NameAndId nameAndId) {
 		if (manager.getOrCreatePlayerData(nameAndId).addRank(this)) {
-			RankEvent.ADD_PLAYER.invoker().accept(new PlayerAddedToRankEvent(manager, this, nameAndId));
-			PlayerNameFormatting.refreshPlayerNames();
+			NativeEventPosting.get().postEvent(new PlayerAddedToRankEvent.Data(manager, this, nameAndId));
+			PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			return true;
 		}
 
@@ -131,8 +137,8 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public boolean remove(NameAndId nameAndId) {
 		if (manager.getOrCreatePlayerData(nameAndId).removeRank(this)) {
 			manager.markPlayerDataDirty();
-			RankEvent.REMOVE_PLAYER.invoker().accept(new PlayerRemovedFromRankEvent(manager,this, nameAndId));
-			PlayerNameFormatting.refreshPlayerNames();
+			NativeEventPosting.get().postEvent(new PlayerRemovedFromRankEvent.Data(manager, this, nameAndId));
+			PlayerNameFormatting.refreshPlayerNames(manager.getServer());
 			return true;
 		}
 
@@ -151,15 +157,15 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return nodes;
 	}
 
-	public static RankImpl readSNBT(RankManagerImpl manager, String rankId, SNBTCompoundTag tag, RankFileSource source) throws RankException {
-		String displayName = tag.getStringOr("name", rankId);
-		RankImpl rank = create(manager, rankId, displayName, tag.getIntOr("power", 0), source); // TODO: A default of 0 might not be ideal
+	public static RankImpl fromJson(RankManagerImpl manager, String rankId, Json5Object json, RankFileSource source) throws RankException {
+		String displayName = Json5Util.getString(json, "name").orElse(rankId);
+		RankImpl rank = create(manager, rankId, displayName, Json5Util.getInt(json,"power").orElse(0), source); // TODO: A default of 0 might not be ideal
 
-		if (tag.contains("condition")) {
-			rank.setCondition(manager.createCondition(rank, tag.get("condition")));
+		if (json.has("condition")) {
+			rank.setCondition(manager.createCondition(rank, json.get("condition")));
 		}
 
-		for (String key : tag.keySet()) {
+		for (String key : json.keySet()) {
 			if (!SPECIAL_FIELDS.contains(key)) {
 				while (key.endsWith(".*")) {
 					key = key.substring(0, key.length() - 2);
@@ -167,7 +173,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 				}
 
 				if (!key.isEmpty()) {
-					rank.permissions.put(key, RankManagerImpl.ofTag(tag, key));
+					rank.permissions.put(key, RankManagerImpl.readPermissions(json, key));
 				}
 			}
 		}
@@ -175,20 +181,20 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return rank;
 	}
 
-	public SNBTCompoundTag writeSNBT() {
-		SNBTCompoundTag res = new SNBTCompoundTag();
+	public Json5Object toJson() {
+		Json5Object res = new Json5Object();
 
-		res.putString("name", name);
-		res.putInt("power", power);
+		res.addProperty("name", name);
+		res.addProperty("power", power);
 
 		if (!condition.isDefaultCondition()) {
 			if (condition.isSimple()) {
-				res.putString("condition", condition.getType());
+				res.addProperty("condition", condition.getType());
 			} else {
-				SNBTCompoundTag c = new SNBTCompoundTag();
-				c.putString("type", condition.getType());
-				condition.save(c);
-				res.put("condition", c);
+				res.add("condition", Util.make(new Json5Object(), json -> {
+					json.addProperty("type", condition.getType());
+					condition.save(json);
+				}));
 			}
 		}
 

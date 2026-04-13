@@ -1,80 +1,33 @@
 plugins {
-	id "com.github.johnrengelman.shadow" version "7.1.0"
-	id "com.matthewprenger.cursegradle" version "1.4.0"
+	id 'net.fabricmc.fabric-loom'
 }
 
-configurations {
-	shadowCommon
-}
+loom {
+//	accessWidenerPath = project(":common").file("src/main/resources/${mod_id}.accesswidener")
 
-architectury {
-	platformSetupLoomIde()
-	fabric()
-}
+	runs {
+		configureEach {
+			ideConfigGenerated = true
+		}
+	}
 
-configurations {
-	common
-	shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
-	compileClasspath.extendsFrom common
-	runtimeClasspath.extendsFrom common
-	developmentFabric.extendsFrom common
-}
+	mods {
+		"${project.mod_id}" {
+			sourceSet sourceSets.main
+			sourceSet("main", project(":common"))
+		}
+	}
 
-dependencies {
-	modApi "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-
-	modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
-	modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
-
-	modApi("dev.ftb.mods:ftb-library-fabric:${rootProject.ftb_library_version}")
-
-	common(project(path: ":common", configuration: "namedElements")) { transitive false }
-	shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+	mixin {
+		useLegacyMixinAp = false
+	}
 }
 
 apply from: "https://raw.githubusercontent.com/FTBTeam/mods-meta/main/gradle/extra-local-mods.gradle"
 
-processResources {
-	inputs.property "version", project.version
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version,
-				"archversion": project.architectury_version,
-				"fabricapiversionrange": project.fabric_api_version_range,
-				"mcversion": project.minecraft_version,
-				"ftblibraryversion": project.ftb_library_version
-	}
+	api "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+	api "dev.ftb.mods:ftb-library-fabric:${rootProject.ftb_library_version}"
 }
-
-shadowJar {
-	configurations = [project.configurations.shadowCommon]
-	setArchiveClassifier("dev-shadow")
-}
-
-remapJar {
-	input.set shadowJar.archiveFile
-	dependsOn shadowJar
-	archiveBaseName.set "${rootProject.archives_base_name}-${project.name}"
-	archiveClassifier.set null
-}
-
-jar {
-	setArchiveClassifier("dev")
-}
-
-components.java {
-	withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-		skip()
-	}
-}
-
-publishing {
-	publications {
-		mavenFabric(MavenPublication) {
-			artifactId = "${rootProject.archives_base_name}-${project.name}"
-			version ftbPublishing.mavenVersion
-			from components.java
-		}
-	}
-}
-
