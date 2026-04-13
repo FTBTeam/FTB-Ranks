@@ -79,6 +79,8 @@ subprojects {
 					"ftb_library_version_range_maven": ftb_library_version_range_maven
 		}
 	}
+
+	createMavenPublishingBlock(project)
 }
 
 idea {
@@ -88,10 +90,8 @@ idea {
 	}
 }
 
-createMavenPublishingBlock(project)
-
 publishMods {
-	dryRun = providers.environmentVariable("CURSEFORGE_KEY").getOrNull() == null
+	dryRun = providers.environmentVariable("CURSEFORGE_KEY").getOrNull() == null || providers.environmentVariable("SKIP_CURSEFORGE").getOrNull() != null
 	changelog = createChangelog(project)
 	version = project.version
 
