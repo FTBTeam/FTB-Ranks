@@ -1,5 +1,6 @@
 package dev.ftb.mods.ftbranks.impl.decorate;
 
+import dev.ftb.mods.ftblibrary.util.TextComponentUtils;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
@@ -17,7 +18,7 @@ public class MessageDecorator {
     public static boolean decorateMessage(ServerPlayer player, MutableComponent text) {
         MutableBoolean changed = new MutableBoolean(false);
 
-        ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
+        ChatFormatting color = TextComponentUtils.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
         if (color != null) {
             text.setStyle(text.getStyle().applyFormat(color));
             changed.setTrue();
