@@ -289,7 +289,7 @@ public class RankManagerImpl implements RankManager {
 		lines.add("=== FTB Ranks ===");
 		lines.add("");
 		lines.add("Last README file update: " + new Date());
-		lines.add("Wiki: https://www.notion.so/feedthebeast/FTB-Mod-Documentation-da2e359bad2449459d58d787edda3168");
+		lines.add("Wiki: https://docs.feed-the-beast.com/mod-docs/mods/suite/Ranks/");
 		lines.add("To refresh this file, run /ftbranks refresh_readme");
 		lines.add("");
 		lines.add("= All available command nodes =");
