@@ -39,7 +39,7 @@ repositories {
 }
 
 dependencies {
-	api("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}")
+	implementation("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}")
 }
 
 jar {
