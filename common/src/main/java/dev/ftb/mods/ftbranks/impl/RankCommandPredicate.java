@@ -6,6 +6,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -23,7 +25,19 @@ public class RankCommandPredicate implements Predicate<CommandSourceStack> {
 	}
 
 	public String getNodeName() {
-		return redirect == null ? nodeName : redirect.get().getNodeName();
+		Set<RankCommandPredicate> visited = new HashSet<>();
+		RankCommandPredicate currentNode = this;
+		while (visited.add(currentNode)) {
+			if (currentNode.redirect == null) {
+				return currentNode.nodeName;
+			}
+			RankCommandPredicate nextNode = currentNode.redirect.get();
+			if (nextNode == null) {
+				return currentNode.nodeName;
+			}
+			currentNode = nextNode;
+		}
+		return currentNode.nodeName;
 	}
 
 	public void setRedirect(Supplier<RankCommandPredicate> redirect) {

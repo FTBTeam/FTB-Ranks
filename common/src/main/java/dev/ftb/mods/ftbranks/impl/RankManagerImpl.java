@@ -212,7 +212,7 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
-		var playerFileTag = Json5Util.tryRead(playerFile);
+		var playerFileTag = Json5Util.load(playerFile);
 		for (String key : playerFileTag.keySet()) {
 			var el = playerFileTag.get(key);
 			if (el.isJson5Object()) {
@@ -236,7 +236,7 @@ public class RankManagerImpl implements RankManager {
 
 	private void readRankFile(RankFileSource source, Map<String, RankImpl> rankMap) throws IOException {
 		Path inputFile = source.getPath(server);
-		Json5Object rankFileTag = Json5Util.tryRead(inputFile);
+		Json5Object rankFileTag = Json5Util.load(inputFile);
 		int size = rankMap.size();
 		for (String rankId : rankFileTag.keySet()) {
 			try {
@@ -326,12 +326,12 @@ public class RankManagerImpl implements RankManager {
 		if (shouldSaveRanks) {
 			Map<RankFileSource, Json5Object> map = new EnumMap<>(RankFileSource.class);
 			for (RankImpl rank : ranks.values()) {
-				map.computeIfAbsent(rank.getSource(), k -> new Json5Object())
+				map.computeIfAbsent(rank.getSource(), _ -> new Json5Object())
 						.add(rank.getId(), rank.toJson());
 			}
 			map.forEach((source, json) -> {
 				try {
-					Json5Util.tryWrite(source.getPath(server), (Json5Element) json);
+					Json5Util.save(source.getPath(server), (Json5Element) json);
 				} catch (IOException e) {
 					FTBRanks.LOGGER.warn("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
 				}
@@ -348,7 +348,7 @@ public class RankManagerImpl implements RankManager {
 			}
 
 			try {
-				Json5Util.tryWrite(playerFile, (Json5Element) playerTag);
+				Json5Util.save(playerFile, (Json5Element) playerTag);
 			} catch (IOException e) {
 				FTBRanks.LOGGER.warn("Failed to save players.json5! {} / {}", e.getClass().getName(), e.getMessage());
 			}
@@ -373,17 +373,12 @@ public class RankManagerImpl implements RankManager {
 
 	static Json5Object writePermissions(Map<String, PermissionValue> map, Json5Object res) {
 		map.forEach((key, value) -> {
-			/*if (value.isEmpty()) {
-				res.putNull(key);
-			} else*/ if (value instanceof BooleanPermissionValue b) {
-				res.addProperty(key, b.value);
-			} else if (value instanceof StringPermissionValue s) {
-				res.addProperty(key, s.value);
-			} else if (value instanceof NumberPermissionValue n) {
-				res.addProperty(key, n.value);
-			} else {
-				res.addProperty(key, value.asString().orElse(""));
-			}
+            switch (value) {
+                case BooleanPermissionValue b -> res.addProperty(key, b.value);
+                case StringPermissionValue s -> res.addProperty(key, s.value);
+                case NumberPermissionValue n -> res.addProperty(key, n.value);
+                default -> res.addProperty(key, value.asString().orElse(""));
+            }
 		});
 		return res;
 	}
