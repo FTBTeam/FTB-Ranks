@@ -8,8 +8,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Util;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 /// A rank condition is basically a predicate that determines if a rank is applicable to a player. Each rank has a
@@ -78,14 +80,21 @@ public interface RankCondition extends Predicate<ServerPlayer> {
 	}
 
 	default List<RankCondition> getConditionList(Json5Object json, String field, Rank rank) {
-		return Util.make(new ArrayList<>(), l -> {
-			Json5Element el = json.get(field);
-			if (el.isJson5Array()) {
-				for (Json5Element member : el.getAsJson5Array()) {
-					l.add(rank.getManager().createCondition(rank, member));
+		try {
+			return Util.make(new ArrayList<>(), l -> {
+				Json5Element el = json.get(field);
+				if (el.isJson5Array()) {
+					for (Json5Element member : el.getAsJson5Array()) {
+						l.add(rank.getManager().createCondition(rank, member));
+					}
+				} else {
+					l.add(rank.getManager().createCondition(rank, el));
 				}
-			}
-		});
+			});
+		} catch (Exception e) {
+			throw new RankException(MessageFormat.format("caught {0} while reading condition list of rank {1}: {2}",
+					e.getClass().getSimpleName(), rank.getName(), e.getMessage()));
+		}
 	}
 
 	/// Convenience interface for simple conditions
