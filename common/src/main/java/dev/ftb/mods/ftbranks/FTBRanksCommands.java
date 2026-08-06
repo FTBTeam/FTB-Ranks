@@ -40,11 +40,22 @@ public class FTBRanksCommands {
 			(object) -> Component.literal("Unknown rank: " + object.toString())
 	);
 
-	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ignoredContext, Commands.CommandSelection ignoredSelection) {
+	private static boolean isCommandSourceAllowed(CommandSourceStack source) {
 		// source.getServer() *can* return null: https://github.com/FTBTeam/FTB-Mods-Issues/issues/766
 		//noinspection ConstantValue
-		dispatcher.register(Commands.literal("ftbranks")
-				.requires(source -> source.getServer() != null && source.getServer().isSingleplayer() || source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+		if (source.getServer() == null) {
+			return false;
+		}
+
+		// from console, or owner of SSP world (incl open to LAN), or has GM perm level or better
+		return source.getPlayer() == null
+				|| source.getServer().isSingleplayerOwner(source.getPlayer().nameAndId())
+				|| source.getPlayer().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+	}
+
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ignoredContext, Commands.CommandSelection ignoredSelection) {
+        dispatcher.register(Commands.literal("ftbranks")
+				.requires(FTBRanksCommands::isCommandSourceAllowed)
 				.then(Commands.literal("reload")
 						.executes(context -> reloadRanks(context.getSource()))
 				)
