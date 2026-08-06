@@ -293,7 +293,7 @@ public class RankManagerImpl implements RankManager {
 		if (data == null) {
 			data = new PlayerRankData(this, profile.id(), profile.name());
 			playerData.put(profile.id(), data);
-			markRanksDirty();
+			markPlayerDataDirty();
 		}
 
 		return data;
