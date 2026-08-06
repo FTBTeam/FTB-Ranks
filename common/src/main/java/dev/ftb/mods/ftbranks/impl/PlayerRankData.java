@@ -15,14 +15,12 @@ public class PlayerRankData {
 	private final UUID playerId;
 	private final String name;
 	private final Map<Rank, Instant> added;
-	private final Map<String, PermissionValue> permissions;
 
 	public PlayerRankData(RankManagerImpl manager, UUID playerId, String name) {
 		this.manager = manager;
 		this.playerId = playerId;
 		this.name = name;
 		this.added = new LinkedHashMap<>();
-		this.permissions = new LinkedHashMap<>();
 	}
 
 	public UUID getPlayerId() {
@@ -63,8 +61,14 @@ public class PlayerRankData {
 		return Objects.hash(playerId);
 	}
 
+	/**
+	 * Player-specific permission nodes have never worked correctly and will be removed.
+	 * @param node the node
+	 * @return always returns MISSING
+	 */
+	@Deprecated(forRemoval = true)
 	public PermissionValue getPermission(String node) {
-		return permissions.getOrDefault(node, PermissionValue.MISSING);
+		return PermissionValue.MISSING;
 	}
 
 	Json5Object toJson() {
@@ -82,11 +86,6 @@ public class PlayerRankData {
 			res.add("ranks", ranksJson);
 		}
 
-		Json5Object permTag = RankManagerImpl.writePermissions(permissions, new Json5Object());
-		if (!permTag.isEmpty()) {
-			res.add("permissions", permTag);
-		}
-
 		return res;
 	}
 
@@ -102,17 +101,6 @@ public class PlayerRankData {
 					} catch (DateTimeParseException e) {
 						throw new RankException(e.getMessage());
 					}
-				}
-			}
-		});
-		Json5Util.getJson5Object(json, "permissions").ifPresent(perms -> {
-			for (String permKey : perms.keySet()) {
-				while (permKey.endsWith(".*")) {
-					permKey = permKey.substring(0, permKey.length() - 2);
-					manager.markPlayerDataDirty();
-				}
-				if (!permKey.isEmpty()) {
-					data.permissions.put(playerId.toString(), RankManagerImpl.readPermissions(perms, permKey));
 				}
 			}
 		});

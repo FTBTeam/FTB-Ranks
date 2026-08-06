@@ -172,11 +172,6 @@ public class RankManagerImpl implements RankManager {
 			return PermissionValue.MISSING;
 		}
 
-		PermissionValue value = data.getPermission(node);
-		if (!value.isEmpty()) {
-			return value;
-		}
-
 		for (Rank rank : ranks) {
 			PermissionValue value1 = rank.getPermission(node);
 			if (!value1.isEmpty()) {
