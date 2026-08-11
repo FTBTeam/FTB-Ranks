@@ -84,8 +84,12 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public void setPermission(String node, @Nullable PermissionValue value) {
-		if (node.equals("condition")) {
-			throw new IllegalArgumentException("use '/ftbranks condition' to set conditions");
+		if (SPECIAL_FIELDS.contains(node)) {
+			String err = "'" + node + "' is a reserved field";
+			if (node.equals("condition")) {
+				err += " (use '/ftbranks condition' to set conditions)";
+			}
+			throw new IllegalArgumentException(err);
 		}
 
 		PermissionValue oldValue = getPermission(node);
@@ -159,7 +163,8 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	public static RankImpl fromJson(RankManagerImpl manager, String rankId, Json5Object json, RankFileSource source) throws RankException {
 		String displayName = Json5Util.getString(json, "name").orElse(rankId);
-		RankImpl rank = create(manager, rankId, displayName, Json5Util.getInt(json,"power").orElse(0), source); // TODO: A default of 0 might not be ideal
+		int power = Json5Util.getInt(json, "power").orElse(0);  // TODO: A default of 0 might not be ideal?
+		RankImpl rank = create(manager, rankId, displayName, power, source);
 
 		if (json.has("condition")) {
 			rank.setCondition(manager.createCondition(rank, json.get("condition")));
