@@ -172,30 +172,30 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public static RankImpl fromJson(RankManagerImpl manager, String rankId, Json5Object json, RankFileSource source) throws RankException {
 		String displayName = Json5Util.getString(json, "name").orElse(rankId);
 		int power = Json5Util.getInt(json, "power").orElse(0);  // TODO: A default of 0 might not be ideal?
-		RankImpl rank = create(manager, rankId, displayName, power, source);
 
+		RankImpl rank = create(manager, rankId, displayName, power, source);
 		if (json.has("condition")) {
-			rank.setCondition(manager.createCondition(rank, json.get("condition")));
+			rank.condition = manager.createCondition(rank, json.get("condition"));
 		}
 
 		for (String key : json.keySet()) {
-			if (!SPECIAL_FIELDS.contains(key)) {
-				while (key.endsWith(".*")) {
-					key = key.substring(0, key.length() - 2);
-					manager.markRanksDirty();
-				}
-
-				if (!key.isEmpty()) {
-					final var k = key;
-					readPermissions(json, k).ifPresentOrElse(
-							perm -> rank.permissions.put(k, perm),
-							() -> FTBRanks.LOGGER.warn("readPermissions: ignoring non-primitive member {} of rank {}", k, rankId)
-					);
-				}
-			}
+            if (!key.isEmpty() && !SPECIAL_FIELDS.contains(key)) {
+                readPermissions(json, key).ifPresentOrElse(
+                        perm -> rank.permissions.put(stripLegacyPermNodeSuffix(key), perm),
+                        () -> FTBRanks.LOGGER.warn("readPermissions: ignoring non-primitive member {} of rank {}", key, rankId)
+                );
+            }
 		}
 
 		return rank;
+	}
+
+	private static String stripLegacyPermNodeSuffix(String key) {
+		// legacy ".*" suffix on command permission nodes is no longer required
+		while (key.endsWith(".*")) {
+			key = key.substring(0, key.length() - 2);
+		}
+		return key;
 	}
 
 	public Json5Object toJson() {
@@ -228,7 +228,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	private static Optional<PermissionValue> readPermissions(Json5Object json, String key) {
 		Json5Element el = json.get(key);
 
-		if (!el.isJson5Primitive()) {
+		if (el == null || !el.isJson5Primitive()) {
 			return Optional.empty();
 		}
 
