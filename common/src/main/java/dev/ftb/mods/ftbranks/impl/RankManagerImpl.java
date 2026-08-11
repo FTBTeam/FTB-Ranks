@@ -151,7 +151,7 @@ public class RankManagerImpl implements RankManager {
 
 		try {
 			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
-			return getPermissionValue(getOrCreatePlayerData(player.nameAndId()), list, node);
+			return getPermissionValue(list, node);
 		} catch (Exception ex) {
 			FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
 		}
@@ -159,25 +159,21 @@ public class RankManagerImpl implements RankManager {
 		return PermissionValue.MISSING;
 	}
 
-	@Override
-	public MinecraftServer getServer() {
-		return server;
-	}
-
-	private PermissionValue getPermissionValue(PlayerRankData data, List<Rank> ranks, String node) {
-		if (node.isEmpty()) {
-			return PermissionValue.MISSING;
-		}
-
+	private PermissionValue getPermissionValue(List<Rank> ranks, String node) {
 		for (Rank rank : ranks) {
-			PermissionValue value1 = rank.getPermission(node);
-			if (!value1.isEmpty()) {
-				return value1;
+			PermissionValue value = rank.getPermission(node);
+			if (!value.isEmpty()) {
+				return value;
 			}
 		}
 
 		int i = node.lastIndexOf('.');
-		return i == -1 ? PermissionValue.MISSING : getPermissionValue(data, ranks, node.substring(0, i));
+		return i == -1 ? PermissionValue.MISSING : getPermissionValue(ranks, node.substring(0, i));
+	}
+
+	@Override
+	public MinecraftServer getServer() {
+		return server;
 	}
 
 	public void reload() throws IOException {
