@@ -1,8 +1,11 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import de.marhali.json5.Json5Element;
 import de.marhali.json5.Json5Object;
+import de.marhali.json5.Json5Primitive;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
+import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.ConditionChangedEvent;
@@ -11,11 +14,16 @@ import dev.ftb.mods.ftbranks.api.event.PlayerAddedToRankEvent;
 import dev.ftb.mods.ftbranks.api.event.PlayerRemovedFromRankEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.players.NameAndId;
 import net.minecraft.util.Util;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+
+import static dev.ftb.mods.ftbranks.FTBRanks.LOGGER;
 
 public class RankImpl implements Rank, Comparable<RankImpl> {
 	private static final Set<String> SPECIAL_FIELDS = Set.of("name", "power", "condition");
@@ -34,7 +42,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankFileSource source) {
 		RankImpl rank = new RankImpl(manager, id, name, power, AlwaysActiveCondition.INSTANCE, source);
-		rank.setCondition(new DefaultCondition(rank));
+		rank.condition = new DefaultCondition(rank);  // don't use setCondition() here
 		return rank;
 	}
 
@@ -178,7 +186,11 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 				}
 
 				if (!key.isEmpty()) {
-					rank.permissions.put(key, RankManagerImpl.readPermissions(json, key));
+					final var k = key;
+					readPermissions(json, k).ifPresentOrElse(
+							perm -> rank.permissions.put(k, perm),
+							() -> FTBRanks.LOGGER.warn("readPermissions: ignoring non-primitive member {} of rank {}", k, rankId)
+					);
 				}
 			}
 		}
@@ -203,7 +215,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			}
 		}
 
-		RankManagerImpl.writePermissions(permissions, res);
+		writePermissions(permissions, res);
 
 		return res;
 	}
@@ -211,4 +223,34 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public RankFileSource getSource() {
 		return source;
 	}
+
+
+	private static Optional<PermissionValue> readPermissions(Json5Object json, String key) {
+		Json5Element el = json.get(key);
+
+		if (!el.isJson5Primitive()) {
+			return Optional.empty();
+		}
+
+		Json5Primitive primitive = el.getAsJson5Primitive();
+		if (primitive.isBoolean()) {
+			return Optional.of(BooleanPermissionValue.of(primitive.getAsBoolean()));
+		} else if (primitive.isNumber()) {
+			return Optional.of(NumberPermissionValue.of(primitive.getAsNumber()));
+		} else {
+			return Optional.of(StringPermissionValue.of(primitive.getAsString()));
+		}
+	}
+
+	private static void writePermissions(Map<String, PermissionValue> map, Json5Object res) {
+		map.forEach((key, value) -> {
+			switch (value) {
+				case BooleanPermissionValue b -> res.addProperty(key, b.value);
+				case StringPermissionValue s -> res.addProperty(key, s.value);
+				case NumberPermissionValue n -> res.addProperty(key, n.value);
+				default -> LOGGER.warn("writePermissions: ignoring unknown perm val {} (class {})", key, value.getClass().getName());
+			}
+		});
+	}
+
 }

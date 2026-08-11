@@ -2,7 +2,6 @@ package dev.ftb.mods.ftbranks.impl;
 
 import de.marhali.json5.Json5Element;
 import de.marhali.json5.Json5Object;
-import de.marhali.json5.Json5Primitive;
 import dev.ftb.mods.ftblibrary.config.ConfigUtil;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
@@ -14,8 +13,6 @@ import dev.ftb.mods.ftbranks.api.event.RankDeletedEvent;
 import dev.ftb.mods.ftbranks.api.event.RanksReloadedEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
-import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
-import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -351,30 +348,4 @@ public class RankManagerImpl implements RankManager {
 		}
 	}
 
-	static PermissionValue readPermissions(Json5Object json, String key) {
-		Json5Element el = json.get(key);
-
-		if (!el.isJson5Primitive()) return PermissionValue.MISSING;
-		Json5Primitive primitive = el.getAsJson5Primitive();
-
-		if (primitive.isBoolean()) {
-			return BooleanPermissionValue.of(primitive.getAsBoolean());
-		} else if (primitive.isNumber()) {
-			return NumberPermissionValue.of(primitive.getAsNumber());
-		} else {
-			return StringPermissionValue.of(primitive.getAsString());
-		}
-	}
-
-	static Json5Object writePermissions(Map<String, PermissionValue> map, Json5Object res) {
-		map.forEach((key, value) -> {
-            switch (value) {
-                case BooleanPermissionValue b -> res.addProperty(key, b.value);
-                case StringPermissionValue s -> res.addProperty(key, s.value);
-                case NumberPermissionValue n -> res.addProperty(key, n.value);
-                default -> res.addProperty(key, value.asString().orElse(""));
-            }
-		});
-		return res;
-	}
 }
