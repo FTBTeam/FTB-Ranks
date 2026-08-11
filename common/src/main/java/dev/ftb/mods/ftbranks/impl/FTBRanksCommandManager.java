@@ -31,8 +31,8 @@ public class FTBRanksCommandManager {
 			field.setAccessible(true);
 			getCommandNodes(commands.getDispatcher(), "command", field, commands.getDispatcher().getRoot());
 		} catch (Throwable ex) {
+			FTBRanks.LOGGER.error("Reflection failed! Unable to inject FTB Ranks command predicates into command nodes! Command permission nodes will be non-functional!");
 			ex.printStackTrace();
-			FTBRanks.LOGGER.error("Reflection failed! Downgrading Java version to 8 might help");
 		}
 
         FTBRanks.LOGGER.info("Loaded {} command nodes", this.commandMap.size());
