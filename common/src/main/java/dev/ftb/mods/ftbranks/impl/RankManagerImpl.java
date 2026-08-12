@@ -320,11 +320,11 @@ public class RankManagerImpl implements RankManager {
 			map.forEach((source, json) -> {
 				try {
 					Json5Util.save(source.getPath(server), (Json5Element) json);
+					shouldSaveRanks = false;
 				} catch (IOException e) {
-					FTBRanks.LOGGER.warn("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
+					FTBRanks.LOGGER.error("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
 				}
 			});
-			shouldSaveRanks = false;
 		}
 	}
 
@@ -337,10 +337,10 @@ public class RankManagerImpl implements RankManager {
 
 			try {
 				Json5Util.save(playerFile, (Json5Element) playerTag);
+				shouldSavePlayers = false;
 			} catch (IOException e) {
-				FTBRanks.LOGGER.warn("Failed to save players.json5! {} / {}", e.getClass().getName(), e.getMessage());
+				FTBRanks.LOGGER.error("Failed to save players.json5! {} / {}", e.getClass().getName(), e.getMessage());
 			}
-			shouldSavePlayers = false;
 		}
 	}
 
