@@ -28,6 +28,8 @@ public class ReloadCommand {
 
             return 1;
         } catch (Exception ex) {
+            // Unlike with server startup, reload errors are not fatal.
+            // We let the server continue with the previous good ranks configuration.
             ex.printStackTrace();
             source.sendFailure(Component.literal(ex.getLocalizedMessage()));
             return 0;

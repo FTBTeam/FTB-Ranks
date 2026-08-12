@@ -234,6 +234,7 @@ public class RankManagerImpl implements RankManager {
 				}
 			} catch (RankException e) {
 				FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", rankId, inputFile, e.getMessage());
+				throw new IOException(e);  // re-throw: any failure to read a rank should stop the whole file being read
 			}
 		}
 		if (rankMap.size() == size) {

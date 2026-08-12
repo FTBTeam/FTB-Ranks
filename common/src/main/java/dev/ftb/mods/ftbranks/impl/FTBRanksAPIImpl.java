@@ -53,6 +53,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 				manager.load();
 			} catch (IOException ex) {
 				FTBRanks.LOGGER.error("failed to load ranks data: {} / {}", ex.getClass().getName(), ex.getMessage());
+				throw new IllegalStateException(ex);  // re-throw: fatal, server should not continue with missing ranks data
 			}
 		}
 	}
