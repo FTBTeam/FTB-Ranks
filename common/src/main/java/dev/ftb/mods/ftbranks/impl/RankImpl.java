@@ -171,7 +171,12 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	public static RankImpl fromJson(RankManagerImpl manager, String rankId, Json5Object json, RankFileSource source) throws RankException {
 		String displayName = Json5Util.getString(json, "name").orElse(rankId);
-		int power = Json5Util.getInt(json, "power").orElse(0);  // TODO: A default of 0 might not be ideal?
+		int power = Json5Util.getInt(json, "power").orElse(1);
+		if (power <= 0) {
+			LOGGER.warn("invalid power level {} for rank {} (must be >= 1) - setting to 1", power, rankId);
+			power = 1;
+			manager.markRanksDirty();
+		}
 
 		RankImpl rank = create(manager, rankId, displayName, power, source);
 		if (json.has("condition")) {
