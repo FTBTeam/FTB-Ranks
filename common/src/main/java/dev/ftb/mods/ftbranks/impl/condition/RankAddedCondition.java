@@ -4,6 +4,7 @@ import de.marhali.json5.Json5Object;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.server.level.ServerPlayer;
 
 public class RankAddedCondition implements RankCondition {
@@ -12,7 +13,7 @@ public class RankAddedCondition implements RankCondition {
 
 	public RankAddedCondition(Rank r, Json5Object json) {
 		original = r;
-		id = Json5Util.getString(json, "rank").orElse("");
+		id = Json5Util.getString(json, "rank").orElseThrow(() -> new RankException("missing 'id' field"));
 	}
 
 	@Override
