@@ -18,11 +18,11 @@ public class RefreshReadmeCommand {
     private static int refreshReadme(CommandSourceStack source) {
         try {
             Objects.requireNonNull(FTBRanksAPIImpl.manager).refreshReadme();
+            source.sendSuccess(() -> Component.literal("README file refreshed!"), false);
+            return 1;
         } catch (IOException ex) {
-            ex.printStackTrace();
+            source.sendFailure(Component.literal("Failed to refresh README file: " + ex.getLocalizedMessage()));
+            return 0;
         }
-
-        source.sendSuccess(() -> Component.literal("README file refreshed!"), false);
-        return 1;
     }
 }

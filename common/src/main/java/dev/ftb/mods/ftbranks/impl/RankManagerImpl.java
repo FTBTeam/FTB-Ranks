@@ -81,7 +81,7 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public RankImpl createRank(String name, int power, boolean forceCreate) {
-		String id = normalizeRankName(name);
+		String id = normalizeRankId(name);
 
 		if (forceCreate) {
 			if (deleteRank(id) != null) {
@@ -97,13 +97,6 @@ public class RankManagerImpl implements RankManager {
 		markRanksDirty();
 		NativeEventPosting.get().postEvent(new RankCreatedEvent.Data(this, rank));
 		return rank;
-	}
-
-	private static String normalizeRankName(String name) {
-		return name.toLowerCase()
-				.replace("+", "_plus")
-				.replaceAll("[^a-z0-9_]", "_")
-				.replaceAll("_{2,}", "_");
 	}
 
 	@Override
@@ -240,16 +233,21 @@ public class RankManagerImpl implements RankManager {
 		Path inputFile = source.getPath(server);
 		Json5Object json = Json5Util.load(inputFile);
 		int size = rankMap.size();
-		for (String rankId : json.keySet()) {
+		for (String key : json.keySet()) {
+			String normalizedId = normalizeRankId(key);
+			if (!key.equals(normalizedId)) {
+				LOGGER.warn("Normalized rank id '{}.{}' -> '{}'", source.getId(), key, normalizedId);
+				markRanksDirty();
+			}
 			try {
-				RankImpl rank = RankImpl.fromJson(this, rankId, json.getAsJson5Object(rankId), source);
+				RankImpl rank = RankImpl.fromJson(this, normalizedId, json.getAsJson5Object(key), source);
 				if (rankMap.containsKey(rank.getNamespacedId())) {
-					// should never happen
+					// should never happen, but normalization could conceivably cause it
 					FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, overwriting existing rank", rank.getId(), inputFile);
 				}
 				rankMap.put(rank.getNamespacedId(), rank);
 			} catch (RankException e) {
-				FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", rankId, inputFile, e.getMessage());
+				FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", normalizedId, inputFile, e.getMessage());
 				throw new IOException(e);  // re-throw: any failure to read a rank should stop the whole file being read
 			}
 		}
@@ -379,6 +377,23 @@ public class RankManagerImpl implements RankManager {
 				FTBRanks.LOGGER.error("Failed to save players.json5! {} / {}", e.getClass().getName(), e.getMessage());
 			}
 		}
+	}
+
+	/// Normalize a rank display name (or rank ID loaded from file):
+	/// * convert to lower case
+	/// * replace "+" with "\_plus"
+	/// * replace all non-alphanumerics with "\_"
+	/// * contract consecutive "\_" occurrences into a single "\_".
+	///
+	/// This normalized ID is used for the canonical unique rank ID.
+	///
+	/// @param in the input ID or name
+	/// @return the normalized ID
+	private static String normalizeRankId(String in) {
+		return in.toLowerCase(Locale.ROOT)
+				.replace("+", "_plus")
+				.replaceAll("[^a-z0-9_]", "_")
+				.replaceAll("_{2,}", "_");
 	}
 
 }

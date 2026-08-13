@@ -1,5 +1,6 @@
 package dev.ftb.mods.ftbranks.commands;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -12,7 +13,7 @@ import net.minecraft.network.chat.Component;
 public class ShowRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("show_rank")
-                .then(Commands.argument("rank", StringArgumentType.string())
+                .then(Commands.argument("rank", StringArgumentType.word())
                         .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder))
                         .executes(context -> showRank(context.getSource(), StringArgumentType.getString(context, "rank")))
                 );
@@ -41,6 +42,6 @@ public class ShowRankCommand {
                 source.sendSuccess(() -> Component.literal(" - " + node + ": " + rank.getPermission(node)), false)
         );
 
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 }

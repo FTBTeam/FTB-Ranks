@@ -11,7 +11,7 @@ public record NamespacedRankId(RankFileSource source, String id) {
 
     @Override
     public String toString() {
-        return RankFileSource.NAME_MAP.getName(source) + "." + id;
+        return source.getId() + "." + id;
     }
 
     public static Optional<NamespacedRankId> fromString(String idStr) {

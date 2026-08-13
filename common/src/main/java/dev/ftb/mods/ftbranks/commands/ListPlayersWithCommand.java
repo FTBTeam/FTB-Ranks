@@ -14,7 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 public class ListPlayersWithCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("list_players_with")
-                .then(Commands.argument("rank", StringArgumentType.string())
+                .then(Commands.argument("rank", StringArgumentType.word())
                         .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder))
                         .executes(context -> listPlayersWith(context.getSource(), StringArgumentType.getString(context, "rank")))
                 );

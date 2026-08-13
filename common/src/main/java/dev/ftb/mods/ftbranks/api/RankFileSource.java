@@ -31,4 +31,8 @@ public enum RankFileSource {
     public Path getPath(MinecraftServer server) {
         return pathFunction.apply(server);
     }
+
+    public String getId() {
+        return NAME_MAP.getName(this);
+    }
 }

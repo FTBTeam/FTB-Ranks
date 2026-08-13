@@ -6,11 +6,17 @@ import dev.ftb.mods.ftbranks.api.RankCondition;
 import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.List;
+
 public class NotCondition implements RankCondition {
 	private final RankCondition condition;
 
 	public NotCondition(Rank rank, Json5Object tag) throws RankException {
-		condition = getConditionList(tag, "condition", rank).getFirst();
+        var conditions = getConditionList(tag, "condition", rank);
+		if (conditions.size() != 1) {
+			throw new RankException("NOT condition takes exactly one sub-condition");
+		}
+		condition = conditions.getFirst();
 	}
 
 	@Override

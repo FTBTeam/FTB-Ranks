@@ -30,7 +30,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public PermissionValue parsePermissionValue(@Nullable String str) {
 		if (str == null) {
 			return null;
-		} else if (str.startsWith("\"") && str.endsWith("\"")) {
+		} else if (str.startsWith("\"") && str.endsWith("\"") && str.length() >= 2) {
 			return StringPermissionValue.of(str.substring(1, str.length() - 1));
 		} else if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("false")) {
 			return BooleanPermissionValue.of(str.equalsIgnoreCase("true"));
