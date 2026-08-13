@@ -15,15 +15,16 @@ import java.util.Set;
 /// Top-level manager object.
 @ApiStatus.NonExtendable
 public interface RankManager {
-	/// Get all the known ranks, ordered by rank power, from highest to lowest. The rank's power determines which rank
-	/// will apply to a player if there is more than one possibility; the rank with the highest power wins any contest.
+	/// Get an immutable collection of all the known ranks, ordered by rank power, from highest to lowest. The rank's
+	/// power determines which rank will apply to a player if there is more than one possibility; the rank with the
+	/// highest power wins any contest.
 	///
 	/// @return all ranks
 	Collection<? extends Rank> getAllRanks();
 
-	/// Get all the known ranks defined for this particular server, defined in `serverconfig/ftbranks/ranks.json5`, and
-	/// editable via commands. This does _not_ include any ranks defined by the modpack and loaded from
-	/// `config/ftbranks-pack.json5`, which may be viewed but not edited by server admins.
+	/// Get an immutable collection of all the known ranks defined for this local server, defined in
+	/// `serverconfig/ftbranks/ranks.json5`, and editable via commands. This does _not_ include any ranks defined
+	/// by the modpack and loaded from `config/ftbranks-pack.json5`, which may be viewed but not edited by server admins.
 	///
 	/// @return all ranks for this server only
 	Collection<? extends Rank> getAllServerRanks();

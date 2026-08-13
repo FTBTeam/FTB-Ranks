@@ -66,12 +66,12 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public Collection<? extends Rank> getAllRanks() {
-		return sortedRanks;
+		return Collections.unmodifiableCollection(sortedRanks);
 	}
 
 	@Override
 	public Collection<? extends Rank> getAllServerRanks() {
-		return sortedServerRanks;
+		return Collections.unmodifiableCollection(sortedServerRanks);
 	}
 
 	@Override
