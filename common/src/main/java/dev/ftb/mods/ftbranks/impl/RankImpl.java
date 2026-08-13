@@ -129,7 +129,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		}
 
 		PermissionValue oldValue = getPermission(node);
-		if (!oldValue.equals(value)) {
+		if (!areValuesEquivalent(value, oldValue)) {
 			if (value != null) {
 				permissions.put(node, value);
 			} else {
@@ -141,6 +141,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			}
 			manager.markRanksDirty();
 		}
+	}
+
+	private boolean areValuesEquivalent(@Nullable PermissionValue value1, PermissionValue value2) {
+		return value1 == null && value2 == PermissionValue.MISSING || value2.equals(value1);
 	}
 
 	@Override
