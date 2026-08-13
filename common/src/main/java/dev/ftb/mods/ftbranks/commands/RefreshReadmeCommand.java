@@ -1,7 +1,9 @@
 package dev.ftb.mods.ftbranks.commands;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
+import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -17,7 +19,7 @@ public class RefreshReadmeCommand {
 
     private static int refreshReadme(CommandSourceStack source) {
         try {
-            Objects.requireNonNull(FTBRanksAPIImpl.manager).refreshReadme();
+            ((RankManagerImpl) FTBRanksAPI.manager()).refreshReadme();
             source.sendSuccess(() -> Component.literal("README file refreshed!"), false);
             return 1;
         } catch (IOException ex) {

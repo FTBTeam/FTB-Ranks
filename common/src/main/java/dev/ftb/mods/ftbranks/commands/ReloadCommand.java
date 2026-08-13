@@ -1,12 +1,11 @@
 package dev.ftb.mods.ftbranks.commands;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
+import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
+import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-
-import java.util.Objects;
 
 import static net.minecraft.commands.Commands.literal;
 
@@ -19,7 +18,7 @@ public class ReloadCommand {
 
     private static int reloadRanks(CommandSourceStack source) {
         try {
-            Objects.requireNonNull(FTBRanksAPIImpl.manager).reload();
+            ((RankManagerImpl) FTBRanksAPI.manager()).reload();
             source.sendSuccess(() -> Component.literal("Ranks reloaded from disk!"), true);
 
             for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {

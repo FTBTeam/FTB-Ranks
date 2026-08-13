@@ -9,7 +9,7 @@ public class FTBRanks {
 	public static final String MOD_ID = "ftbranks";
 	public static final Logger LOGGER = LogManager.getLogger("FTB Ranks");
 
-	private FTBRanksAPIImpl implementation;
+	private final FTBRanksAPIImpl implementation;
 
 	public FTBRanks() {
 		implementation = new FTBRanksAPIImpl();

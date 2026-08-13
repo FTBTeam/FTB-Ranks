@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public class FTBRanksAPIImpl extends FTBRanksAPI {
 	@Nullable
-	public static RankManagerImpl manager;
+	private RankManagerImpl manager;
 
 	@Override
 	public RankManagerImpl getManager() {

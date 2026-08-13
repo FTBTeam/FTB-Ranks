@@ -47,7 +47,7 @@ public abstract class FTBRanksAPI {
 	/// Do not call this yourself! For internal use only.
 	@ApiStatus.Internal
 	public static void setup(FTBRanksAPI theInstance) {
-		if (instance != null || !theInstance.getClass().getName().startsWith("dev.ftb.mods.ftbranks")) {
+		if (instance != null || !theInstance.getClass().getPackageName().equals("dev.ftb.mods.ftbranks.impl")) {
 			throw new IllegalStateException("don't do this");
 		}
 		instance = theInstance;
