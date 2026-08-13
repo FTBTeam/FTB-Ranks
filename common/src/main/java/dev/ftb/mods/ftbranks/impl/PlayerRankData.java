@@ -2,6 +2,7 @@ package dev.ftb.mods.ftbranks.impl;
 
 import de.marhali.json5.Json5Object;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
+import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.PermissionValue;
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankException;
@@ -101,6 +102,8 @@ public class PlayerRankData {
 					} catch (DateTimeParseException e) {
 						throw new RankException(e.getMessage());
 					}
+				} else {
+					FTBRanks.LOGGER.warn("unknown rank {} found in player data for {}, ignoring", rankKey, playerId);
 				}
 			}
 		});

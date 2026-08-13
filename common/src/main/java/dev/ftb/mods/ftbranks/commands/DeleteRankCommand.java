@@ -14,7 +14,7 @@ public class DeleteRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("delete")
                 .then(Commands.argument("rank", StringArgumentType.word())
-                        .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder))
+                        .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                         .executes(context -> deleteRank(context.getSource(), StringArgumentType.getString(context, "rank")))
                 );
     }

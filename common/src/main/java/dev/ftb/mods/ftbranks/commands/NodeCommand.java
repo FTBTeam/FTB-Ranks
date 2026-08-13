@@ -20,7 +20,7 @@ public class NodeCommand {
         return Commands.literal("node")
                 .then(Commands.literal("add")
                         .then(Commands.argument("rank", StringArgumentType.word())
-                                .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder))
+                                .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                                 .then(Commands.argument("node", StringArgumentType.word())
                                         .then(Commands.argument("value", StringArgumentType.greedyString())
                                                 .executes(context -> setNode(context.getSource(), StringArgumentType.getString(context, "rank"), StringArgumentType.getString(context, "node"), StringArgumentType.getString(context, "value")))
@@ -30,7 +30,7 @@ public class NodeCommand {
                 )
                 .then(Commands.literal("remove")
                         .then(Commands.argument("rank", StringArgumentType.word())
-                                .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder))
+                                .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                                 .then(Commands.argument("node", StringArgumentType.word())
                                         .executes(context -> setNode(context.getSource(), StringArgumentType.getString(context, "rank"), StringArgumentType.getString(context, "node"), null))
                                 )
@@ -38,7 +38,7 @@ public class NodeCommand {
                 )
                 .then(Commands.literal("list")
                         .then(Commands.argument("rank", StringArgumentType.word())
-                                .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder))
+                                .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                                 .executes(context -> listNodes(context.getSource(), StringArgumentType.getString(context, "rank")))
                         )
                 );
@@ -54,8 +54,8 @@ public class NodeCommand {
             } else {
                 source.sendSuccess(() -> Component.literal(String.format("Permission node '%s' removed from rank '%s'", node, rank)), false);
             }
-        } catch (IllegalArgumentException e) {
-            throw new SimpleCommandExceptionType(Component.literal(e.getMessage())).create();
+        } catch (Exception e) {
+            throw new SimpleCommandExceptionType(Component.literal(e.getLocalizedMessage())).create();
         }
 
         return Command.SINGLE_SUCCESS;

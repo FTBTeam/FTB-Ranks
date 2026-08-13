@@ -31,6 +31,9 @@ public class ShowRankCommand {
                         .append(Component.literal(String.valueOf(rank.getPower())).withStyle(ChatFormatting.WHITE)),
                 true);
 
+        source.sendSuccess(() -> Component.literal("Rank Source: ").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal(rank.getSource().toString()).withStyle(ChatFormatting.WHITE)), true);
+
         String condStr = rank.getCondition().asString();
         Component c = condStr.isEmpty() ?
                 Component.literal("(none: players must be added)").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) :

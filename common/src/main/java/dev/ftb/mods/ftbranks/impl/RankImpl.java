@@ -92,6 +92,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public void setPermission(String node, @Nullable PermissionValue value) {
+		if (getSource() == RankFileSource.MODPACK) {
+			throw new RankException("cannot alter a modpack-loaded rank");
+		}
+
 		if (SPECIAL_FIELDS.contains(node)) {
 			String err = "'" + node + "' is a reserved field";
 			if (node.equals("condition")) {
@@ -127,6 +131,9 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public void setCondition(RankCondition newCondition) {
+		if (getSource() == RankFileSource.MODPACK) {
+			throw new RankException("cannot alter a modpack-loaded rank");
+		}
 		RankCondition oldCondition = this.condition;
 		this.condition = newCondition;
 		NativeEventPosting.get().postEvent(new ConditionChangedEvent.Data(manager, this, oldCondition, newCondition));
@@ -136,6 +143,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public boolean add(NameAndId nameAndId) {
+		if (!getCondition().isDefaultCondition()) {
+			throw new RankException("rank must not have a condition set");
+		}
+
 		if (manager.getOrCreatePlayerData(nameAndId).addRank(this)) {
 			NativeEventPosting.get().postEvent(new PlayerAddedToRankEvent.Data(manager, this, nameAndId));
 			PlayerNameFormatting.refreshPlayerNames(manager.getServer());
@@ -225,10 +236,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return res;
 	}
 
+	@Override
 	public RankFileSource getSource() {
 		return source;
 	}
-
 
 	private static Optional<PermissionValue> readPermissions(Json5Object json, String key) {
 		Json5Element el = json.get(key);

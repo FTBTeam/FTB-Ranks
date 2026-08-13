@@ -19,7 +19,7 @@ public class ConditionCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("condition")
                 .then(Commands.argument("rank", StringArgumentType.word())
-                        .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder))
+                        .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                         .then(Commands.argument("value", StringArgumentType.greedyString())
                                 .executes(context -> setCondition(context.getSource(), StringArgumentType.getString(context, "rank"), StringArgumentType.getString(context, "value")))
                         )

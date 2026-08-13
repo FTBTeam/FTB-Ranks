@@ -15,6 +15,11 @@ public interface Rank {
 	/// @return the rank manager
 	RankManager getManager();
 
+	/// Get the source that this rank was loaded from. See [RankFileSource] for more information.
+	///
+	/// @return the source of the rank
+	RankFileSource getSource();
+
 	/// Get the unique rank ID.
 	///
 	/// @return the rank ID
@@ -71,10 +76,11 @@ public interface Rank {
 		return getManager().getAddedRanks(player.nameAndId()).contains(this);
 	}
 
-	/// Add the given player to this rank.
+	/// Add the given player to this rank. The rank must not have an explicit condition set.
 	///
 	/// @param nameAndId the player's name and ID
 	/// @return true if the player was added, false it was already present
+	/// @throws RankException if the rank has an explicit condition
 	boolean add(NameAndId nameAndId);
 
 	/// Remove the given player from this rank.

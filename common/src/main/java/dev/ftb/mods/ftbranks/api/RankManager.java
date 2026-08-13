@@ -19,6 +19,13 @@ public interface RankManager {
 	/// @return all ranks
 	Collection<? extends Rank> getAllRanks();
 
+	/// Get all the known ranks defined for this particular server, defined in `serverconfig/ftbranks/ranks.json5`, and
+	/// editable via commands. This does _not_ include any ranks defined by the modpack and loaded from
+	/// `config/ftbranks-pack.json5`, which may be viewed but not edited by server admins.
+	///
+	/// @return all ranks for this server only
+	Collection<? extends Rank> getAllServerRanks();
+
 	/// Get the rank with the given ID, if it exists.
 	///
 	/// @param id the unique rank ID
