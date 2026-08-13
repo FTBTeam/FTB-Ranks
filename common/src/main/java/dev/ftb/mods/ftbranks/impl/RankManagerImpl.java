@@ -130,7 +130,7 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public Set<Rank> getAddedRanks(NameAndId nameAndId) {
-		return getOrCreatePlayerData(nameAndId).addedRanks();
+		return getOptionalPlayerData(nameAndId).map(PlayerRankData::addedRanks).orElse(Set.of());
 	}
 
 	@Override
@@ -325,6 +325,10 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		return data;
+	}
+
+	Optional<PlayerRankData> getOptionalPlayerData(NameAndId profile) {
+		return Optional.ofNullable(playerData.get(profile.id()));
 	}
 
 	void registerCondition(String id, RankConditionFactory conditionFactory) {
