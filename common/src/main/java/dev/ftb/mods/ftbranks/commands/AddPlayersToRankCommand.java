@@ -32,10 +32,10 @@ public class AddPlayersToRankCommand {
             try {
                 if (rank.add(profile)) {
                     success++;
-                    source.sendSuccess(() -> Component.literal(MessageFormat.format("Player {0} added to rank {1}!", profile.name(), rank.getName())), false);
+                    source.sendSuccess(() -> Component.literal(MessageFormat.format("Player {0} added to rank {1}!", profile.name(), rank.getDisplayName())), false);
                 }
             } catch (Exception e) {
-                source.sendFailure(Component.literal(MessageFormat.format("Could not add player {0} to rank {1}: {2}", profile.name(), rank.getName(), e.getMessage())));
+                source.sendFailure(Component.literal(MessageFormat.format("Could not add player {0} to rank {1}: {2}", profile.name(), rank.getDisplayName(), e.getMessage())));
             }
         }
 

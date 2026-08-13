@@ -15,7 +15,7 @@ public class ListPlayersWithCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("list_players_with")
                 .then(Commands.argument("rank", StringArgumentType.string())
-                        .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder))
+                        .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder))
                         .executes(context -> listPlayersWith(context.getSource(), StringArgumentType.getString(context, "rank")))
                 );
     }
@@ -23,7 +23,7 @@ public class ListPlayersWithCommand {
     private static int listPlayersWith(CommandSourceStack source, String rankName) throws CommandSyntaxException {
         Rank rank = FTBRanksCommands.getRank(rankName);
 
-        source.sendSuccess(() -> Component.literal(String.format("Players with rank '%s':", rank.getName())), false);
+        source.sendSuccess(() -> Component.literal(String.format("Players with rank '%s':", rank.getDisplayName())), false);
 
         for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
             if (rank.isActive(player)) {

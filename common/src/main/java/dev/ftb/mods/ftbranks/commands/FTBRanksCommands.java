@@ -43,6 +43,7 @@ public class FTBRanksCommands {
 				.then(ListAllRanksCommand.register())
 				.then(CreateRankCommand.register())
 				.then(DeleteRankCommand.register())
+				.then(EditRankCommand.register())
 				.then(AddPlayersToRankCommand.register())
 				.then(RemovePlayersFromRankCommand.register())
 				.then(ListRanksOfCommand.register())
@@ -78,7 +79,7 @@ public class FTBRanksCommands {
 			tooltip.append("\n").append(Component.literal("Players must be explicitly added to this rank\nwith '/ftbranks add <player> " + rank.getId() + "'").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
 		}
 
-		return Component.literal(rank.getName())
+		return Component.literal(rank.getDisplayName())
 				.withStyle(isDef ? ChatFormatting.AQUA : ChatFormatting.YELLOW)
 				.withStyle(Style.EMPTY
 						.withClickEvent(new ClickEvent.RunCommand("/ftbranks show_rank " + rank.getNamespacedId()))

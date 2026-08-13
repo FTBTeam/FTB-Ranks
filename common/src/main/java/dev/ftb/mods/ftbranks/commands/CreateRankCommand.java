@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 public class CreateRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("create")
-                .then(Commands.argument("name", StringArgumentType.word())
+                .then(Commands.argument("name", StringArgumentType.string())
                         .then(Commands.argument("power", IntegerArgumentType.integer(1))
                                 .executes(context -> createRank(context.getSource(), StringArgumentType.getString(context, "name"), IntegerArgumentType.getInteger(context, "power"))))
                         .executes(context -> createRank(context.getSource(), StringArgumentType.getString(context, "name"), 1))

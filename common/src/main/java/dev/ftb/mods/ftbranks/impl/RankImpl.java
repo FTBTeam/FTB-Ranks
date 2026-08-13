@@ -31,11 +31,11 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	private final RankManagerImpl manager;
 	private final String id;
 	private final Map<String, PermissionValue> permissions = new LinkedHashMap<>();
-	private final String name;
-	private final int power;
 	private final RankFileSource source;
 	private final NamespacedRankId namespacedRankId;
 	private RankCondition condition;
+	private String displayName;
+	private int power;
 
 	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankCondition condition, RankFileSource source) {
 		return new RankImpl(manager, id, name, power, condition, source);
@@ -47,10 +47,10 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return rank;
 	}
 
-	private RankImpl(RankManagerImpl manager, String id, String name, int power, RankCondition condition, RankFileSource source) {
+	private RankImpl(RankManagerImpl manager, String id, String displayName, int power, RankCondition condition, RankFileSource source) {
 		this.manager = manager;
 		this.id = id;
-		this.name = name;
+		this.displayName = displayName;
 		this.power = power;
 		this.condition = condition;
 		this.source = source;
@@ -88,8 +88,17 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
-	public String getName() {
-		return name;
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	@Override
+	public void setDisplayName(String displayName) {
+		requireSource(RankFileSource.SERVER, "cannot change display name");
+
+		this.displayName = displayName;
+
+		manager.markRanksDirty();
 	}
 
 	@Override
@@ -98,10 +107,18 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	}
 
 	@Override
+	public void setPower(int power) {
+		requireSource(RankFileSource.SERVER, "cannot change power");
+
+		this.power = power;
+
+		manager.rebuildSortedRanks();
+		manager.markRanksDirty();
+	}
+
+	@Override
 	public void setPermission(String node, @Nullable PermissionValue value) {
-		if (getSource() == RankFileSource.MODPACK) {
-			throw new RankException("cannot alter a modpack-loaded rank");
-		}
+		requireSource(RankFileSource.SERVER, "cannot change permission nodes");
 
 		if (SPECIAL_FIELDS.contains(node)) {
 			String err = "'" + node + "' is a reserved field";
@@ -136,11 +153,16 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		return condition;
 	}
 
+	private void requireSource(RankFileSource source, String err) {
+		if (getSource() != source) {
+			throw new RankException(err + " (source: " + getSource() + ")");
+		}
+	}
+
 	@Override
 	public void setCondition(RankCondition newCondition) {
-		if (getSource() == RankFileSource.MODPACK) {
-			throw new RankException("cannot alter a modpack-loaded rank");
-		}
+		requireSource(RankFileSource.SERVER, "cannot change condition");
+
 		RankCondition oldCondition = this.condition;
 		this.condition = newCondition;
 		NativeEventPosting.get().postEvent(new ConditionChangedEvent.Data(manager, this, oldCondition, newCondition));
@@ -224,7 +246,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public Json5Object toJson() {
 		Json5Object res = new Json5Object();
 
-		res.addProperty("name", name);
+		res.addProperty("name", displayName);
 		res.addProperty("power", power);
 
 		if (!condition.isDefaultCondition()) {

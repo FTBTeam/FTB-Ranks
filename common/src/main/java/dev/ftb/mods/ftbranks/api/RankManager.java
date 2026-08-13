@@ -4,6 +4,7 @@ import de.marhali.json5.Json5Element;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /// Top-level manager object.
+@ApiStatus.NonExtendable
 public interface RankManager {
 	/// Get all the known ranks, ordered by rank power, from highest to lowest. The rank's power determines which rank
 	/// will apply to a player if there is more than one possibility; the rank with the highest power wins any contest.

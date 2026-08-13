@@ -26,7 +26,7 @@ public class ShowRankCommand {
         source.sendSuccess(() -> Component.literal("Rank ID: ").withStyle(ChatFormatting.YELLOW)
                         .append(Component.literal(rank.getNamespacedId().toString()).withStyle(ChatFormatting.WHITE))
                         .append(Component.literal(", Rank Name: ").withStyle(ChatFormatting.YELLOW))
-                        .append(Component.literal(rank.getName()).withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(rank.getDisplayName()).withStyle(ChatFormatting.WHITE))
                         .append(Component.literal(", Power: ").withStyle(ChatFormatting.YELLOW))
                         .append(Component.literal(String.valueOf(rank.getPower())).withStyle(ChatFormatting.WHITE)),
                 true);

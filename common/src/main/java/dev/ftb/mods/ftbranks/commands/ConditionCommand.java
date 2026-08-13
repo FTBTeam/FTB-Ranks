@@ -26,7 +26,7 @@ public class ConditionCommand {
                 );
     }
 
-    private static int setCondition(CommandSourceStack source, String rankName, String value) throws CommandSyntaxException {
+    static int setCondition(CommandSourceStack source, String rankName, String value) throws CommandSyntaxException {
         Rank rank = FTBRanksCommands.getRank(rankName);
 
         try {

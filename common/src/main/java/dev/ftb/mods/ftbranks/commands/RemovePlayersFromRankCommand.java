@@ -28,7 +28,7 @@ public class RemovePlayersFromRankCommand {
         Rank rank = FTBRanksCommands.getRank(rankName);
         for (NameAndId profile : players) {
             if (rank.remove(profile)) {
-                source.sendSuccess(() -> Component.literal(String.format("Player %s removed from rank '%s'!", profile.name(), rank.getName())), false);
+                source.sendSuccess(() -> Component.literal(String.format("Player %s removed from rank '%s'!", profile.name(), rank.getDisplayName())), false);
             }
         }
 

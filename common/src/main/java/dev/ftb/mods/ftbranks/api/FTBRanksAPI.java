@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Objects;
 
 /// Top-level API object
+@ApiStatus.NonExtendable
 public abstract class FTBRanksAPI {
 	@Nullable
 	private static FTBRanksAPI instance;

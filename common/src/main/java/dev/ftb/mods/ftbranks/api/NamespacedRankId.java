@@ -2,6 +2,8 @@ package dev.ftb.mods.ftbranks.api;
 
 import java.util.Optional;
 
+/// Represents the combination of a rank ID, and the source it came from, i.e. whether this is server-local rank,
+/// or defined by the modpack. This is important to avoid name clashes between server and modpack sourced ranks.
 public record NamespacedRankId(RankFileSource source, String id) {
     public static NamespacedRankId serverRank(String id) {
         return new NamespacedRankId(RankFileSource.SERVER, id);

@@ -14,7 +14,7 @@ public class DeleteRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("delete")
                 .then(Commands.argument("rank", StringArgumentType.word())
-                        .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder, false))
+                        .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                         .executes(context -> deleteRank(context.getSource(), StringArgumentType.getString(context, "rank")))
                 );
     }
@@ -22,7 +22,7 @@ public class DeleteRankCommand {
     private static int deleteRank(CommandSourceStack source, String rankName) throws CommandSyntaxException {
         Rank rank = FTBRanksCommands.getRank(rankName);
         if (FTBRanksAPI.manager().deleteRank(rank.getId()) != null) {
-            source.sendSuccess(() -> Component.literal("Rank '" + rank.getName() + "' deleted!"), false);
+            source.sendSuccess(() -> Component.literal("Rank '" + rank.getDisplayName() + "' deleted!"), false);
 
             return Command.SINGLE_SUCCESS;
         }

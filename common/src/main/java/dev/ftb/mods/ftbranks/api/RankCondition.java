@@ -14,15 +14,15 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
-/// A rank condition is basically a predicate that determines if a rank is applicable to a player. Each rank has a
-/// condition.
+/// A rank condition is basically a predicate that determines if a rank is applicable to a player. Every rank has a
+/// condition, although that may be the default condition, which requires players to be specifically added to the rank.
 public interface RankCondition extends Predicate<ServerPlayer> {
 	/// Get the unique type ID for this condition. This is mainly used for serialization purposes.
 	///
 	/// @return the type ID
 	String getType();
 
-	/// Is this a default condition? The default conditions requires players to be explicitly added to the rank
+	/// Is this the default condition? The default conditions requires players to be explicitly added to the rank
 	/// for the rank to be applicable. A rank with no explicit condition specified will use the default condition.
 	///
 	/// @return true if this is the default condition
@@ -93,7 +93,7 @@ public interface RankCondition extends Predicate<ServerPlayer> {
 			});
 		} catch (Exception e) {
 			throw new RankException(MessageFormat.format("caught {0} while reading condition list of rank {1}: {2}",
-					e.getClass().getSimpleName(), rank.getName(), e.getMessage()));
+					e.getClass().getSimpleName(), rank.getDisplayName(), e.getMessage()));
 		}
 	}
 

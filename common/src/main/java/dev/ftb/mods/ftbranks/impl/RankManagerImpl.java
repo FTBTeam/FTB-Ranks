@@ -310,7 +310,7 @@ public class RankManagerImpl implements RankManager {
 		Files.write(directory.resolve("README.txt"), lines);
 	}
 
-	private void rebuildSortedRanks() {
+	void rebuildSortedRanks() {
 		sortedRanks.clear();
 		sortedRanks.addAll(ranks.values().stream().sorted().toList());
 		sortedServerRanks.clear();
