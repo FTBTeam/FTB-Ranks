@@ -33,6 +33,7 @@ public class FTBRanksNeoForge {
 		bus.addListener(ServerStartingEvent.class, event -> impl.serverStarting(event.getServer()));
 		bus.addListener(ServerStartedEvent.class, event -> impl.serverStarted(event.getServer()));
 		bus.addListener(ServerStoppedEvent.class, event -> impl.serverStopped(event.getServer()));
+		bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, event -> impl.playerLoggedIn(event.getEntity()));
 		bus.addListener(LevelEvent.Save.class, ignored -> impl.worldSaved());
 		bus.addListener(this::playerNameFormatting);
 		bus.addListener(this::serverChat);

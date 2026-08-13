@@ -13,13 +13,13 @@ import java.util.*;
 public class PlayerRankData {
 	private final RankManagerImpl manager;
 	private final UUID playerId;
-	private final String name;
+	private String playerName;
 	private final Map<Rank, Instant> added;
 
-	public PlayerRankData(RankManagerImpl manager, UUID playerId, String name) {
+	public PlayerRankData(RankManagerImpl manager, UUID playerId, String playerName) {
 		this.manager = manager;
 		this.playerId = playerId;
-		this.name = name;
+		this.playerName = playerName;
 		this.added = new LinkedHashMap<>();
 	}
 
@@ -48,6 +48,10 @@ public class PlayerRankData {
 		return false;
 	}
 
+	public void setPlayerName(String playerName) {
+		this.playerName = playerName;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -74,7 +78,7 @@ public class PlayerRankData {
 	Json5Object toJson() {
 		Json5Object res = new Json5Object();
 
-		res.addProperty("name", name);
+		res.addProperty("name", playerName);
 
 		Json5Object ranksJson = new Json5Object();
 		added.forEach((rank, when) -> {
@@ -124,4 +128,8 @@ public class PlayerRankData {
 		}
 		return null;
 	}
+
+    public String getPlayerName() {
+        return playerName;
+    }
 }

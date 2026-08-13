@@ -10,6 +10,8 @@ import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -87,4 +89,17 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		data.register("and", AndCondition::new);
 		data.register("xor", XorCondition::new);
 	}
+
+    public void playerLoggedIn(Player player) {
+        if (player instanceof ServerPlayer && manager != null) {
+			manager.getOptionalPlayerData(player.nameAndId()).ifPresent(data -> {
+				String prevName = data.getPlayerName();
+				if (!prevName.equals(player.getPlainTextName())) {
+					data.setPlayerName(player.getPlainTextName());
+					FTBRanks.LOGGER.info("updated player display name for player {}: '{}' -> '{}'", player.getUUID(), prevName, data.getPlayerName());
+					manager.markPlayerDataDirty();
+				}
+			});
+		}
+    }
 }
