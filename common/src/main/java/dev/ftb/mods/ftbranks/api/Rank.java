@@ -25,6 +25,8 @@ public interface Rank {
 	/// @return the rank ID
 	String getId();
 
+	NamespacedRankId getNamespacedId();
+
 	/// Get the rank's displayable name.
 	///
 	/// @return the display name

@@ -17,7 +17,7 @@ public class AddPlayersToRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("add")
                 .then(Commands.argument("players", GameProfileArgument.gameProfile())
-                        .then(Commands.argument("rank", StringArgumentType.word())
+                        .then(Commands.argument("rank", StringArgumentType.string())
                                 .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder))
                                 .executes(context -> addRank(context.getSource(), GameProfileArgument.getGameProfiles(context, "players"), StringArgumentType.getString(context, "rank")))
                         )

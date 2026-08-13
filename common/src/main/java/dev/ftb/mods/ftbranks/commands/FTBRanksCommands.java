@@ -60,17 +60,20 @@ public class FTBRanksCommands {
 	static CompletableFuture<Suggestions> suggestRanks(SuggestionsBuilder builder, boolean allRanks) {
 		var ranks = allRanks ? FTBRanksAPI.manager().getAllRanks() : FTBRanksAPI.manager().getAllServerRanks();
 
-		return SharedSuggestionProvider.suggest(ranks.stream().map(Rank::getId), builder);
+		return SharedSuggestionProvider.suggest(ranks.stream().map(rank -> rank.getNamespacedId().toString()), builder);
 	}
 
 	static Component makeRankNameClicky(Rank rank) {
 		boolean isDef = rank.getCondition().isDefaultCondition();
 
 		MutableComponent tooltip = Component.literal("Rank ID: ").withStyle(ChatFormatting.WHITE)
-				.append(Component.literal(rank.getId()).withStyle(ChatFormatting.GRAY))
+				.append(Component.literal(rank.getNamespacedId().toString()).withStyle(ChatFormatting.GRAY))
 				.append("\n")
 				.append(Component.literal("Rank condition: ").withStyle(ChatFormatting.WHITE)
-						.append(Component.literal(rank.getCondition().getType()).withStyle(ChatFormatting.GRAY)));
+						.append(Component.literal(rank.getCondition().getType()).withStyle(ChatFormatting.GRAY)))
+				.append("\n")
+				.append(Component.literal("Rank power: ").withStyle(ChatFormatting.WHITE)
+						.append(Component.literal(String.valueOf(rank.getPower())).withStyle(ChatFormatting.GRAY)));
 		if (isDef) {
 			tooltip.append("\n").append(Component.literal("Players must be explicitly added to this rank\nwith '/ftbranks add <player> " + rank.getId() + "'").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
 		}
@@ -78,7 +81,7 @@ public class FTBRanksCommands {
 		return Component.literal(rank.getName())
 				.withStyle(isDef ? ChatFormatting.AQUA : ChatFormatting.YELLOW)
 				.withStyle(Style.EMPTY
-						.withClickEvent(new ClickEvent.RunCommand("/ftbranks show_rank " + rank.getId()))
+						.withClickEvent(new ClickEvent.RunCommand("/ftbranks show_rank " + rank.getNamespacedId()))
 						.withHoverEvent(new HoverEvent.ShowText(tooltip))
 				);
 	}

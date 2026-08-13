@@ -3,9 +3,8 @@ package dev.ftb.mods.ftbranks.impl;
 import de.marhali.json5.Json5Object;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftbranks.FTBRanks;
-import dev.ftb.mods.ftbranks.api.PermissionValue;
-import dev.ftb.mods.ftbranks.api.Rank;
-import dev.ftb.mods.ftbranks.api.RankException;
+import dev.ftb.mods.ftbranks.api.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -80,7 +79,7 @@ public class PlayerRankData {
 		Json5Object ranksJson = new Json5Object();
 		added.forEach((rank, when) -> {
 			if (rank.getCondition().isDefaultCondition()) {
-				ranksJson.addProperty(rank.getId(), when.toString());
+				ranksJson.addProperty(rank.getNamespacedId().toString(), when.toString());
 			}
 		});
 		if (!ranksJson.isEmpty()) {
@@ -90,12 +89,16 @@ public class PlayerRankData {
 		return res;
 	}
 
-	static PlayerRankData fromJson(RankManagerImpl manager, UUID playerId, Json5Object json, Map<String,RankImpl> tempRanks) {
+	static PlayerRankData fromJson(RankManagerImpl manager, UUID playerId, Json5Object json, Map<NamespacedRankId,RankImpl> tempRanks) {
 		PlayerRankData data = new PlayerRankData(manager, playerId, Json5Util.getString(json, "name").orElse(""));
 
 		Json5Util.getJson5Object(json, "ranks").ifPresent(ranks -> {
 			for (String rankKey : ranks.keySet()) {
-				RankImpl rank = tempRanks.get(rankKey);
+				RankImpl rank = NamespacedRankId.fromString(rankKey).map(tempRanks::get).orElse(null);
+				if (rank == null) {
+					// legacy import
+					rank = findUnprefixedRank(rankKey, tempRanks);
+				}
 				if (rank != null) {
 					try {
 						data.added.put(rank, Instant.parse(Json5Util.getString(ranks, rankKey).orElse("")));
@@ -109,5 +112,16 @@ public class PlayerRankData {
 		});
 
 		return data;
+	}
+
+	@Nullable
+	private static RankImpl findUnprefixedRank(String id, Map<NamespacedRankId,RankImpl> map) {
+		for (RankFileSource source : RankFileSource.values()) {
+			RankImpl rank = map.get(new NamespacedRankId(source, id));
+			if (rank != null) {
+				return rank;
+			}
+		}
+		return null;
 	}
 }

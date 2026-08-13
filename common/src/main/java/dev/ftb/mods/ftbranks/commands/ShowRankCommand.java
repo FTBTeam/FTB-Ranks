@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 public class ShowRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("show_rank")
-                .then(Commands.argument("rank", StringArgumentType.word())
+                .then(Commands.argument("rank", StringArgumentType.string())
                         .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder))
                         .executes(context -> showRank(context.getSource(), StringArgumentType.getString(context, "rank")))
                 );
@@ -24,20 +24,16 @@ public class ShowRankCommand {
         source.sendSuccess(() -> Component.literal("=".repeat(50)).withStyle(ChatFormatting.GREEN), false);
 
         source.sendSuccess(() -> Component.literal("Rank ID: ").withStyle(ChatFormatting.YELLOW)
-                        .append(Component.literal(rank.getId()).withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(rank.getNamespacedId().toString()).withStyle(ChatFormatting.WHITE))
                         .append(Component.literal(", Rank Name: ").withStyle(ChatFormatting.YELLOW))
                         .append(Component.literal(rank.getName()).withStyle(ChatFormatting.WHITE))
                         .append(Component.literal(", Power: ").withStyle(ChatFormatting.YELLOW))
                         .append(Component.literal(String.valueOf(rank.getPower())).withStyle(ChatFormatting.WHITE)),
                 true);
 
-        source.sendSuccess(() -> Component.literal("Rank Source: ").withStyle(ChatFormatting.YELLOW)
-                .append(Component.literal(rank.getSource().toString()).withStyle(ChatFormatting.WHITE)), true);
-
-        String condStr = rank.getCondition().asString();
-        Component c = condStr.isEmpty() ?
+        Component c = rank.getCondition().isDefaultCondition() ?
                 Component.literal("(none: players must be added)").withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC) :
-                Component.literal(condStr).withStyle(ChatFormatting.WHITE);
+                Component.literal(rank.getCondition().getType()).withStyle(ChatFormatting.WHITE);
         source.sendSuccess(() -> Component.literal("Condition: ").append(c).withStyle(ChatFormatting.YELLOW), false);
 
         source.sendSuccess(() -> Component.literal("Permission nodes:").withStyle(ChatFormatting.YELLOW), false);

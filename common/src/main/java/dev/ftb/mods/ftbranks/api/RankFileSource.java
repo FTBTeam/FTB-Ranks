@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.api;
 
 import dev.ftb.mods.ftblibrary.platform.Platform;
+import dev.ftb.mods.ftblibrary.util.NameMap;
 import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import net.minecraft.server.MinecraftServer;
 
@@ -18,6 +19,8 @@ import java.util.function.Function;
 public enum RankFileSource {
     SERVER(server -> server.getWorldPath(RankManagerImpl.FOLDER_NAME).resolve("ranks.json5")),
     MODPACK(_ -> Platform.get().paths().configPath().resolve("ftbranks-pack.json5"));
+
+    public static final NameMap<RankFileSource> NAME_MAP = NameMap.of(SERVER, RankFileSource.values()).create();
 
     private final Function<MinecraftServer, Path> pathFunction;
 

@@ -34,6 +34,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	private final String name;
 	private final int power;
 	private final RankFileSource source;
+	private final NamespacedRankId namespacedRankId;
 	private RankCondition condition;
 
 	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankCondition condition, RankFileSource source) {
@@ -53,6 +54,12 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		this.power = power;
 		this.condition = condition;
 		this.source = source;
+		this.namespacedRankId = new NamespacedRankId(source, id);
+	}
+
+	@Override
+	public NamespacedRankId getNamespacedId() {
+		return namespacedRankId;
 	}
 
 	@Override
