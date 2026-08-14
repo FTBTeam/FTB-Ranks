@@ -2,10 +2,10 @@ package dev.ftb.mods.ftbranks.fabric;
 
 import dev.ftb.mods.ftblibrary.fabric.PlayerDisplayNameCallback;
 import dev.ftb.mods.ftbranks.FTBRanks;
-import dev.ftb.mods.ftbranks.commands.FTBRanksCommands;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.api.fabric.FTBRanksEvents;
+import dev.ftb.mods.ftbranks.commands.FTBRanksCommands;
 import dev.ftb.mods.ftbranks.impl.decorate.MessageDecorator;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;

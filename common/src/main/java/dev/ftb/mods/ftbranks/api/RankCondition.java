@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 /// A rank condition is basically a predicate that determines if a rank is applicable to a player. Every rank has a

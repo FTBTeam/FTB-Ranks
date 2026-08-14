@@ -4,7 +4,6 @@ import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 
 /// Top-level API object

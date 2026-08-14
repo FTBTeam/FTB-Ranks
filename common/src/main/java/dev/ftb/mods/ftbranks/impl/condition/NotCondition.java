@@ -6,8 +6,6 @@ import dev.ftb.mods.ftbranks.api.RankCondition;
 import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.List;
-
 public class NotCondition implements RankCondition {
 	private final RankCondition condition;
 

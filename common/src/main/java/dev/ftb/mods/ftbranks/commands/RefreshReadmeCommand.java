@@ -2,14 +2,12 @@ package dev.ftb.mods.ftbranks.commands;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
-import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
 import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class RefreshReadmeCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
