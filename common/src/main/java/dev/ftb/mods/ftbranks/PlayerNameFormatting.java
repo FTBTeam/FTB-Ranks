@@ -15,7 +15,7 @@ public class PlayerNameFormatting {
     public static Component formatPlayerName(Player player, Component originalName) {
         if (!(player instanceof ServerPlayer serverPlayer)) return originalName;
 
-        String format = FTBRanksAPI.getPermissionValue(serverPlayer, "ftbranks.name_format").asString().orElse("");
+        String format = FTBRanksAPI.getPermissionValue(serverPlayer, "ftbranks.name_format", false).asString().orElse("");
 
         if (!format.isEmpty()) {
             try {

@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 /// Top-level API object
@@ -28,11 +29,24 @@ public abstract class FTBRanksAPI {
 	/// Convenience method: get the given player's value for the given permission node. This just calls
 	/// [RankManager#getPermissionValue(ServerPlayer, String)].
 	///
+	/// The `checkParentNodes` parameter operates as follows: if the queried node name is
+	/// "one.two.three", and `checkParentNodes` is true, then the nodes "one.two.three", "one.two" and
+	/// "one" are checked, in that order. If `parentNodes` is false, then _only_ "one.two.three" is checked.
+	///
 	/// @param player the player to check
 	/// @param node the node to check
+	/// @param checkParentNodes see above for an explanation of this parameter
 	/// @return the permission value, or [PermissionValue#MISSING] if the node is not found
+	/// @throws NullPointerException if called before the Minecraft server has started
+	public static PermissionValue getPermissionValue(ServerPlayer player, String node, boolean checkParentNodes) {
+		return manager().getPermissionValue(player, node, checkParentNodes);
+	}
+
+	/// Calls [#getPermissionValue(net.minecraft.server.level.ServerPlayer, java.lang.String, boolean)]
+	/// with `checkParentNodes` = true
+	/// @throws NullPointerException if called before the Minecraft server has started
 	public static PermissionValue getPermissionValue(ServerPlayer player, String node) {
-		return manager().getPermissionValue(player, node);
+		return manager().getPermissionValue(player, node, true);
 	}
 
 	/// Create a permission value by parsing the string input. This method will make a best guess as to what type to use;

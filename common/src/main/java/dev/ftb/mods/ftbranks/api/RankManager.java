@@ -54,7 +54,8 @@ public interface RankManager {
 	@Nullable
 	Rank deleteRank(String id);
 
-	/// Get all the ranks to which the given player has been specifically added.
+	/// Get all the ranks to which the given player has been specifically added. Ranks which implicitly apply to the
+	/// player by virtue of a condition are not included here.
 	///
 	/// @param nameAndId the player's name and ID to check
 	/// @return the ranks to which the player has been added
@@ -65,9 +66,7 @@ public interface RankManager {
 	///
 	/// @param player the player
 	/// @return a list of ranks
-	default List<? extends Rank> getRanks(ServerPlayer player) {
-		return getAllRanks().stream().filter(rank -> rank.isActive(player)).toList();
-	}
+	List<? extends Rank> getRanks(ServerPlayer player);
 
 	/// Create a condition from a Json5 element. This is typically used when registering nested condition types; see the
 	/// built-in "and" / "or" / "not" conditions for examples.
@@ -86,10 +85,17 @@ public interface RankManager {
 	/// Retrieve the value of the given node for the given player. Querying for an unknown node will result in the
 	/// return of the default permission value, which is effectively an empty return.
 	///
-	/// @param player the player
-	/// @param node the node name
+	/// @param player           the player to check
+	/// @param node             the node name
+	/// @param checkParentNodes see [FTBRanksAPI#getPermissionValue(ServerPlayer, String, boolean)] for an explanation of this parameter
 	/// @return the permission value
-	PermissionValue getPermissionValue(ServerPlayer player, String node);
+	PermissionValue getPermissionValue(ServerPlayer player, String node, boolean checkParentNodes);
+
+	/// Calls [#getPermissionValue(net.minecraft.server.level.ServerPlayer, java.lang.String, boolean)] with
+	/// `checkParentNodes` = true
+	default PermissionValue getPermissionValue(ServerPlayer player, String node) {
+		return getPermissionValue(player, node, true);
+	}
 
 	/// Get the Minecraft server instance.
 	///

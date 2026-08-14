@@ -42,11 +42,12 @@ public class RankManagerImpl implements RankManager {
 	private boolean shouldSaveRanks;
 	private boolean shouldSavePlayers;
 
-	private Map<NamespacedRankId, RankImpl> ranks = new HashMap<>();
-	private final List<RankImpl> sortedRanks = new ArrayList<>();
-	private final List<RankImpl> sortedServerRanks = new ArrayList<>();
+	private Map<NamespacedRankId, RankImpl> ranks = new ConcurrentHashMap<>();
+	private List<RankImpl> sortedRanks = new ArrayList<>();
+	private List<RankImpl> sortedServerRanks = new ArrayList<>();
 	private final Map<String, RankConditionFactory> conditions = new ConcurrentHashMap<>();
 	private Map<UUID, PlayerRankData> playerData = new HashMap<>();
+	private final PlayerRankCache playerRankCache = new PlayerRankCache();
 
 	public RankManagerImpl(MinecraftServer server) {
 		this.server = server;
@@ -134,6 +135,11 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
+	public List<? extends Rank> getRanks(ServerPlayer player) {
+		return playerRankCache.getRanksForPlayer(player);
+	}
+
+	@Override
 	public RankCondition createCondition(Rank rank, Json5Element element) throws RankException {
 		Json5Object json = new Json5Object();
         if (element.isJson5Primitive()) {
@@ -150,13 +156,18 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public PermissionValue getPermissionValue(ServerPlayer player, String node) {
+		return getPermissionValue(player, node, true);
+	}
+
+	@Override
+	public PermissionValue getPermissionValue(ServerPlayer player, String node, boolean checkParentNodes) {
 		if (node.isEmpty() || sortedRanks.isEmpty()) {
 			return PermissionValue.MISSING;
 		}
 
 		try {
-			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
-			return getPermissionValue(list, node);
+			List<Rank> list = playerRankCache.getRanksForPlayer(player);
+			return getPermissionValue(list, node, checkParentNodes);
 		} catch (Exception ex) {
 			FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
 		}
@@ -164,16 +175,25 @@ public class RankManagerImpl implements RankManager {
 		return PermissionValue.MISSING;
 	}
 
-	private PermissionValue getPermissionValue(List<Rank> ranks, String node) {
-		for (Rank rank : ranks) {
-			PermissionValue value = rank.getPermission(node);
-			if (!value.isEmpty()) {
-				return value;
+	private PermissionValue getPermissionValue(List<Rank> ranks, String node, boolean checkParentNodes) {
+		do {
+			for (Rank rank : ranks) {
+				PermissionValue value = rank.getPermission(node);
+				if (!value.isEmpty()) {
+					return value;
+				}
 			}
-		}
 
-		int i = node.lastIndexOf('.');
-		return i == -1 ? PermissionValue.MISSING : getPermissionValue(ranks, node.substring(0, i));
+			// try parent node?
+			if (checkParentNodes) {
+				int i = node.lastIndexOf('.');
+				node = i < 0 ? "" : node.substring(0, i);
+			} else {
+				break;
+			}
+		} while (!node.isEmpty());
+
+		return PermissionValue.MISSING;
 	}
 
 	@Override
@@ -182,21 +202,23 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	public void reload() throws IOException {
-		shouldSaveRanks = false;
-
 		if (Files.notExists(rankFile)) {
 			if (Files.exists(DEFAULT_RANK_FILE)) {
 				Files.copy(DEFAULT_RANK_FILE, rankFile);
 			} else {
 				createDefaultRanks();
 			}
+			markRanksDirty();
 		}
 
 		if (Files.notExists(playerFile)) {
 			playerData = new HashMap<>();
 			markPlayerDataDirty();
-			savePlayersNow();
 		}
+
+		// in case any unsaved changes are present...
+		saveRanksNow();
+		savePlayersNow();
 
 		Map<NamespacedRankId, RankImpl> tempRanks = new LinkedHashMap<>();
 		readRankFile(RankFileSource.SERVER, tempRanks);
@@ -216,6 +238,8 @@ public class RankManagerImpl implements RankManager {
 				tempPlayerData.put(id, data);
 			}
 		}
+
+		// at this point, we know both rank and player data has successfully loaded
 
 		ranks = new LinkedHashMap<>(tempRanks);
 		playerData = new LinkedHashMap<>(tempPlayerData);
@@ -309,10 +333,9 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	void rebuildSortedRanks() {
-		sortedRanks.clear();
-		sortedRanks.addAll(ranks.values().stream().sorted().toList());
-		sortedServerRanks.clear();
-		sortedServerRanks.addAll(sortedRanks.stream().filter(r -> r.getSource() == RankFileSource.SERVER).toList());
+		sortedRanks = ranks.values().stream().sorted().toList();
+		sortedServerRanks = sortedRanks.stream().filter(r -> r.getSource() == RankFileSource.SERVER).toList();
+		playerRankCache.clear();
 	}
 
 	PlayerRankData getOrCreatePlayerData(NameAndId profile) {
@@ -400,4 +423,27 @@ public class RankManagerImpl implements RankManager {
 				.replaceAll("_{2,}", "_");
 	}
 
+	/// Short-lived (1 tick) cache to map a player to the ranks which are active for that player.
+	private class PlayerRankCache {
+		private long lastCachedTickCount = 0L;
+		private final Map<UUID, List<Rank>> cache = new ConcurrentHashMap<>();
+
+		public List<Rank> getRanksForPlayer(ServerPlayer player) {
+			int serverTickCount = player.level().getServer().getTickCount();
+			if (serverTickCount != lastCachedTickCount) {
+				clear();
+				lastCachedTickCount = serverTickCount;
+			}
+
+			if (!cache.containsKey(player.getUUID())) {
+				cache.put(player.getUUID(), sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList()));
+			}
+
+			return cache.get(player.getUUID());
+		}
+
+		public void clear() {
+			cache.clear();
+		}
+	}
 }

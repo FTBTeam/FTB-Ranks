@@ -1,6 +1,7 @@
 package dev.ftb.mods.ftbranks.impl.decorate;
 
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
+import dev.ftb.mods.ftbranks.api.PermissionValue;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +18,8 @@ public class MessageDecorator {
     public static boolean decorateMessage(ServerPlayer player, MutableComponent text) {
         MutableBoolean changed = new MutableBoolean(false);
 
-        ChatFormatting color = ChatFormatting.getByName(FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color").asString().orElse(null));
+        PermissionValue colorPerm = FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color", false);
+        ChatFormatting color = ChatFormatting.getByName(colorPerm.asString().orElse(null));
         if (color != null) {
             text.setStyle(text.getStyle().applyFormat(color));
             changed.setTrue();
@@ -33,7 +35,7 @@ public class MessageDecorator {
     }
 
     private static void addStyle(ServerPlayer player, MutableComponent component, String node, ChatFormatting modifier, MutableBoolean changed) {
-        if (FTBRanksAPI.getPermissionValue(player, node).asBooleanOrFalse()) {
+        if (FTBRanksAPI.getPermissionValue(player, node, false).asBooleanOrFalse()) {
             component.setStyle(component.getStyle().applyFormat(modifier));
             changed.setTrue();
         }
