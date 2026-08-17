@@ -53,6 +53,10 @@ public interface RankCondition extends Predicate<ServerPlayer> {
 		return json;
 	}
 
+	default List<NamespacedRankId> referencedRankIds() {
+		return List.of();
+	}
+
 	/// Dump the condition as a printable string.
 	///
 	/// @return the string representation

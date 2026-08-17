@@ -14,6 +14,13 @@ public record NamespacedRankId(RankFileSource source, String id) {
         return source.getId() + "." + id;
     }
 
+    /// Create a namespaced rank ID from string. This method works as the inverse of [#toString()].
+    ///
+    ///  If no namespace prefix is provided, the SERVER namespace is assumed. If an invalid namespace is provided (a
+    /// prefix other than "server." or "modpack.") then `Optional.empty()` is returned.
+    ///
+    /// @param idStr the rank ID string
+    /// @return the namespace rank ID
     public static Optional<NamespacedRankId> fromString(String idStr) {
         String[] fields = idStr.split("\\.", 2);
         if (fields.length == 1) {

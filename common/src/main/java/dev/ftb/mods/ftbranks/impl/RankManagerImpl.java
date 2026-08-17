@@ -76,8 +76,8 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public Optional<Rank> getRank(String id) {
-		return NamespacedRankId.fromString(id).map(nsId -> ranks.get(nsId));
+	public Optional<Rank> getRank(NamespacedRankId id) {
+		return Optional.ofNullable(ranks.get(id));
 	}
 
 	@Override
@@ -202,19 +202,7 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	public void reload() throws IOException {
-		if (Files.notExists(rankFile)) {
-			if (Files.exists(DEFAULT_RANK_FILE)) {
-				Files.copy(DEFAULT_RANK_FILE, rankFile);
-			} else {
-				createDefaultRanks();
-			}
-			markRanksDirty();
-		}
-
-		if (Files.notExists(playerFile)) {
-			playerData = new HashMap<>();
-			markPlayerDataDirty();
-		}
+		checkForFileExistence();
 
 		// in case any unsaved changes are present...
 		saveRanksNow();
@@ -227,6 +215,8 @@ public class RankManagerImpl implements RankManager {
 		} else {
 			createDefaultModpackRanks(RankFileSource.MODPACK.getPath(server));
 		}
+
+		validateRanks(tempRanks);
 
 		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
 		var playerFileTag = Json5Util.load(playerFile);
@@ -251,6 +241,22 @@ public class RankManagerImpl implements RankManager {
 		PlayerNameFormatting.refreshPlayerNames(this.server);
 
 		FTBRanks.LOGGER.info("Loaded {} ranks", ranks.size());
+	}
+
+	private void checkForFileExistence() throws IOException {
+		if (Files.notExists(rankFile)) {
+			if (Files.exists(DEFAULT_RANK_FILE)) {
+				Files.copy(DEFAULT_RANK_FILE, rankFile);
+			} else {
+				createDefaultRanks();
+			}
+			markRanksDirty();
+		}
+
+		if (Files.notExists(playerFile)) {
+			playerData = new HashMap<>();
+			markPlayerDataDirty();
+		}
 	}
 
 	private void readRankFile(RankFileSource source, Map<NamespacedRankId, RankImpl> rankMap) throws IOException {
@@ -408,7 +414,7 @@ public class RankManagerImpl implements RankManager {
 
 	/// Normalize a rank display name (or rank ID loaded from file):
 	/// * convert to lower case
-	/// * replace "+" with "\_plus"
+	/// * replace "+" and "&" with "\_plus"
 	/// * replace all non-alphanumerics with "\_"
 	/// * contract consecutive "\_" occurrences into a single "\_".
 	///
@@ -418,9 +424,24 @@ public class RankManagerImpl implements RankManager {
 	/// @return the normalized ID
 	private static String normalizeRankId(String in) {
 		return in.toLowerCase(Locale.ROOT)
+				.replace("&", "_plus")
 				.replace("+", "_plus")
 				.replaceAll("[^a-z0-9_]", "_")
 				.replaceAll("_{2,}", "_");
+	}
+
+	private void validateRanks(Map<NamespacedRankId, RankImpl> rankMap) {
+		rankMap.values().forEach(rank -> validate0(rank, new HashSet<>()));
+	}
+
+	private void validate0(Rank rank, Set<NamespacedRankId> visited) {
+		visited.add(rank.getNamespacedId());
+		rank.getCondition().referencedRankIds().forEach(refId -> {
+			if (visited.contains(refId)) {
+				throw new RankException(String.format("cyclic rank reference! %s -> %s", rank.getNamespacedId(), refId));
+			}
+			getRank(refId).ifPresent(r1 -> validate0(r1, visited));
+		});
 	}
 
 	/// Short-lived (1 tick) cache to map a player to the ranks which are active for that player.

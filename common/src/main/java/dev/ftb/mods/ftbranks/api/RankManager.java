@@ -29,16 +29,30 @@ public interface RankManager {
 	/// @return all ranks for this server only
 	Collection<? extends Rank> getAllServerRanks();
 
-	/// Get the rank with the given ID, if it exists.
+    /// Get the rank with the given ID, if it exists. If the ID is not namespaced with a "server." or "modpack."
+    /// prefix, a "server." namespace prefix is assumed.
+	///
+	/// It is recommended to use {@link #getRank(NamespacedRankId)} where possible.
+    ///
+    /// @param id the unique rank ID
+    /// @return the optional rank
+    default Optional<Rank> getRank(String id) {
+		return NamespacedRankId.fromString(id).flatMap(this::getRank);
+    }
+
+    /// Get the rank with the given namespaced ID, if it exists.
 	///
 	/// @param id the unique rank ID
 	/// @return the optional rank
-	Optional<Rank> getRank(String id);
+	Optional<Rank> getRank(NamespacedRankId id);
 
 	/// Create a new rank with the given name &amp; power. A canonical rank ID is derived from the name, by
-	/// converting to lower case, then substituting the "+" symbol with "_plus" and all other non-alphanumeric characters
-	/// with underscores. Finally, runs of multiple consecutive underscores are replaced with a single underscore.
-	/// E.g. "Alice + Bob's rank" will be converted to "alice_plus_bob_s_rank"
+	/// converting to lower case, then substituting the "+" and "&" symbols with "_plus" and all other non-alphanumeric
+	/// characters with underscores. Finally, runs of multiple consecutive underscores are replaced with a single
+	/// underscore.
+	///
+	/// E.g. "Alice & Bob's rank" will be converted to an ID of `alice_plus_bob_s_rank`, and
+	/// namespaced with the `server.` prefix (since only server ranks can be created by command).
 	///
 	/// @param displayName rank display name
 	/// @param power rank power
@@ -47,7 +61,8 @@ public interface RankManager {
 	/// @throws RankException if `forceCreate` is false and a rank with the same canonical ID already exists
 	Rank createRank(String displayName, int power, boolean forceCreate);
 
-	/// Delete the rank with the given ID.
+	/// Delete the rank with the given ID. This ID is always considered to be a server ID; the "server." prefix should
+	/// not be included.
 	///
 	/// @param id the unique rank ID
 	/// @return the rank that was deleted, or null if the ID didn't exist
