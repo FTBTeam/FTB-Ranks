@@ -79,8 +79,12 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public void setPermission(String node, PermissionValue value) {
-		if (node.equals("condition")) {
-			throw new IllegalArgumentException("use '/ftbranks condition' to set conditions");
+		if (SPECIAL_FIELDS.contains(node)) {
+			String err = "'" + node + "' is a reserved field";
+			if (node.equals("condition")) {
+				err += " (use '/ftbranks condition' to set conditions)";
+			}
+			throw new IllegalArgumentException(err);
 		}
 
 		PermissionValue oldValue = getPermission(node);
@@ -163,19 +167,21 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		}
 
 		for (String key : tag.getAllKeys()) {
-			if (!SPECIAL_FIELDS.contains(key)) {
-				while (key.endsWith(".*")) {
-					key = key.substring(0, key.length() - 2);
-					manager.markRanksDirty();
-				}
-
-				if (!key.isEmpty()) {
-					rank.permissions.put(key, RankManagerImpl.ofTag(tag, key));
-				}
-			}
+            if (!key.isEmpty() && !SPECIAL_FIELDS.contains(key)) {
+				String stripped = stripLegacyPermNodeSuffix(key);
+	            rank.permissions.put(stripped, RankManagerImpl.ofTag(tag, stripped));
+            }
 		}
 
 		return rank;
+	}
+
+	private static String stripLegacyPermNodeSuffix(String key) {
+		// legacy ".*" suffix on command permission nodes is no longer required
+		while (key.endsWith(".*")) {
+			key = key.substring(0, key.length() - 2);
+		}
+		return key;
 	}
 
 	public SNBTCompoundTag writeSNBT() {
