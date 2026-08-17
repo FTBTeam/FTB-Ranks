@@ -160,10 +160,9 @@ public class RankManagerImpl implements RankManager {
 
 		try {
 			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
-			return getPermissionValue(getOrCreatePlayerData(player.getGameProfile()), list, node);
+			return getPermissionValue(list, node);
 		} catch (Exception ex) {
-			FTBRanks.LOGGER.error("Error getting permission value for node " + node + "!");
-			ex.printStackTrace();
+			FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
 		}
 
 		return PermissionValue.MISSING;
@@ -174,14 +173,9 @@ public class RankManagerImpl implements RankManager {
 		return server;
 	}
 
-	private PermissionValue getPermissionValue(PlayerRankData data, List<Rank> ranks, String node) {
+	private PermissionValue getPermissionValue(List<Rank> ranks, String node) {
 		if (node.isEmpty()) {
 			return PermissionValue.MISSING;
-		}
-
-		PermissionValue value = data.getPermission(node);
-		if (!value.isEmpty()) {
-			return value;
 		}
 
 		for (Rank rank : ranks) {
@@ -192,7 +186,7 @@ public class RankManagerImpl implements RankManager {
 		}
 
 		int i = node.lastIndexOf('.');
-		return i == -1 ? PermissionValue.MISSING : getPermissionValue(data, ranks, node.substring(0, i));
+		return i == -1 ? PermissionValue.MISSING : getPermissionValue(ranks, node.substring(0, i));
 	}
 
 	public void reload() throws Exception {

@@ -15,14 +15,12 @@ public class PlayerRankData {
 	private final UUID playerId;
 	private final String name;
 	private final Map<Rank, Instant> added;
-	private final Map<String, PermissionValue> permissions;
 
 	public PlayerRankData(RankManagerImpl manager, UUID playerId, String name) {
 		this.manager = manager;
 		this.playerId = playerId;
 		this.name = name;
 		this.added = new LinkedHashMap<>();
-		this.permissions = new LinkedHashMap<>();
 	}
 
 	public UUID getPlayerId() {
@@ -63,9 +61,15 @@ public class PlayerRankData {
 		return Objects.hash(playerId);
 	}
 
+	/**
+	 * Player-specific permission nodes have never worked correctly and will be removed.
+	 * @param node the node
+	 * @return always returns MISSING
+	 */
+	@Deprecated(forRemoval = true)
 	@NotNull
 	public PermissionValue getPermission(String node) {
-		return permissions.getOrDefault(node, PermissionValue.MISSING);
+		return PermissionValue.MISSING;
 	}
 
 	SNBTCompoundTag writeSNBT() {
@@ -83,11 +87,6 @@ public class PlayerRankData {
 			res.put("ranks", ranksTag);
 		}
 
-		SNBTCompoundTag permTag = RankManagerImpl.writePermissions(permissions, new SNBTCompoundTag());
-		if (!permTag.isEmpty()) {
-			res.put("permissions", permTag);
-		}
-
 		return res;
 	}
 
@@ -103,17 +102,6 @@ public class PlayerRankData {
 				} catch (DateTimeParseException e) {
 					throw new RankException(e.getMessage());
 				}
-			}
-		}
-
-		SNBTCompoundTag permTag = tag.getCompound("permissions");
-		for (String permKey : permTag.getAllKeys()) {
-			while (permKey.endsWith(".*")) {
-				permKey = permKey.substring(0, permKey.length() - 2);
-				manager.markPlayerDataDirty();
-			}
-			if (!permKey.isEmpty()) {
-				data.permissions.put(playerId.toString(), RankManagerImpl.ofTag(permTag, permKey));
 			}
 		}
 
