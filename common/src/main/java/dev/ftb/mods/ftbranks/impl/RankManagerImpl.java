@@ -66,7 +66,7 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public Collection<Rank> getAllRanks() {
-		return sortedRanks;
+		return Collections.unmodifiableCollection(sortedRanks);
 	}
 
 	@Override
