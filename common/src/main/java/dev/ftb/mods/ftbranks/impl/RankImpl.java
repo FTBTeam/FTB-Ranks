@@ -170,12 +170,11 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		RankImpl rank = create(manager, rankId, displayName, tag.getInt("power"), source);
 
 		if (tag.contains("condition")) {
-			rank.setCondition(manager.createCondition(rank, tag.get("condition")));
+			rank.condition = manager.createCondition(rank, tag.get("condition"));
 		}
 
 		for (String key : tag.getAllKeys()) {
             if (!key.isEmpty() && !SPECIAL_FIELDS.contains(key)) {
-				String strippedKey = stripLegacyPermNodeSuffix(key);
 				readPermissions(tag, key).ifPresentOrElse(
 						perm -> rank.permissions.put(stripLegacyPermNodeSuffix(key), perm),
 						() -> FTBRanks.LOGGER.warn("readPermissions: ignoring non-primitive member {} of rank {}", key, rankId)
