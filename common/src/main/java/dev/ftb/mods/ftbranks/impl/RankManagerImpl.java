@@ -13,11 +13,7 @@ import dev.ftb.mods.ftbranks.api.event.RankEvent;
 import dev.ftb.mods.ftbranks.api.event.RanksReloadedEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
-import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
-import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
-import net.minecraft.nbt.EndTag;
-import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
@@ -364,38 +360,4 @@ public class RankManagerImpl implements RankManager {
 		}
 	}
 
-	static PermissionValue ofTag(SNBTCompoundTag tag, String key) {
-		if (tag.isBoolean(key)) {
-			return BooleanPermissionValue.of(tag.getBoolean(key));
-		}
-
-		Tag v = tag.get(key);
-
-		if (v == null || v instanceof EndTag) {
-			return PermissionValue.MISSING;
-		} else if (v instanceof NumericTag) {
-			return NumberPermissionValue.of(((NumericTag) v).getAsNumber());
-		} else if (v instanceof StringTag) {
-			return StringPermissionValue.of(v.getAsString());
-		}
-
-		return StringPermissionValue.of(v.toString());
-	}
-
-	static SNBTCompoundTag writePermissions(Map<String, PermissionValue> map, SNBTCompoundTag res) {
-		map.forEach((key, value) -> {
-			if (value.isEmpty()) {
-				res.putNull(key);
-			} else if (value instanceof BooleanPermissionValue b) {
-				res.putBoolean(key, b.value);
-			} else if (value instanceof StringPermissionValue s) {
-				res.putString(key, s.value);
-			} else if (value instanceof NumberPermissionValue n) {
-				res.putNumber(key, n.value);
-			} else {
-				res.putString(key, value.asString().orElse(""));
-			}
-		});
-		return res;
-	}
 }

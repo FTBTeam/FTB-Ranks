@@ -2,14 +2,21 @@ package dev.ftb.mods.ftbranks.impl;
 
 import com.mojang.authlib.GameProfile;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
+import net.minecraft.nbt.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static dev.ftb.mods.ftbranks.FTBRanks.LOGGER;
 
 public class RankImpl implements Rank, Comparable<RankImpl> {
 	private static final Set<String> SPECIAL_FIELDS = Set.of("name", "power", "condition");
@@ -29,7 +36,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankFileSource source) {
 		RankImpl rank = new RankImpl(manager, id, name, power, AlwaysActiveCondition.INSTANCE, source);
-		rank.setCondition(new DefaultCondition(rank));
+		rank.condition = new DefaultCondition(rank);
 		return rank;
 	}
 
@@ -168,8 +175,11 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 		for (String key : tag.getAllKeys()) {
             if (!key.isEmpty() && !SPECIAL_FIELDS.contains(key)) {
-				String stripped = stripLegacyPermNodeSuffix(key);
-	            rank.permissions.put(stripped, RankManagerImpl.ofTag(tag, stripped));
+				String strippedKey = stripLegacyPermNodeSuffix(key);
+				readPermissions(tag, key).ifPresentOrElse(
+						perm -> rank.permissions.put(stripLegacyPermNodeSuffix(key), perm),
+						() -> FTBRanks.LOGGER.warn("readPermissions: ignoring non-primitive member {} of rank {}", key, rankId)
+				);
             }
 		}
 
@@ -201,7 +211,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			}
 		}
 
-		RankManagerImpl.writePermissions(permissions, res);
+		writePermissions(permissions, res);
 
 		return res;
 	}
@@ -209,4 +219,34 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public RankFileSource getSource() {
 		return source;
 	}
+
+	private static Optional<PermissionValue> readPermissions(SNBTCompoundTag tag, String key) {
+		Tag v = tag.get(key);
+
+		if (v == null || v instanceof ListTag || v instanceof CompoundTag) {
+			return Optional.empty();
+		}
+
+		if (tag.isBoolean(key)) {
+			return Optional.of(BooleanPermissionValue.of(tag.getBoolean(key)));
+		}
+
+		return switch (v) {
+			case NumericTag numericTag -> Optional.of(NumberPermissionValue.of(numericTag.getAsNumber()));
+			case StringTag stringTag -> Optional.of(StringPermissionValue.of(stringTag.getAsString()));
+			default -> Optional.empty();
+		};
+	}
+
+	private static void writePermissions(Map<String, PermissionValue> map, SNBTCompoundTag res) {
+		map.forEach((key, value) -> {
+            switch (value) {
+                case BooleanPermissionValue b -> res.putBoolean(key, b.value);
+                case StringPermissionValue s -> res.putString(key, s.value);
+                case NumberPermissionValue n -> res.putNumber(key, n.value);
+                default -> LOGGER.warn("writePermissions: ignoring unknown perm val {} (class {})", key, value.getClass().getName());
+            }
+		});
+	}
+
 }
