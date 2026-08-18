@@ -2,6 +2,7 @@ package dev.ftb.mods.ftbranks.api;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.util.Collection;
  * players the rank applies to. A rank also has a "power" level; the highest-powered rank will apply to a player if
  * more than one rank is applicable.
  */
+@ApiStatus.NonExtendable
 public interface Rank {
 	/**
 	 * Convenience method to get the rank manager.

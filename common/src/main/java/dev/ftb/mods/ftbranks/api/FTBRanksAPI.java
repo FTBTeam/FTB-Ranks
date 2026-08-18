@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Top-level API object
  */
+@ApiStatus.NonExtendable
 public abstract class FTBRanksAPI {
 	private static FTBRanksAPI instance;
 
@@ -56,7 +57,7 @@ public abstract class FTBRanksAPI {
 	 */
 	@ApiStatus.Internal
 	public static void setup(FTBRanksAPI theInstance) {
-		if (instance != null || !theInstance.getClass().getName().startsWith("dev.ftb.mods.ftbranks")) {
+		if (instance != null || !theInstance.getClass().getPackageName().equals("dev.ftb.mods.ftbranks.impl")) {
 			throw new IllegalStateException("don't do this");
 		}
 		instance = theInstance;
@@ -66,5 +67,5 @@ public abstract class FTBRanksAPI {
 	 * Get the manager
 	 * @return the manager
 	 */
-	protected abstract RankManager getManager();
+	public abstract RankManager getManager();
 }

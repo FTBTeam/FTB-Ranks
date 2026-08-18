@@ -13,6 +13,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
+import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
@@ -160,7 +161,7 @@ public class FTBRanksCommands {
 
 	private static int reloadRanks(CommandSourceStack source) {
 		try {
-			FTBRanksAPIImpl.manager.reload();
+			((RankManagerImpl) FTBRanksAPIImpl.getInstance().getManager()).reload();
 			source.sendSuccess(() -> Component.literal("Ranks reloaded from disk!"), true);
 
 			for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
@@ -177,7 +178,7 @@ public class FTBRanksCommands {
 
 	private static int refreshReadme(CommandSourceStack source) {
 		try {
-			FTBRanksAPIImpl.manager.refreshReadme();
+			((RankManagerImpl) FTBRanksAPIImpl.getInstance().getManager()).refreshReadme();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -202,7 +203,7 @@ public class FTBRanksCommands {
 	private static int listAllRanks(CommandSourceStack source) {
 		source.sendSuccess(() -> Component.literal("Ranks:"), false);
 
-		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
+		for (Rank rank : FTBRanksAPIImpl.getInstance().getManager().getAllRanks()) {
 			source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 		}
 
@@ -253,7 +254,7 @@ public class FTBRanksCommands {
 	private static int listRanksOf(CommandSourceStack source, ServerPlayer player) {
 		source.sendSuccess(() -> Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().getName())), false);
 
-		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
+		for (Rank rank : FTBRanksAPIImpl.getInstance().getManager().getAllRanks()) {
 			if (rank.isActive(player)) {
 				source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 			}

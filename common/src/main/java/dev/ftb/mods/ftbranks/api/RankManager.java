@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.Set;
 /**
  * Top-level manager object.
  */
+@ApiStatus.NonExtendable
 public interface RankManager {
 	/**
 	 * Get all the known ranks, ordered by rank power, from highest to lowest. The rank's power determines which rank
