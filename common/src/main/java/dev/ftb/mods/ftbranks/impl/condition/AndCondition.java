@@ -15,7 +15,7 @@ public class AndCondition implements RankCondition {
 	public AndCondition(Rank rank, Json5Object json) throws RankException {
 		conditions = getConditionList(json, "conditions", rank);
 		if (conditions.size() < 2) {
-			throw new RankException("OR condition takes two or more sub-conditions");
+			throw new RankException("AND condition takes two or more sub-conditions");
 		}
 	}
 
