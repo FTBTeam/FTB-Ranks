@@ -53,19 +53,26 @@ public class FTBRanksCommands {
 				|| source.getPlayer().hasPermissions(Commands.LEVEL_GAMEMASTERS);
 	}
 
+	private static boolean isServerOp(CommandSourceStack sourceStack) {
+		return sourceStack.hasPermission(Commands.LEVEL_OWNERS);
+	}
+
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
 		dispatcher.register(Commands.literal("ftbranks")
 				.requires(FTBRanksCommands::isCommandSourceAllowed)
 				.then(Commands.literal("reload")
+						.requires(FTBRanksCommands::isServerOp)
 						.executes(context -> reloadRanks(context.getSource()))
 				)
 				.then(Commands.literal("refresh_readme")
+						.requires(FTBRanksCommands::isServerOp)
 						.executes(context -> refreshReadme(context.getSource()))
 				)
 				.then(Commands.literal("list_all_ranks")
 						.executes(context -> listAllRanks(context.getSource()))
 				)
 				.then(Commands.literal("create")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("name", StringArgumentType.word())
 								.then(Commands.argument("power", IntegerArgumentType.integer(1))
 										.executes(context -> createRank(context.getSource(), StringArgumentType.getString(context, "name"), IntegerArgumentType.getInteger(context,"power"))))
@@ -73,12 +80,14 @@ public class FTBRanksCommands {
 						)
 				)
 				.then(Commands.literal("delete")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("rank", StringArgumentType.word())
 								.suggests((context, builder) -> suggestRanks(builder))
 								.executes(context -> deleteRank(context.getSource(), StringArgumentType.getString(context, "rank")))
 						)
 				)
 				.then(Commands.literal("add")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("players", GameProfileArgument.gameProfile())
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
@@ -87,6 +96,7 @@ public class FTBRanksCommands {
 						)
 				)
 				.then(Commands.literal("remove")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("players", GameProfileArgument.gameProfile())
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
@@ -107,6 +117,7 @@ public class FTBRanksCommands {
 				)
 				.then(Commands.literal("node")
 						.then(Commands.literal("add")
+								.requires(FTBRanksCommands::isServerOp)
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
 										.then(Commands.argument("node", StringArgumentType.word())
@@ -117,6 +128,7 @@ public class FTBRanksCommands {
 								)
 						)
 						.then(Commands.literal("remove")
+								.requires(FTBRanksCommands::isServerOp)
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
 										.then(Commands.argument("node", StringArgumentType.word())
@@ -132,6 +144,7 @@ public class FTBRanksCommands {
 						)
 				)
 				.then(Commands.literal("condition")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("rank", StringArgumentType.word())
 								.suggests((context, builder) -> suggestRanks(builder))
 								.then(Commands.argument("value", StringArgumentType.greedyString())
