@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.1.2.4]
+
+### Changed
+* FTB Ranks commands which change rank state in any way now require permission level 4 (server owner) instead of 2
+  * In particular this means that running ranks commands from command blocks or signs is no longer possible
+* Rank commands are now namespaced, either with `server.` or `pack.`
+  * This eliminates clashes between ranks added locally on the server and ranks defined as part of modpack setup
+  * Modpack ranks (if any) are loaded from `ftbranks-pack.json5` and a comment in that file makes it clear that these should not be edited manually
+  * Rank editing commands _only_ work on `server.` ranks
+  * Rank viewing commands work on all ranks
+  * Rank suggestions in commands are now always prefixed with the namespace, but unprefixed ranks are accepted, treated as `server.` ranks
+* An error when loading any rank from the `ranks.json5` now stops _all_ ranks being loaded
+  * This avoids the server continuing with a potentially inconsistent configuration
+  * Rank load failures are fatal on server startup, but non-fatal on reload (an error is logged and server continues with old good configuration)
+* Rank checking for player name formatting should be more performant now
+  * Added some short-term player-rank caching, and also removed some unnecessary rank querying
+
+### Fixed
+* The `/ftbranks` node command no longer accepts `name` and `power` as node names, since they're reserved
+* Fixed rank player membership data not always getting marked as save-needed on change
+* For SSP, open-to-lan behaviour is now safer: players joining a published server no longer have access to ranks commands
+* Fixed a NPE during rank loading if rank names ended with `.*`
+* Player display names are now re-checked on each player login and updated in `players.json5` as needed
+
 ## [26.1.2.3-beta]
 
 ### Fixed
