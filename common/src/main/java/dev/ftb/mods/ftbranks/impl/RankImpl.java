@@ -2,14 +2,21 @@ package dev.ftb.mods.ftbranks.impl;
 
 import com.mojang.authlib.GameProfile;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
+import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.PlayerNameFormatting;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.api.event.*;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
+import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
+import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
+import net.minecraft.nbt.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static dev.ftb.mods.ftbranks.FTBRanks.LOGGER;
 
 public class RankImpl implements Rank, Comparable<RankImpl> {
 	private static final Set<String> SPECIAL_FIELDS = Set.of("name", "power", "condition");
@@ -29,7 +36,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	public static RankImpl create(RankManagerImpl manager, String id, String name, int power, RankFileSource source) {
 		RankImpl rank = new RankImpl(manager, id, name, power, AlwaysActiveCondition.INSTANCE, source);
-		rank.setCondition(new DefaultCondition(rank));
+		rank.condition = new DefaultCondition(rank);
 		return rank;
 	}
 
@@ -79,8 +86,12 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 
 	@Override
 	public void setPermission(String node, PermissionValue value) {
-		if (node.equals("condition")) {
-			throw new IllegalArgumentException("use '/ftbranks condition' to set conditions");
+		if (SPECIAL_FIELDS.contains(node)) {
+			String err = "'" + node + "' is a reserved field";
+			if (node.equals("condition")) {
+				err += " (use '/ftbranks condition' to set conditions)";
+			}
+			throw new IllegalArgumentException(err);
 		}
 
 		PermissionValue oldValue = getPermission(node);
@@ -159,23 +170,27 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 		RankImpl rank = create(manager, rankId, displayName, tag.getInt("power"), source);
 
 		if (tag.contains("condition")) {
-			rank.setCondition(manager.createCondition(rank, tag.get("condition")));
+			rank.condition = manager.createCondition(rank, tag.get("condition"));
 		}
 
 		for (String key : tag.getAllKeys()) {
-			if (!SPECIAL_FIELDS.contains(key)) {
-				while (key.endsWith(".*")) {
-					key = key.substring(0, key.length() - 2);
-					manager.markRanksDirty();
-				}
-
-				if (!key.isEmpty()) {
-					rank.permissions.put(key, RankManagerImpl.ofTag(tag, key));
-				}
-			}
+            if (!key.isEmpty() && !SPECIAL_FIELDS.contains(key)) {
+				readPermissions(tag, key).ifPresentOrElse(
+						perm -> rank.permissions.put(stripLegacyPermNodeSuffix(key), perm),
+						() -> FTBRanks.LOGGER.warn("readPermissions: ignoring non-primitive member {} of rank {}", key, rankId)
+				);
+            }
 		}
 
 		return rank;
+	}
+
+	private static String stripLegacyPermNodeSuffix(String key) {
+		// legacy ".*" suffix on command permission nodes is no longer required
+		while (key.endsWith(".*")) {
+			key = key.substring(0, key.length() - 2);
+		}
+		return key;
 	}
 
 	public SNBTCompoundTag writeSNBT() {
@@ -195,7 +210,7 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 			}
 		}
 
-		RankManagerImpl.writePermissions(permissions, res);
+		writePermissions(permissions, res);
 
 		return res;
 	}
@@ -203,4 +218,34 @@ public class RankImpl implements Rank, Comparable<RankImpl> {
 	public RankFileSource getSource() {
 		return source;
 	}
+
+	private static Optional<PermissionValue> readPermissions(SNBTCompoundTag tag, String key) {
+		Tag v = tag.get(key);
+
+		if (v == null || v instanceof ListTag || v instanceof CompoundTag) {
+			return Optional.empty();
+		}
+
+		if (tag.isBoolean(key)) {
+			return Optional.of(BooleanPermissionValue.of(tag.getBoolean(key)));
+		}
+
+		return switch (v) {
+			case NumericTag numericTag -> Optional.of(NumberPermissionValue.of(numericTag.getAsNumber()));
+			case StringTag stringTag -> Optional.of(StringPermissionValue.of(stringTag.getAsString()));
+			default -> Optional.empty();
+		};
+	}
+
+	private static void writePermissions(Map<String, PermissionValue> map, SNBTCompoundTag res) {
+		map.forEach((key, value) -> {
+            switch (value) {
+                case BooleanPermissionValue b -> res.putBoolean(key, b.value);
+                case StringPermissionValue s -> res.putString(key, s.value);
+                case NumberPermissionValue n -> res.putNumber(key, n.value);
+                default -> LOGGER.warn("writePermissions: ignoring unknown perm val {} (class {})", key, value.getClass().getName());
+            }
+		});
+	}
+
 }

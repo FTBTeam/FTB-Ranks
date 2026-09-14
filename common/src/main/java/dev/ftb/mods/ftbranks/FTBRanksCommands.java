@@ -13,6 +13,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftbranks.api.*;
 import dev.ftb.mods.ftbranks.impl.FTBRanksAPIImpl;
+import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import dev.ftb.mods.ftbranks.impl.condition.DefaultCondition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
@@ -39,21 +40,39 @@ public class FTBRanksCommands {
 			(object) -> Component.literal("Unknown rank: " + object.toString())
 	);
 
-	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
+	private static boolean isCommandSourceAllowed(CommandSourceStack source) {
 		// source.getServer() *can* return null: https://github.com/FTBTeam/FTB-Mods-Issues/issues/766
 		//noinspection ConstantValue
+		if (source.getServer() == null) {
+			return false;
+		}
+
+		// from console, or owner of SSP world (incl open to LAN), or has GM perm level or better
+		return source.getPlayer() == null
+				|| source.getServer().isSingleplayerOwner(source.getPlayer().getGameProfile())
+				|| source.getPlayer().hasPermissions(Commands.LEVEL_GAMEMASTERS);
+	}
+
+	private static boolean isServerOp(CommandSourceStack sourceStack) {
+		return sourceStack.hasPermission(Commands.LEVEL_OWNERS);
+	}
+
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
 		dispatcher.register(Commands.literal("ftbranks")
-				.requires(source -> source.getServer() != null && source.getServer().isSingleplayer() || source.hasPermission(2))
+				.requires(FTBRanksCommands::isCommandSourceAllowed)
 				.then(Commands.literal("reload")
+						.requires(FTBRanksCommands::isServerOp)
 						.executes(context -> reloadRanks(context.getSource()))
 				)
 				.then(Commands.literal("refresh_readme")
+						.requires(FTBRanksCommands::isServerOp)
 						.executes(context -> refreshReadme(context.getSource()))
 				)
 				.then(Commands.literal("list_all_ranks")
 						.executes(context -> listAllRanks(context.getSource()))
 				)
 				.then(Commands.literal("create")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("name", StringArgumentType.word())
 								.then(Commands.argument("power", IntegerArgumentType.integer(1))
 										.executes(context -> createRank(context.getSource(), StringArgumentType.getString(context, "name"), IntegerArgumentType.getInteger(context,"power"))))
@@ -61,12 +80,14 @@ public class FTBRanksCommands {
 						)
 				)
 				.then(Commands.literal("delete")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("rank", StringArgumentType.word())
 								.suggests((context, builder) -> suggestRanks(builder))
 								.executes(context -> deleteRank(context.getSource(), StringArgumentType.getString(context, "rank")))
 						)
 				)
 				.then(Commands.literal("add")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("players", GameProfileArgument.gameProfile())
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
@@ -75,6 +96,7 @@ public class FTBRanksCommands {
 						)
 				)
 				.then(Commands.literal("remove")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("players", GameProfileArgument.gameProfile())
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
@@ -95,6 +117,7 @@ public class FTBRanksCommands {
 				)
 				.then(Commands.literal("node")
 						.then(Commands.literal("add")
+								.requires(FTBRanksCommands::isServerOp)
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
 										.then(Commands.argument("node", StringArgumentType.word())
@@ -105,6 +128,7 @@ public class FTBRanksCommands {
 								)
 						)
 						.then(Commands.literal("remove")
+								.requires(FTBRanksCommands::isServerOp)
 								.then(Commands.argument("rank", StringArgumentType.word())
 										.suggests((context, builder) -> suggestRanks(builder))
 										.then(Commands.argument("node", StringArgumentType.word())
@@ -120,6 +144,7 @@ public class FTBRanksCommands {
 						)
 				)
 				.then(Commands.literal("condition")
+						.requires(FTBRanksCommands::isServerOp)
 						.then(Commands.argument("rank", StringArgumentType.word())
 								.suggests((context, builder) -> suggestRanks(builder))
 								.then(Commands.argument("value", StringArgumentType.greedyString())
@@ -149,7 +174,7 @@ public class FTBRanksCommands {
 
 	private static int reloadRanks(CommandSourceStack source) {
 		try {
-			FTBRanksAPIImpl.manager.reload();
+			((RankManagerImpl) FTBRanksAPIImpl.getInstance().getManager()).reload();
 			source.sendSuccess(() -> Component.literal("Ranks reloaded from disk!"), true);
 
 			for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
@@ -166,7 +191,7 @@ public class FTBRanksCommands {
 
 	private static int refreshReadme(CommandSourceStack source) {
 		try {
-			FTBRanksAPIImpl.manager.refreshReadme();
+			((RankManagerImpl) FTBRanksAPIImpl.getInstance().getManager()).refreshReadme();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -191,7 +216,7 @@ public class FTBRanksCommands {
 	private static int listAllRanks(CommandSourceStack source) {
 		source.sendSuccess(() -> Component.literal("Ranks:"), false);
 
-		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
+		for (Rank rank : FTBRanksAPIImpl.getInstance().getManager().getAllRanks()) {
 			source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 		}
 
@@ -242,7 +267,7 @@ public class FTBRanksCommands {
 	private static int listRanksOf(CommandSourceStack source, ServerPlayer player) {
 		source.sendSuccess(() -> Component.literal(String.format("Ranks added to player '%s':", player.getGameProfile().getName())), false);
 
-		for (Rank rank : FTBRanksAPIImpl.manager.getAllRanks()) {
+		for (Rank rank : FTBRanksAPIImpl.getInstance().getManager().getAllRanks()) {
 			if (rank.isActive(player)) {
 				source.sendSuccess(() -> Component.literal("- ").append(makeRankNameClicky(rank)), false);
 			}

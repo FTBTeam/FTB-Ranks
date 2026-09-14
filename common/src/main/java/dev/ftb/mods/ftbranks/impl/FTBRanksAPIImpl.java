@@ -14,10 +14,10 @@ import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.math.NumberUtils;
 
 public class FTBRanksAPIImpl extends FTBRanksAPI {
-	public static RankManagerImpl manager;
+	private static RankManagerImpl manager;
 
 	@Override
-	protected RankManager getManager() {
+    public RankManager getManager() {
 		return manager;
 	}
 

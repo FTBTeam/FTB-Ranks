@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2101.1.5]
+
+### Changed
+* FTB Ranks commands which change rank state in any way now require permission level 4 (server owner) instead of 2
+  * In particular this means that running ranks commands from command blocks or signs is no longer possible
+* For SSP, open-to-lan behaviour is now safer: players joining a published server no longer have access to ranks commands
+
+### Fixed
+* The `/ftbranks` node command no longer accepts `name` and `power` as node names, since they're reserved
+* Fixed rank player membership data not always getting marked as save-needed on change
+
 ## [2101.1.4]
 
 ### Fixed
