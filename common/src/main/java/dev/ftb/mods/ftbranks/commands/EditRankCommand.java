@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 public class EditRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("edit")
+                .requires(FTBRanksCommands::isServerOp)
                 .then(Commands.argument("rank", StringArgumentType.word())
                         .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                         .then(Commands.literal("name")

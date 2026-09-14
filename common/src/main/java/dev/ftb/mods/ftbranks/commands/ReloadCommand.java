@@ -12,8 +12,8 @@ import static net.minecraft.commands.Commands.literal;
 public class ReloadCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> register() {
         return literal("reload")
-                .executes(c -> reloadRanks(c.getSource())
-                );
+                .requires(FTBRanksCommands::isServerOp)
+                .executes(c -> reloadRanks(c.getSource()));
     }
 
     private static int reloadRanks(CommandSourceStack source) {

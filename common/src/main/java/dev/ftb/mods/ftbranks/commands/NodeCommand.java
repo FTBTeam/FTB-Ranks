@@ -19,6 +19,7 @@ public class NodeCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("node")
                 .then(Commands.literal("add")
+                        .requires(FTBRanksCommands::isServerOp)
                         .then(Commands.argument("rank", StringArgumentType.word())
                                 .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                                 .then(Commands.argument("node", StringArgumentType.word())
@@ -29,6 +30,7 @@ public class NodeCommand {
                         )
                 )
                 .then(Commands.literal("remove")
+                        .requires(FTBRanksCommands::isServerOp)
                         .then(Commands.argument("rank", StringArgumentType.word())
                                 .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                                 .then(Commands.argument("node", StringArgumentType.word())

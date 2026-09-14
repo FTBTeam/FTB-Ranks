@@ -18,6 +18,7 @@ import net.minecraft.network.chat.Component;
 public class ConditionCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("condition")
+                .requires(FTBRanksCommands::isServerOp)
                 .then(Commands.argument("rank", StringArgumentType.word())
                         .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                         .then(Commands.argument("value", StringArgumentType.greedyString())

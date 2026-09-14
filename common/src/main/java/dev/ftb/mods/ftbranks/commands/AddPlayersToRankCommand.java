@@ -16,6 +16,7 @@ import java.util.Collection;
 public class AddPlayersToRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("add")
+                .requires(FTBRanksCommands::isServerOp)
                 .then(Commands.argument("players", GameProfileArgument.gameProfile())
                         .then(Commands.argument("rank", StringArgumentType.word())
                                 .suggests((context, builder) -> FTBRanksCommands.suggestRanks(builder))

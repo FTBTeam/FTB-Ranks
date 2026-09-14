@@ -35,6 +35,10 @@ public class FTBRanksCommands {
 				|| source.getPlayer().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 	}
 
+	static boolean isServerOp(CommandSourceStack sourceStack) {
+		return sourceStack.permissions().hasPermission(Permissions.COMMANDS_OWNER);
+	}
+
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ignoredContext, Commands.CommandSelection ignoredSelection) {
 		dispatcher.register(Commands.literal("ftbranks")
 				.requires(FTBRanksCommands::isCommandSourceAllowed)

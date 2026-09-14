@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 public class DeleteRankCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("delete")
+                .requires(FTBRanksCommands::isServerOp)
                 .then(Commands.argument("rank", StringArgumentType.word())
                         .suggests((_, builder) -> FTBRanksCommands.suggestRanks(builder, false))
                         .executes(context -> deleteRank(context.getSource(), StringArgumentType.getString(context, "rank")))

@@ -12,6 +12,7 @@ import java.io.IOException;
 public class RefreshReadmeCommand {
     static LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("refresh_readme")
+                .requires(FTBRanksCommands::isServerOp)
                 .executes(context -> refreshReadme(context.getSource()));
     }
 
