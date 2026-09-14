@@ -2,7 +2,6 @@ package dev.ftb.mods.ftbranks.impl;
 
 import de.marhali.json5.Json5Element;
 import de.marhali.json5.Json5Object;
-import de.marhali.json5.Json5Primitive;
 import dev.ftb.mods.ftblibrary.config.ConfigUtil;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
@@ -14,14 +13,12 @@ import dev.ftb.mods.ftbranks.api.event.RankDeletedEvent;
 import dev.ftb.mods.ftbranks.api.event.RanksReloadedEvent;
 import dev.ftb.mods.ftbranks.impl.condition.AlwaysActiveCondition;
 import dev.ftb.mods.ftbranks.impl.condition.OPCondition;
-import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
-import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.level.storage.LevelResource;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,10 +42,12 @@ public class RankManagerImpl implements RankManager {
 	private boolean shouldSaveRanks;
 	private boolean shouldSavePlayers;
 
-	private Map<String, RankImpl> ranks = new HashMap<>();
-	private final List<Rank> sortedRanks = new ArrayList<>();
+	private Map<NamespacedRankId, RankImpl> ranks = new ConcurrentHashMap<>();
+	private List<RankImpl> sortedRanks = new ArrayList<>();
+	private List<RankImpl> sortedServerRanks = new ArrayList<>();
 	private final Map<String, RankConditionFactory> conditions = new ConcurrentHashMap<>();
 	private Map<UUID, PlayerRankData> playerData = new HashMap<>();
+	private final PlayerRankCache playerRankCache = new PlayerRankCache();
 
 	public RankManagerImpl(MinecraftServer server) {
 		this.server = server;
@@ -67,55 +66,59 @@ public class RankManagerImpl implements RankManager {
 	}
 
 	@Override
-	public Collection<Rank> getAllRanks() {
-		return sortedRanks;
+	public Collection<? extends Rank> getAllRanks() {
+		return Collections.unmodifiableCollection(sortedRanks);
 	}
 
 	@Override
-	public Optional<Rank> getRank(String id) {
+	public Collection<? extends Rank> getAllServerRanks() {
+		return Collections.unmodifiableCollection(sortedServerRanks);
+	}
+
+	@Override
+	public Optional<Rank> getRank(NamespacedRankId id) {
 		return Optional.ofNullable(ranks.get(id));
 	}
 
 	@Override
 	public RankImpl createRank(String name, int power, boolean forceCreate) {
-		String id = normalizeRankName(name);
+		String id = normalizeRankId(name);
 
 		if (forceCreate) {
 			if (deleteRank(id) != null) {
 				LOGGER.warn("forcibly overwriting existing rank {}", name);
 			}
-		} else if (ranks.containsKey(id)) {
+		} else if (ranks.containsKey(NamespacedRankId.serverRank(id))) {
 			throw new RankException("Rank '" + id + "' already exists");
 		}
 
 		RankImpl rank = RankImpl.create(this, id, name, power, RankFileSource.SERVER);
-		ranks.put(id, rank);
+		ranks.put(rank.getNamespacedId(), rank);
 		rebuildSortedRanks();
 		markRanksDirty();
 		NativeEventPosting.get().postEvent(new RankCreatedEvent.Data(this, rank));
 		return rank;
 	}
 
-	private static String normalizeRankName(String name) {
-		return name.toLowerCase()
-				.replace("+", "_plus")
-				.replaceAll("[^a-z0-9_]", "_")
-				.replaceAll("_{2,}", "_");
-	}
-
 	@Override
 	@Nullable
 	public RankImpl deleteRank(String id) {
-		RankImpl rank = ranks.get(id);
+		NamespacedRankId nsId = NamespacedRankId.serverRank(id);
+		RankImpl rank = ranks.get(nsId);
 
 		if (rank != null) {
+			if (rank.getSource() == RankFileSource.MODPACK) {
+				// shouldn't ever happen
+				throw new RankException("cannot delete a modpack-loaded rank");
+			}
+
 			for (PlayerRankData rankData : playerData.values()) {
 				if (rankData.removeRank(rank)) {
 					markPlayerDataDirty();
 				}
 			}
 
-			ranks.remove(id);
+			ranks.remove(nsId);
 
 			rebuildSortedRanks();
 
@@ -128,7 +131,12 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public Set<Rank> getAddedRanks(NameAndId nameAndId) {
-		return getOrCreatePlayerData(nameAndId).addedRanks();
+		return getOptionalPlayerData(nameAndId).map(PlayerRankData::addedRanks).orElse(Set.of());
+	}
+
+	@Override
+	public List<? extends Rank> getRanks(ServerPlayer player) {
+		return playerRankCache.getRanksForPlayer(player);
 	}
 
 	@Override
@@ -148,16 +156,42 @@ public class RankManagerImpl implements RankManager {
 
 	@Override
 	public PermissionValue getPermissionValue(ServerPlayer player, String node) {
+		return getPermissionValue(player, node, true);
+	}
+
+	@Override
+	public PermissionValue getPermissionValue(ServerPlayer player, String node, boolean checkParentNodes) {
 		if (node.isEmpty() || sortedRanks.isEmpty()) {
 			return PermissionValue.MISSING;
 		}
 
 		try {
-			List<Rank> list = sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList());
-			return getPermissionValue(getOrCreatePlayerData(player.nameAndId()), list, node);
+			List<Rank> list = playerRankCache.getRanksForPlayer(player);
+			return getPermissionValue(list, node, checkParentNodes);
 		} catch (Exception ex) {
 			FTBRanks.LOGGER.error("Error getting permission value for node {}! {} / {}", node, ex.getClass().getName(), ex.getMessage());
 		}
+
+		return PermissionValue.MISSING;
+	}
+
+	private PermissionValue getPermissionValue(List<Rank> ranks, String node, boolean checkParentNodes) {
+		do {
+			for (Rank rank : ranks) {
+				PermissionValue value = rank.getPermission(node);
+				if (!value.isEmpty()) {
+					return value;
+				}
+			}
+
+			// try parent node?
+			if (checkParentNodes) {
+				int i = node.lastIndexOf('.');
+				node = i < 0 ? "" : node.substring(0, i);
+			} else {
+				break;
+			}
+		} while (!node.isEmpty());
 
 		return PermissionValue.MISSING;
 	}
@@ -167,49 +201,22 @@ public class RankManagerImpl implements RankManager {
 		return server;
 	}
 
-	private PermissionValue getPermissionValue(PlayerRankData data, List<Rank> ranks, String node) {
-		if (node.isEmpty()) {
-			return PermissionValue.MISSING;
-		}
-
-		PermissionValue value = data.getPermission(node);
-		if (!value.isEmpty()) {
-			return value;
-		}
-
-		for (Rank rank : ranks) {
-			PermissionValue value1 = rank.getPermission(node);
-			if (!value1.isEmpty()) {
-				return value1;
-			}
-		}
-
-		int i = node.lastIndexOf('.');
-		return i == -1 ? PermissionValue.MISSING : getPermissionValue(data, ranks, node.substring(0, i));
-	}
-
 	public void reload() throws IOException {
-		shouldSaveRanks = false;
+		checkForFileExistence();
 
-		if (Files.notExists(rankFile)) {
-			if (Files.exists(DEFAULT_RANK_FILE)) {
-				Files.copy(DEFAULT_RANK_FILE, rankFile);
-			} else {
-				createDefaultRanks();
-			}
-		}
+		// in case any unsaved changes are present...
+		saveRanksNow();
+		savePlayersNow();
 
-		if (Files.notExists(playerFile)) {
-			playerData = new HashMap<>();
-			markPlayerDataDirty();
-			savePlayersNow();
-		}
-
-		Map<String, RankImpl> tempRanks = new LinkedHashMap<>();
+		Map<NamespacedRankId, RankImpl> tempRanks = new LinkedHashMap<>();
 		readRankFile(RankFileSource.SERVER, tempRanks);
 		if (Files.exists(RankFileSource.MODPACK.getPath(server))) {
 			readRankFile(RankFileSource.MODPACK, tempRanks);
+		} else {
+			createDefaultModpackRanks(RankFileSource.MODPACK.getPath(server));
 		}
+
+		validateRanks(tempRanks);
 
 		Map<UUID, PlayerRankData> tempPlayerData = new LinkedHashMap<>();
 		var playerFileTag = Json5Util.load(playerFile);
@@ -221,6 +228,8 @@ public class RankManagerImpl implements RankManager {
 				tempPlayerData.put(id, data);
 			}
 		}
+
+		// at this point, we know both rank and player data has successfully loaded
 
 		ranks = new LinkedHashMap<>(tempRanks);
 		playerData = new LinkedHashMap<>(tempPlayerData);
@@ -234,18 +243,42 @@ public class RankManagerImpl implements RankManager {
 		FTBRanks.LOGGER.info("Loaded {} ranks", ranks.size());
 	}
 
-	private void readRankFile(RankFileSource source, Map<String, RankImpl> rankMap) throws IOException {
+	private void checkForFileExistence() throws IOException {
+		if (Files.notExists(rankFile)) {
+			if (Files.exists(DEFAULT_RANK_FILE)) {
+				Files.copy(DEFAULT_RANK_FILE, rankFile);
+			} else {
+				createDefaultRanks();
+			}
+			markRanksDirty();
+		}
+
+		if (Files.notExists(playerFile)) {
+			playerData = new HashMap<>();
+			markPlayerDataDirty();
+		}
+	}
+
+	private void readRankFile(RankFileSource source, Map<NamespacedRankId, RankImpl> rankMap) throws IOException {
 		Path inputFile = source.getPath(server);
-		Json5Object rankFileTag = Json5Util.load(inputFile);
+		Json5Object json = Json5Util.load(inputFile);
 		int size = rankMap.size();
-		for (String rankId : rankFileTag.keySet()) {
+		for (String key : json.keySet()) {
+			String normalizedId = normalizeRankId(key);
+			if (!key.equals(normalizedId)) {
+				LOGGER.warn("Normalized rank id '{}.{}' -> '{}'", source.getId(), key, normalizedId);
+				markRanksDirty();
+			}
 			try {
-				RankImpl rank = RankImpl.fromJson(this, rankId, rankFileTag.getAsJson5Object(rankId), source);
-				if (rankMap.putIfAbsent(rank.getId(), rank) != null) {
-					FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, ignoring", rank.getId(), inputFile);
+				RankImpl rank = RankImpl.fromJson(this, normalizedId, json.getAsJson5Object(key), source);
+				if (rankMap.containsKey(rank.getNamespacedId())) {
+					// should never happen, but normalization could conceivably cause it
+					FTBRanks.LOGGER.warn("Conflicting rank ID '{}' detected while reading {}, overwriting existing rank", rank.getId(), inputFile);
 				}
+				rankMap.put(rank.getNamespacedId(), rank);
 			} catch (RankException e) {
-				FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", rankId, inputFile, e.getMessage());
+				FTBRanks.LOGGER.error("Failed to read rank ID '{}' from {}: {}", normalizedId, inputFile, e.getMessage());
+				throw new IOException(e);  // re-throw: any failure to read a rank should stop the whole file being read
 			}
 		}
 		if (rankMap.size() == size) {
@@ -257,18 +290,36 @@ public class RankManagerImpl implements RankManager {
 		ranks = new LinkedHashMap<>();
 
 		RankImpl memberRank = RankImpl.create(this, "member", "Member", 1, AlwaysActiveCondition.INSTANCE, RankFileSource.SERVER);
-		ranks.put("member", memberRank);
+		ranks.put(memberRank.getNamespacedId(), memberRank);
 
 		RankImpl vipRank = RankImpl.create(this, "vip", "VIP", 50, RankFileSource.SERVER);
 		vipRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&bVIP {name}"));
-		ranks.put("vip", vipRank);
+		ranks.put(vipRank.getNamespacedId(), vipRank);
 
 		RankImpl adminRank = RankImpl.create(this, "admin", "Admin", 1000, new OPCondition(), RankFileSource.SERVER);
 		adminRank.setPermission("ftbranks.name_format", StringPermissionValue.of("&2{name}"));
-		ranks.put("admin", adminRank);
+		ranks.put(adminRank.getNamespacedId(), adminRank);
 
 		markRanksDirty();
 		saveRanksNow();
+	}
+
+	private void createDefaultModpackRanks(Path path) throws IOException {
+		Json5Object json = new Json5Object();
+		json.setComment("""
+                DO NOT EDIT THIS FILE UNLESS YOU ARE DEVELOPING A MODPACK!
+                
+                This file is used to hold modpack-specific ranks important to the correct
+                 functioning of the pack and may be overwritten whenever the modpack is updated.
+                
+                If you are a server admin who needs to add or edit ranks, then either:
+                 * carefully edit <world>/serverconfig/ftbranks/ranks.json5
+                 * or use "/ftbranks ..." commands to make your changes
+                
+                Note to pack developers: rank ID's you add here will not clash with ranks added locally
+                 in <world>/serverconfig/ftbranks/ranks.json5, since they are separately namespaced."""
+		);
+		Json5Util.save(path, json);
 	}
 
 	public void refreshReadme() throws IOException {
@@ -287,9 +338,10 @@ public class RankManagerImpl implements RankManager {
 		Files.write(directory.resolve("README.txt"), lines);
 	}
 
-	private void rebuildSortedRanks() {
-		sortedRanks.clear();
-		sortedRanks.addAll(ranks.values().stream().sorted().toList());
+	void rebuildSortedRanks() {
+		sortedRanks = ranks.values().stream().sorted().toList();
+		sortedServerRanks = sortedRanks.stream().filter(r -> r.getSource() == RankFileSource.SERVER).toList();
+		playerRankCache.clear();
 	}
 
 	PlayerRankData getOrCreatePlayerData(NameAndId profile) {
@@ -298,10 +350,14 @@ public class RankManagerImpl implements RankManager {
 		if (data == null) {
 			data = new PlayerRankData(this, profile.id(), profile.name());
 			playerData.put(profile.id(), data);
-			markRanksDirty();
+			markPlayerDataDirty();
 		}
 
 		return data;
+	}
+
+	Optional<PlayerRankData> getOptionalPlayerData(NameAndId profile) {
+		return Optional.ofNullable(playerData.get(profile.id()));
 	}
 
 	void registerCondition(String id, RankConditionFactory conditionFactory) {
@@ -332,11 +388,11 @@ public class RankManagerImpl implements RankManager {
 			map.forEach((source, json) -> {
 				try {
 					Json5Util.save(source.getPath(server), (Json5Element) json);
+					shouldSaveRanks = false;
 				} catch (IOException e) {
-					FTBRanks.LOGGER.warn("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
+					FTBRanks.LOGGER.error("Failed to save {}}! {} / {}", source.getPath(server), e.getClass().getName(), e.getMessage());
 				}
 			});
-			shouldSaveRanks = false;
 		}
 	}
 
@@ -349,37 +405,66 @@ public class RankManagerImpl implements RankManager {
 
 			try {
 				Json5Util.save(playerFile, (Json5Element) playerTag);
+				shouldSavePlayers = false;
 			} catch (IOException e) {
-				FTBRanks.LOGGER.warn("Failed to save players.json5! {} / {}", e.getClass().getName(), e.getMessage());
+				FTBRanks.LOGGER.error("Failed to save players.json5! {} / {}", e.getClass().getName(), e.getMessage());
 			}
-			shouldSavePlayers = false;
 		}
 	}
 
-	static PermissionValue readPermissions(Json5Object json, String key) {
-		Json5Element el = json.get(key);
-
-		if (!el.isJson5Primitive()) return PermissionValue.MISSING;
-		Json5Primitive primitive = el.getAsJson5Primitive();
-
-		if (primitive.isBoolean()) {
-			return BooleanPermissionValue.of(primitive.getAsBoolean());
-		} else if (primitive.isNumber()) {
-			return NumberPermissionValue.of(primitive.getAsNumber());
-		} else {
-			return StringPermissionValue.of(primitive.getAsString());
-		}
+	/// Normalize a rank display name (or rank ID loaded from file):
+	/// * convert to lower case
+	/// * replace "+" and "&" with "\_plus"
+	/// * replace all non-alphanumerics with "\_"
+	/// * contract consecutive "\_" occurrences into a single "\_".
+	///
+	/// This normalized ID is used for the canonical unique rank ID.
+	///
+	/// @param in the input ID or name
+	/// @return the normalized ID
+	private static String normalizeRankId(String in) {
+		return in.toLowerCase(Locale.ROOT)
+				.replace("&", "_plus")
+				.replace("+", "_plus")
+				.replaceAll("[^a-z0-9_]", "_")
+				.replaceAll("_{2,}", "_");
 	}
 
-	static Json5Object writePermissions(Map<String, PermissionValue> map, Json5Object res) {
-		map.forEach((key, value) -> {
-            switch (value) {
-                case BooleanPermissionValue b -> res.addProperty(key, b.value);
-                case StringPermissionValue s -> res.addProperty(key, s.value);
-                case NumberPermissionValue n -> res.addProperty(key, n.value);
-                default -> res.addProperty(key, value.asString().orElse(""));
-            }
+	private void validateRanks(Map<NamespacedRankId, RankImpl> rankMap) {
+		rankMap.values().forEach(rank -> validate0(rank, new HashSet<>()));
+	}
+
+	private void validate0(Rank rank, Set<NamespacedRankId> visited) {
+		visited.add(rank.getNamespacedId());
+		rank.getCondition().referencedRankIds().forEach(refId -> {
+			if (visited.contains(refId)) {
+				throw new RankException(String.format("cyclic rank reference! %s -> %s", rank.getNamespacedId(), refId));
+			}
+			getRank(refId).ifPresent(r1 -> validate0(r1, visited));
 		});
-		return res;
+	}
+
+	/// Short-lived (1 tick) cache to map a player to the ranks which are active for that player.
+	private class PlayerRankCache {
+		private long lastCachedTickCount = 0L;
+		private final Map<UUID, List<Rank>> cache = new ConcurrentHashMap<>();
+
+		public List<Rank> getRanksForPlayer(ServerPlayer player) {
+			int serverTickCount = player.level().getServer().getTickCount();
+			if (serverTickCount != lastCachedTickCount) {
+				clear();
+				lastCachedTickCount = serverTickCount;
+			}
+
+			if (!cache.containsKey(player.getUUID())) {
+				cache.put(player.getUUID(), sortedRanks.stream().filter(rank -> rank.isActive(player)).collect(Collectors.toList()));
+			}
+
+			return cache.get(player.getUUID());
+		}
+
+		public void clear() {
+			cache.clear();
+		}
 	}
 }

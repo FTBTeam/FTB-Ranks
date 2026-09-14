@@ -2,7 +2,6 @@ package dev.ftb.mods.ftbranks.api.event;
 
 import dev.ftb.mods.ftbranks.api.Rank;
 import dev.ftb.mods.ftbranks.api.RankManager;
-import dev.ftb.mods.ftbranks.impl.RankManagerImpl;
 import net.minecraft.server.players.NameAndId;
 
 import java.util.function.Consumer;

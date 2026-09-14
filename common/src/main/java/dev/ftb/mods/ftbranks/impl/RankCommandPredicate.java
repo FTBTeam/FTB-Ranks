@@ -16,7 +16,7 @@ public class RankCommandPredicate implements Predicate<CommandSourceStack> {
 	private final String nodeName;
 
 	@Nullable
-	private Supplier<RankCommandPredicate> redirect;
+	private Supplier<@Nullable RankCommandPredicate> redirect;
 
 	public RankCommandPredicate(CommandNode<CommandSourceStack> commandNode, String nodeName) {
 		this.original = commandNode.getRequirement();

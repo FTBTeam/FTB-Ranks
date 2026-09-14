@@ -10,6 +10,8 @@ import dev.ftb.mods.ftbranks.impl.permission.BooleanPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.NumberPermissionValue;
 import dev.ftb.mods.ftbranks.impl.permission.StringPermissionValue;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -18,7 +20,7 @@ import java.util.Objects;
 
 public class FTBRanksAPIImpl extends FTBRanksAPI {
 	@Nullable
-	public static RankManagerImpl manager;
+	private RankManagerImpl manager;
 
 	@Override
 	public RankManagerImpl getManager() {
@@ -30,7 +32,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 	public PermissionValue parsePermissionValue(@Nullable String str) {
 		if (str == null) {
 			return null;
-		} else if (str.startsWith("\"") && str.endsWith("\"")) {
+		} else if (str.startsWith("\"") && str.endsWith("\"") && str.length() >= 2) {
 			return StringPermissionValue.of(str.substring(1, str.length() - 1));
 		} else if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("false")) {
 			return BooleanPermissionValue.of(str.equalsIgnoreCase("true"));
@@ -53,6 +55,7 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 				manager.load();
 			} catch (IOException ex) {
 				FTBRanks.LOGGER.error("failed to load ranks data: {} / {}", ex.getClass().getName(), ex.getMessage());
+				throw new IllegalStateException(ex);  // re-throw: fatal, server should not continue with missing ranks data
 			}
 		}
 	}
@@ -86,4 +89,17 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		data.register("and", AndCondition::new);
 		data.register("xor", XorCondition::new);
 	}
+
+    public void playerLoggedIn(Player player) {
+        if (player instanceof ServerPlayer && manager != null) {
+			manager.getOptionalPlayerData(player.nameAndId()).ifPresent(data -> {
+				String prevName = data.getPlayerName();
+				if (!prevName.equals(player.getPlainTextName())) {
+					data.setPlayerName(player.getPlainTextName());
+					FTBRanks.LOGGER.info("updated player display name for player {}: '{}' -> '{}'", player.getUUID(), prevName, data.getPlayerName());
+					manager.markPlayerDataDirty();
+				}
+			});
+		}
+    }
 }

@@ -35,5 +35,5 @@ modId = "ftblibrary"
 type = "required"
 versionRange = "${ftb_library_version_range_maven}"
 ordering = "AFTER"
-side = "CLIENT"
+side = "BOTH"
 

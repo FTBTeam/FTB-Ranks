@@ -2,9 +2,9 @@ package dev.ftb.mods.ftbranks.impl;
 
 import de.marhali.json5.Json5Object;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
-import dev.ftb.mods.ftbranks.api.PermissionValue;
-import dev.ftb.mods.ftbranks.api.Rank;
-import dev.ftb.mods.ftbranks.api.RankException;
+import dev.ftb.mods.ftbranks.FTBRanks;
+import dev.ftb.mods.ftbranks.api.*;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -13,16 +13,14 @@ import java.util.*;
 public class PlayerRankData {
 	private final RankManagerImpl manager;
 	private final UUID playerId;
-	private final String name;
+	private String playerName;
 	private final Map<Rank, Instant> added;
-	private final Map<String, PermissionValue> permissions;
 
-	public PlayerRankData(RankManagerImpl manager, UUID playerId, String name) {
+	public PlayerRankData(RankManagerImpl manager, UUID playerId, String playerName) {
 		this.manager = manager;
 		this.playerId = playerId;
-		this.name = name;
+		this.playerName = playerName;
 		this.added = new LinkedHashMap<>();
-		this.permissions = new LinkedHashMap<>();
 	}
 
 	public UUID getPlayerId() {
@@ -50,6 +48,10 @@ public class PlayerRankData {
 		return false;
 	}
 
+	public void setPlayerName(String playerName) {
+		this.playerName = playerName;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -63,60 +65,71 @@ public class PlayerRankData {
 		return Objects.hash(playerId);
 	}
 
+	/**
+	 * Player-specific permission nodes have never worked correctly and will be removed.
+	 * @param node the node
+	 * @return always returns MISSING
+	 */
+	@Deprecated(forRemoval = true)
 	public PermissionValue getPermission(String node) {
-		return permissions.getOrDefault(node, PermissionValue.MISSING);
+		return PermissionValue.MISSING;
 	}
 
 	Json5Object toJson() {
 		Json5Object res = new Json5Object();
 
-		res.addProperty("name", name);
+		res.addProperty("name", playerName);
 
 		Json5Object ranksJson = new Json5Object();
 		added.forEach((rank, when) -> {
 			if (rank.getCondition().isDefaultCondition()) {
-				ranksJson.addProperty(rank.getId(), when.toString());
+				ranksJson.addProperty(rank.getNamespacedId().toString(), when.toString());
 			}
 		});
 		if (!ranksJson.isEmpty()) {
 			res.add("ranks", ranksJson);
 		}
 
-		Json5Object permTag = RankManagerImpl.writePermissions(permissions, new Json5Object());
-		if (!permTag.isEmpty()) {
-			res.add("permissions", permTag);
-		}
-
 		return res;
 	}
 
-	static PlayerRankData fromJson(RankManagerImpl manager, UUID playerId, Json5Object json, Map<String,RankImpl> tempRanks) {
+	static PlayerRankData fromJson(RankManagerImpl manager, UUID playerId, Json5Object json, Map<NamespacedRankId,RankImpl> tempRanks) {
 		PlayerRankData data = new PlayerRankData(manager, playerId, Json5Util.getString(json, "name").orElse(""));
 
 		Json5Util.getJson5Object(json, "ranks").ifPresent(ranks -> {
 			for (String rankKey : ranks.keySet()) {
-				RankImpl rank = tempRanks.get(rankKey);
+				RankImpl rank = NamespacedRankId.fromString(rankKey).map(tempRanks::get).orElse(null);
+				if (rank == null) {
+					// legacy import
+					rank = findUnprefixedRank(rankKey, tempRanks);
+				}
 				if (rank != null) {
 					try {
 						data.added.put(rank, Instant.parse(Json5Util.getString(ranks, rankKey).orElse("")));
 					} catch (DateTimeParseException e) {
 						throw new RankException(e.getMessage());
 					}
-				}
-			}
-		});
-		Json5Util.getJson5Object(json, "permissions").ifPresent(perms -> {
-			for (String permKey : perms.keySet()) {
-				while (permKey.endsWith(".*")) {
-					permKey = permKey.substring(0, permKey.length() - 2);
-					manager.markPlayerDataDirty();
-				}
-				if (!permKey.isEmpty()) {
-					data.permissions.put(playerId.toString(), RankManagerImpl.readPermissions(perms, permKey));
+				} else {
+					FTBRanks.LOGGER.warn("unknown rank {} found in player data for {}, ignoring", rankKey, playerId);
 				}
 			}
 		});
 
 		return data;
 	}
+
+	@Nullable
+	private static RankImpl findUnprefixedRank(String id, Map<NamespacedRankId,RankImpl> map) {
+		for (RankFileSource source : RankFileSource.values()) {
+			RankImpl rank = map.get(new NamespacedRankId(source, id));
+			if (rank != null) {
+				return rank;
+			}
+		}
+		return null;
+	}
+
+    public String getPlayerName() {
+        return playerName;
+    }
 }

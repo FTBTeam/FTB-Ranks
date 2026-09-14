@@ -3,6 +3,7 @@ package dev.ftb.mods.ftbranks.impl.condition;
 import de.marhali.json5.Json5Object;
 import dev.ftb.mods.ftblibrary.json5.Json5Util;
 import dev.ftb.mods.ftbranks.api.RankCondition;
+import dev.ftb.mods.ftbranks.api.RankException;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,7 +26,7 @@ public class StatCondition implements RankCondition {
 	private final Stat<?> stat;
 
 	public StatCondition(Json5Object json) {
-		statId = Identifier.parse(Json5Util.getString(json, "stat").orElse(""));
+		statId = Identifier.parse(Json5Util.getString(json, "stat").orElseThrow(() -> new RankException("missing 'stat' field")));
 		stat = BuiltInRegistries.CUSTOM_STAT.getOptional(statId)
 				.map(Stats.CUSTOM::get)
 				.orElseThrow(() ->

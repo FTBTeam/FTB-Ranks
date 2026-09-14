@@ -9,7 +9,7 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 
 /// Represents the value of a permission node retrieved from a player by
-/// [FTBRanksAPI#getPermissionValue(ServerPlayer, String)].
+/// [FTBRanksAPI#getPermissionValue(ServerPlayer, String, boolean)]
 public interface PermissionValue {
 	/// The fallback permission value returned by querying an unknown node name
 	PermissionValue MISSING = new PermissionValue() {

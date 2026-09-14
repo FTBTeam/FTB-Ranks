@@ -15,7 +15,7 @@ public class XorCondition implements RankCondition {
 	public XorCondition(Rank rank, Json5Object json) throws RankException {
 		conditions = getConditionList(json, "conditions", rank);
 		if (conditions.size() != 2) {
-			throw new RuntimeException("XOR condition takes exactly two sub-conditions");
+			throw new RankException("XOR condition takes exactly two sub-conditions");
 		}
 	}
 

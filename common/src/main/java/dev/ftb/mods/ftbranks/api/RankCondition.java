@@ -8,19 +8,20 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Util;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-/// A rank condition is basically a predicate that determines if a rank is applicable to a player. Each rank has a
-/// condition.
+/// A rank condition is basically a predicate that determines if a rank is applicable to a player. Every rank has a
+/// condition, although that may be the default condition, which requires players to be specifically added to the rank.
 public interface RankCondition extends Predicate<ServerPlayer> {
 	/// Get the unique type ID for this condition. This is mainly used for serialization purposes.
 	///
 	/// @return the type ID
 	String getType();
 
-	/// Is this a default condition? The default conditions requires players to be explicitly added to the rank
+	/// Is this the default condition? The default conditions requires players to be explicitly added to the rank
 	/// for the rank to be applicable. A rank with no explicit condition specified will use the default condition.
 	///
 	/// @return true if this is the default condition
@@ -52,6 +53,10 @@ public interface RankCondition extends Predicate<ServerPlayer> {
 		return json;
 	}
 
+	default List<NamespacedRankId> referencedRankIds() {
+		return List.of();
+	}
+
 	/// Dump the condition as a printable string.
 	///
 	/// @return the string representation
@@ -78,14 +83,21 @@ public interface RankCondition extends Predicate<ServerPlayer> {
 	}
 
 	default List<RankCondition> getConditionList(Json5Object json, String field, Rank rank) {
-		return Util.make(new ArrayList<>(), l -> {
-			Json5Element el = json.get(field);
-			if (el.isJson5Array()) {
-				for (Json5Element member : el.getAsJson5Array()) {
-					l.add(rank.getManager().createCondition(rank, member));
+		try {
+			return Util.make(new ArrayList<>(), l -> {
+				Json5Element el = json.get(field);
+				if (el.isJson5Array()) {
+					for (Json5Element member : el.getAsJson5Array()) {
+						l.add(rank.getManager().createCondition(rank, member));
+					}
+				} else {
+					l.add(rank.getManager().createCondition(rank, el));
 				}
-			}
-		});
+			});
+		} catch (Exception e) {
+			throw new RankException(MessageFormat.format("caught {0} while reading condition list of rank {1}: {2}",
+					e.getClass().getSimpleName(), rank.getDisplayName(), e.getMessage()));
+		}
 	}
 
 	/// Convenience interface for simple conditions
