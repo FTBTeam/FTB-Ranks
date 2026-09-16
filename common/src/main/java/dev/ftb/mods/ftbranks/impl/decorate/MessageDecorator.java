@@ -5,6 +5,7 @@ import dev.ftb.mods.ftbranks.api.PermissionValue;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.scores.TeamColor;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
 public class MessageDecorator {
@@ -19,9 +20,9 @@ public class MessageDecorator {
         MutableBoolean changed = new MutableBoolean(false);
 
         PermissionValue colorPerm = FTBRanksAPI.getPermissionValue(player, "ftbranks.chat_text.color", false);
-        ChatFormatting color = ChatFormatting.getByName(colorPerm.asString().orElse(null));
+        TeamColor color = TeamColor.byName(colorPerm.asString().orElse("white"));
         if (color != null) {
-            text.setStyle(text.getStyle().applyFormat(color));
+            text.setStyle(text.getStyle().withColor(color.textColor()));
             changed.setTrue();
         }
 
