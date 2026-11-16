@@ -17,6 +17,7 @@ dependencies {
     compileOnly "io.github.llamalad7:mixinextras-fabric:0.5.0"
 
     implementation("dev.ftb.mods:ftb-library:${rootProject.ftb_library_version}")
+    compileOnly("dev.ftb.mods:ftb-teams:${rootProject.ftb_teams_version}")
 }
 
 test {

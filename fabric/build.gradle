@@ -30,4 +30,6 @@ dependencies {
 
 	api "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
 	api "dev.ftb.mods:ftb-library-fabric:${rootProject.ftb_library_version}"
+
+	api "dev.ftb.mods:ftb-teams-fabric:${rootProject.ftb_teams_version}"
 }

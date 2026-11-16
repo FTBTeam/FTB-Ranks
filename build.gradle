@@ -126,12 +126,14 @@ publishMods {
 		projectId = curseforge_id_fabric
 		requires('fabric-api')
 		requires('ftb-library-fabric')
+		optional('ftb-teams-fabric')
 	}
 
 	curseforge("curseforgeNeoForge") {
 		from(curseForgeOptions, neoForgeOptions)
 		projectId = curseforge_id_forge
 		requires('ftb-library-forge')
+		optional('ftb-teams-forge')
 	}
 }
 

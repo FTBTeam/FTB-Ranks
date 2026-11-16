@@ -1,5 +1,6 @@
 package dev.ftb.mods.ftbranks.impl;
 
+import dev.ftb.mods.ftblibrary.platform.Platform;
 import dev.ftb.mods.ftblibrary.platform.event.NativeEventPosting;
 import dev.ftb.mods.ftbranks.FTBRanks;
 import dev.ftb.mods.ftbranks.api.FTBRanksAPI;
@@ -76,13 +77,17 @@ public class FTBRanksAPIImpl extends FTBRanksAPI {
 		data.registerSimple("op", OPCondition::new);
 		data.registerSimple("spawn",SpawnCondition::new);
 		data.registerSimple("fake_player", FakePlayerCondition::new);
-		data.registerSimple("creative_mode",CreativeModeCondition::new);
+		data.registerSimple("creative_mode", CreativeModeCondition::new);
 
-		data.register("dimension", (ignored, json) -> new DimensionCondition(json));
-		data.register("playtime", (ignored, json) -> new PlaytimeCondition(json));
-		data.register("stat", (ignored, json) -> new StatCondition(json));
+		data.register("dimension", DimensionCondition::new);
+		data.register("playtime", PlaytimeCondition::new);
+		data.register("stat", StatCondition::new);
 		data.register("rank_added", RankAddedCondition::new);
 		data.register("rank_applies", RankAppliesCondition::new);
+		data.register("gamestage", GameStageCondition::new);
+		if (Platform.get().isModLoaded("ftbteams")) {
+			data.register("teamstage", TeamStageCondition::new);
+		}
 
 		data.register("not", NotCondition::new);
 		data.register("or", OrCondition::new);

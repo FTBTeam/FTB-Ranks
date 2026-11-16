@@ -2,8 +2,8 @@ package dev.ftb.mods.ftbranks.api;
 
 import de.marhali.json5.Json5Object;
 
-/// A condition factory, used to create new instances of a condition. Register instances of this factory by
-/// subscribing to [dev.ftb.mods.ftbranks.api.event.RegisterConditionsEvent].
+/// A condition factory, used to create new instances of conditions which require both a rank and some JSON5 data to
+/// construct. Register instances of this factory by subscribing to [dev.ftb.mods.ftbranks.api.event.RegisterConditionsEvent].
 @FunctionalInterface
 public interface RankConditionFactory {
 	/// Create a condition instance
